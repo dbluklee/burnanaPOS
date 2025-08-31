@@ -1,0 +1,14 @@
+{
+  "plugins": [],
+  "projects": [
+    "68b2fd0e2d9b6dc727a56e29"
+  ],
+  "components": [
+    {
+      "path": "frontend/src/components/Block.tsx",
+      "zeplinIds": [
+        "68b302da601400ebb7e7a03a"
+      ]
+    }
+  ]
+}
