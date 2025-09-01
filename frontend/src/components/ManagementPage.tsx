@@ -6,6 +6,8 @@ import PanelContent from './PanelContent';
 import PlaceCard from './PlaceCard';
 import ResponsiveCardGrid from './ResponsiveCardGrid';
 import { tableColors } from './ColorSelector';
+import { useLogging } from '../hooks/useLogging';
+import SyncStatus from './SyncStatus';
 
 // Icon components as SVG strings (from Figma assets)
 const homeIconSvg = `data:image/svg+xml,<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 28L40 8L70 28V68C70 69.1046 69.1046 70 68 70H12C10.8954 70 10 69.1046 10 68V28Z" stroke="%23E0E0E0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M30 70V40H50V70" stroke="%23E0E0E0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -32,6 +34,23 @@ interface Place {
 export default function ManagementPage({ onBack, onSignOut, onHome }: ManagementPageProps) {
   const [selectedTab, setSelectedTab] = React.useState('Place');
   const [isAddMode, setIsAddMode] = React.useState(false);
+  const [cardsTransitioning, setCardsTransitioning] = React.useState(false);
+  const [animatingCardId, setAnimatingCardId] = React.useState<string | null>(null);
+  const [tabTransitioning, setTabTransitioning] = React.useState(false);
+  
+  // Use the logging system
+  const { 
+    logs, 
+    isLoading: logsLoading, 
+    undoLog, 
+    logPlaceCreated, 
+    logPlaceDeleted,
+    logTableCreated,
+    logTableDeleted,
+    logCustomerArrival,
+    forceSyncNow,
+    syncStatus
+  } = useLogging();
   
   // Test data - 11 places to fill the grid (leaving one empty slot for the add button)
   const testPlaces: Place[] = [
@@ -81,37 +100,104 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
     }
   };
   
-  // Sample log data
-  const logEntries = [
-    { id: 1, time: '10:31', message: '1st floor Table1 A customer has arrived.' },
-    { id: 2, time: '02:01', message: 'Connection to the server was successful.' },
-    { id: 3, time: '02:01', message: 'Attempting to connect to the server...' },
-    { id: 4, time: '02:01', message: 'The dashboard has been started.' }
-  ];
+  // Convert database logs to the format expected by the Log component
+  const logEntries = logs.map(log => ({
+    id: log.id!,
+    time: log.timeFormatted,
+    message: log.text
+  }));
 
-  const handleLogUndo = (logId: number) => {
+  const handleLogUndo = async (logId: number) => {
     console.log(`Undo action for log ${logId}`);
-    // Add your undo logic here
+    await undoLog(logId);
   };
   
   const handleAddButtonClick = () => {
     setIsAddMode(true);
   };
-  
-  const handleSavePlace = (placeName: string, selectedColor: string) => {
-    const newPlace: Place = {
-      id: Date.now().toString(),
-      name: placeName,
-      color: selectedColor,
-      tableCount: 0 // Start with 0 tables, can be updated later
-    };
-    setSavedPlaces([...savedPlaces, newPlace]);
+
+  const handleSave = async (name: string, selectedColor: string) => {
+    console.log('Saving:', { name, selectedColor });
+    
+    if (selectedTab === 'Place') {
+      const newPlace: Place = {
+        id: Date.now().toString(),
+        name,
+        color: selectedColor,
+        tableCount: 0
+      };
+
+      // Start fade animation
+      setCardsTransitioning(true);
+      setAnimatingCardId(newPlace.id);
+      
+      // Fade out current cards
+      setTimeout(() => {
+        // Add the new place
+        setSavedPlaces(prev => [...prev, newPlace]);
+        setIsAddMode(false);
+        
+        // Fade in with new card
+        setTimeout(() => {
+          setCardsTransitioning(false);
+          // Keep the animation ID for a bit longer to show the highlight
+          setTimeout(() => {
+            setAnimatingCardId(null);
+          }, 500);
+        }, 25);
+      }, 150);
+      
+      // Log the creation
+      await logPlaceCreated(name);
+    } else if (selectedTab === 'Table') {
+      setIsAddMode(false);
+      // For table creation, we need to know which place it belongs to
+      // For now, we'll just log it generically
+      await logTableCreated(name, 'Selected Place'); // This would be dynamic in a real app
+    }
+  };
+
+  const handleCancel = () => {
     setIsAddMode(false);
   };
-  
-  const handleCancelPlace = () => {
-    setIsAddMode(false);
+
+  const handlePlaceDelete = async (place: Place) => {
+    // Start fade animation
+    setCardsTransitioning(true);
+    setAnimatingCardId(place.id);
+    
+    // Fade out current cards
+    setTimeout(() => {
+      // Remove from saved places
+      setSavedPlaces(prev => prev.filter(p => p.id !== place.id));
+      
+      // Fade in remaining cards
+      setTimeout(() => {
+        setCardsTransitioning(false);
+        setAnimatingCardId(null);
+      }, 25);
+    }, 150);
+    
+    // Log the deletion
+    await logPlaceDeleted(place.name);
   };
+
+  // Test functions for demonstrating logging
+  const handleTestCustomerArrival = async () => {
+    await logCustomerArrival('1st floor', 'Table1', Math.floor(Math.random() * 4) + 1);
+  };
+
+  const handleTestSync = async () => {
+    await forceSyncNow();
+  };
+
+  const handleTestDeletePlace = async () => {
+    if (savedPlaces.length > 0) {
+      const lastPlace = savedPlaces[savedPlaces.length - 1];
+      await handlePlaceDelete(lastPlace);
+    }
+  };
+  
   
   // Get current date/time formatted like in design
   const getCurrentDateTime = () => {
@@ -175,7 +261,32 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
             <p className="leading-[normal] whitespace-pre">Management</p>
           </div>
         </div>
-        <div className="box-border content-stretch flex h-full items-center justify-end px-[1vw] py-0 relative shrink-0 flex-1" data-name="DateTime" data-node-id="184:4009">
+        <div className="box-border content-stretch flex h-full items-center justify-end px-[1vw] py-0 relative shrink-0 flex-1 gap-2" data-name="DateTime" data-node-id="184:4009">
+          {/* Sync status indicator */}
+          <SyncStatus syncStatus={syncStatus} />
+          
+          {/* Test buttons for logging system */}
+          <button
+            onClick={handleTestCustomerArrival}
+            className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            title="Test customer arrival log"
+          >
+            Test Customer
+          </button>
+          <button
+            onClick={handleTestSync}
+            className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+            title="Force sync logs to server"
+          >
+            Sync Now
+          </button>
+          <button
+            onClick={handleTestDeletePlace}
+            className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+            title="Delete last place (test animation)"
+          >
+            Del Place
+          </button>
           <div className="flex flex-col font-['Pretendard'] font-semibold h-full justify-center leading-[0] not-italic relative shrink-0 text-[#e0e0e0] text-right whitespace-nowrap" style={{ fontSize: 'clamp(0.9rem, 1.5vw, 1.5rem)' }} data-node-id="184:4010">
             <p className="leading-[normal]">{getCurrentDateTime()}</p>
           </div>
@@ -196,7 +307,22 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                     key={tab}
                     label={tab}
                     isSelected={selectedTab === tab}
-                    onClick={() => setSelectedTab(tab)}
+                    onClick={() => {
+                      if (selectedTab !== tab) {
+                        setTabTransitioning(true);
+                        
+                        // Fade out current content
+                        setTimeout(() => {
+                          setSelectedTab(tab);
+                          setIsAddMode(false); // Reset add mode when switching tabs
+                          
+                          // Fade in new content
+                          setTimeout(() => {
+                            setTabTransitioning(false);
+                          }, 25);
+                        }, 150);
+                      }
+                    }}
                   />
                 ))}
               </div>
@@ -216,32 +342,46 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                   display: none;
                 }
               `}</style>
-              {selectedTab === 'Place' && savedPlaces.length > 0 ? (
-                <ResponsiveCardGrid 
-                  places={[...savedPlaces, { id: 'add', name: '', color: '', tableCount: 0 }]}
-                  onCardClick={(place) => {
-                    if (place.id === 'add') {
-                      handleAddButtonClick();
-                    } else {
-                      console.log('Clicked place:', place.name);
-                    }
-                  }}
-                />
-              ) : (
-                <div className="content-stretch flex flex-col items-center justify-center overflow-hidden relative shrink-0 w-full h-full" data-name="Notification" data-node-id="184:4044">
-                  {isAddMode ? (
-                    <Noti 
-                      title="Use settings on the right."
-                      description=""
-                    />
-                  ) : (
-                    <Noti 
-                      title={getNotiMessage(selectedTab).title}
-                      description={getNotiMessage(selectedTab).description}
-                    />
-                  )}
-                </div>
-              )}
+              <div 
+                className={`w-full h-full transition-opacity duration-150 ease-in-out ${
+                  tabTransitioning || cardsTransitioning ? 'opacity-0' : 'opacity-100'
+                }`}
+              >
+                {selectedTab === 'Place' && savedPlaces.length > 0 ? (
+                  <ResponsiveCardGrid 
+                    places={[...savedPlaces, { id: 'add', name: '', color: '', tableCount: 0 }]}
+                    onCardClick={(place) => {
+                      if (place.id === 'add') {
+                        handleAddButtonClick();
+                      } else {
+                        // For demo purposes, let's make double-click delete the place
+                        console.log('Clicked place:', place.name);
+                        // You could add double-click detection here or use a different method
+                      }
+                    }}
+                    isTransitioning={cardsTransitioning}
+                    animatingCardId={animatingCardId}
+                  />
+                ) : (
+                  <div 
+                    className="content-stretch flex flex-col items-center justify-center overflow-hidden relative shrink-0 w-full h-full" 
+                    data-name="Notification" 
+                    data-node-id="184:4044"
+                  >
+                    {isAddMode ? (
+                      <Noti 
+                        title="Use settings on the right."
+                        description=""
+                      />
+                    ) : (
+                      <Noti 
+                        title={getNotiMessage(selectedTab).title}
+                        description={getNotiMessage(selectedTab).description}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -262,8 +402,8 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                 selectedTab={selectedTab}
                 logEntries={logEntries}
                 onLogUndo={handleLogUndo}
-                onSave={handleSavePlace}
-                onCancel={handleCancelPlace}
+                onSave={handleSave}
+                onCancel={handleCancel}
               />
             </div>
           </div>

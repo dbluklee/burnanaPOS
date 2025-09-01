@@ -6,12 +6,15 @@ import HomePage from './components/HomePage';
 import ManagementPage from './components/ManagementPage';
 import ComponentShowcase from './components/ComponentShowcase';
 import type { PageType } from './types/navigation';
+import { useLogger } from './hooks/useLogging';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<PageType>('homepage');
   const [pageHistory, setPageHistory] = useState<PageType[]>(['homepage']);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [displayPage, setDisplayPage] = useState<PageType>('homepage');
+  
+  const { logNavigation } = useLogger();
 
   // Apply Mode-1 class to body for color variables
   useEffect(() => {
@@ -23,6 +26,9 @@ function App() {
 
   const navigateTo = (page: PageType) => {
     setIsTransitioning(true);
+    
+    // Log navigation
+    logNavigation(currentPage, page);
     
     // Fade out
     setTimeout(() => {

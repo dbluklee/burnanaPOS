@@ -11,9 +11,11 @@ interface Place {
 interface ResponsiveCardGridProps {
   places: Place[];
   onCardClick: (place: Place) => void;
+  isTransitioning?: boolean;
+  animatingCardId?: string | null;
 }
 
-export default function ResponsiveCardGrid({ places, onCardClick }: ResponsiveCardGridProps) {
+export default function ResponsiveCardGrid({ places, onCardClick, isTransitioning = false, animatingCardId = null }: ResponsiveCardGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [cardSize, setCardSize] = useState(15); // Default 15vw
   const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
@@ -108,30 +110,59 @@ export default function ResponsiveCardGrid({ places, onCardClick }: ResponsiveCa
       style={{ touchAction: 'pan-y' }}
       onTouchMove={handleTouchMove}
     >
+      <style jsx>{`
+        @keyframes slideInUp {
+          0% {
+            transform: translateY(20px) scale(0.95);
+            opacity: 0;
+          }
+          100% {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+          }
+        }
+        @keyframes cardHighlight {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.02);
+          }
+        }
+      `}</style>
       <div 
-        className="flex flex-wrap items-start justify-start w-full"
+        className={`flex flex-wrap items-start justify-start w-full transition-opacity duration-150 ease-in-out ${
+          isTransitioning ? 'opacity-0' : 'opacity-100'
+        }`}
         style={{ gap: `${gapVw}vw` }}
       >
-        {places.map((place) => (
-          <div
-            key={place.id}
-            className="relative overflow-hidden flex-shrink-0"
-            style={{
-              width: `${cardSizeVw}vw`,
-              height: `${cardSizeVw}vw`
-            }}
-            onClick={() => onCardClick(place)}
-            data-card="true"
-          >
-            <PlaceCard
-              placeName={place.name}
-              tableCount={place.tableCount}
-              color={place.color}
-              property={place.id === 'add' ? 'Empty' : 'Default'}
+        {places.map((place) => {
+          const isNewCard = animatingCardId === place.id && !isTransitioning;
+          return (
+            <div
+              key={place.id}
+              className={`relative overflow-hidden flex-shrink-0 transition-all duration-300 ease-out ${
+                isNewCard ? 'animate-pulse' : ''
+              }`}
+              style={{
+                width: `${cardSizeVw}vw`,
+                height: `${cardSizeVw}vw`,
+                transform: isNewCard ? 'scale(1.02)' : 'scale(1)',
+                animation: isNewCard ? 'slideInUp 0.4s ease-out' : 'none',
+              }}
               onClick={() => onCardClick(place)}
-            />
-          </div>
-        ))}
+              data-card="true"
+            >
+              <PlaceCard
+                placeName={place.name}
+                tableCount={place.tableCount}
+                color={place.color}
+                property={place.id === 'add' ? 'Empty' : 'Default'}
+                onClick={() => onCardClick(place)}
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
