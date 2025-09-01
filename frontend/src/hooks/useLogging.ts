@@ -23,6 +23,11 @@ interface UseLoggingReturn {
   logCustomerArrival: (placeName: string, tableName: string, customerCount?: number) => Promise<void>;
   logError: (errorMessage: string, additionalData?: Record<string, any>) => Promise<void>;
   
+  // Authentication logging methods
+  logUserSignIn: (userId: string) => Promise<void>;
+  logUserSignUp: (userId: string) => Promise<void>;
+  logUserSignOut: () => Promise<void>;
+  
   // Actions
   undoLog: (logId: number) => Promise<boolean>;
   refreshLogs: () => Promise<void>;
@@ -163,6 +168,27 @@ export function useLogging(autoRefresh: boolean = true): UseLoggingReturn {
     await loggingService.logError(errorMessage, additionalData);
   }, []);
 
+  // Authentication logging methods
+  const logUserSignIn = useCallback(async (userId: string) => {
+    await loggingService.logUserSignIn(userId);
+    // Refresh logs to show only session logs after sign in
+    if (!autoRefresh) {
+      await refreshLogs();
+    }
+  }, [autoRefresh, refreshLogs]);
+
+  const logUserSignUp = useCallback(async (userId: string) => {
+    await loggingService.logUserSignUp(userId);
+    // Refresh logs to show only session logs after sign up
+    if (!autoRefresh) {
+      await refreshLogs();
+    }
+  }, [autoRefresh, refreshLogs]);
+
+  const logUserSignOut = useCallback(async () => {
+    await loggingService.logUserSignOut();
+  }, []);
+
   // Action methods
   const undoLog = useCallback(async (logId: number): Promise<boolean> => {
     try {
@@ -210,6 +236,11 @@ export function useLogging(autoRefresh: boolean = true): UseLoggingReturn {
     logTableDeleted,
     logCustomerArrival,
     logError,
+    
+    // Authentication logging methods
+    logUserSignIn,
+    logUserSignUp,
+    logUserSignOut,
     
     // Actions
     undoLog,

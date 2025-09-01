@@ -1,15 +1,27 @@
 import React, { useState } from 'react';
 import ColorSelector, { tableColors } from './ColorSelector';
 import TextInput from './TextInput';
+import SetButtons from './SetButtons';
 
 interface PlaceSettingsProps {
   onSave?: (placeName: string, selectedColor: string) => void;
   onCancel?: () => void;
+  onDelete?: () => void;
+  isEditMode?: boolean;
+  initialName?: string;
+  initialColorIndex?: number;
 }
 
-export default function PlaceSettings({ onSave, onCancel }: PlaceSettingsProps) {
-  const [placeName, setPlaceName] = useState('');
-  const [selectedColorIndex, setSelectedColorIndex] = useState(0);
+export default function PlaceSettings({ 
+  onSave, 
+  onCancel, 
+  onDelete, 
+  isEditMode = false, 
+  initialName = '', 
+  initialColorIndex = 0 
+}: PlaceSettingsProps) {
+  const [placeName, setPlaceName] = useState(initialName);
+  const [selectedColorIndex, setSelectedColorIndex] = useState(initialColorIndex);
 
   const handleSave = () => {
     onSave?.(placeName, tableColors[selectedColorIndex]);
@@ -17,6 +29,10 @@ export default function PlaceSettings({ onSave, onCancel }: PlaceSettingsProps) 
 
   const handleCancel = () => {
     onCancel?.();
+  };
+
+  const handleDelete = () => {
+    onDelete?.();
   };
 
   return (
@@ -44,32 +60,14 @@ export default function PlaceSettings({ onSave, onCancel }: PlaceSettingsProps) 
 
         <div className="h-10 shrink-0 w-full" data-name="gap" />
         
-        {/* Save/Cancel Buttons */}
-        <div className="flex items-center justify-center overflow-clip relative shrink-0 w-full" data-name="SaveCancelArea">
-          <div className="flex items-center justify-center relative" style={{ gap: '3rem' }} data-name="SaveCancelButton">
-            <div 
-              className="box-border flex h-[60px] items-center justify-center overflow-clip px-8 py-2.5 relative rounded-[37.5px] shrink-0 cursor-pointer hover:opacity-80 transition-opacity bg-white/10 hover:bg-white/20" 
-              data-name="SaveButton"
-              onClick={handleSave}
-            >
-              <div className="FontStyleTitle flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-center text-nowrap text-white">
-                <p className="leading-[normal] whitespace-pre">SAVE</p>
-              </div>
-            </div>
-            <div 
-              className="box-border flex h-[60px] items-center justify-center overflow-clip px-8 py-2.5 relative rounded-[37.5px] shrink-0 cursor-pointer hover:opacity-80 transition-opacity bg-white/10 hover:bg-white/20" 
-              data-name="CancelButton"
-              onClick={handleCancel}
-            >
-              <div className="FontStyleTitle flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-center text-nowrap text-white">
-                <p className="leading-[normal] whitespace-pre">CANCEL</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="h-10 shrink-0 w-full" data-name="gap" />
-        <div className="box-border content-stretch flex flex-col h-20 items-center justify-between overflow-clip p-[10px] shrink-0 w-full" data-name="DeleteArea" />
+        {/* Set Buttons Component (Save/Cancel + Delete) */}
+        <SetButtons
+          onSave={handleSave}
+          onCancel={handleCancel}
+          onDelete={handleDelete}
+          isEditMode={isEditMode}
+          disabled={!placeName.trim()} // Disable delete if no name is entered
+        />
       </div>
     </div>
   );

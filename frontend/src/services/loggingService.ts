@@ -55,6 +55,7 @@ class LoggingService {
   private currentUserId: string = 'user001'; // This would come from authentication
   private isInitialized: boolean = false;
   private logSubscribers: Set<(logs: LogEntry[]) => void> = new Set();
+  private sessionStartTime: number | null = null;
 
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
@@ -234,13 +235,60 @@ class LoggingService {
     });
   }
 
+  // Authentication event methods
+  async logUserSignIn(userId: string): Promise<void> {
+    this.setCurrentUser(userId);
+    this.markSessionStart(); // Mark session start when user signs in
+    await this.log(EventType.USER_SIGNIN, `User ${userId} has signed in.`);
+  }
+
+  async logUserSignUp(userId: string): Promise<void> {
+    this.setCurrentUser(userId);
+    this.markSessionStart(); // Mark session start when user signs up
+    await this.log(EventType.USER_SIGNUP, `User ${userId} has signed up.`);
+  }
+
+  async logUserSignOut(): Promise<void> {
+    await this.log(EventType.USER_SIGNOUT, `User ${this.currentUserId} has signed out.`);
+    // Don't reset session start time on sign out - keep the session logs available
+  }
+
+  // Session management
+  markSessionStart(): void {
+    this.sessionStartTime = Date.now();
+    console.log('📅 Session start time marked:', new Date(this.sessionStartTime).toLocaleString());
+  }
+
+  getSessionStartTime(): number | null {
+    return this.sessionStartTime;
+  }
+
   // Data retrieval methods
   async getRecentLogs(limit: number = 50): Promise<LogEntry[]> {
-    return await databaseService.getRecentLogs(limit);
+    const allLogs = await databaseService.getRecentLogs(limit * 2); // Get more to account for filtering
+    
+    // If no session start time is set, return all recent logs
+    if (!this.sessionStartTime) {
+      return allLogs.slice(0, limit);
+    }
+    
+    // Filter logs from session start time onwards
+    const sessionLogs = allLogs.filter(log => log.timestamp >= this.sessionStartTime!);
+    
+    // Return the most recent logs up to the limit
+    return sessionLogs.slice(0, limit);
   }
 
   async getAllLogs(): Promise<LogEntry[]> {
-    return await databaseService.getAllLogs();
+    const allLogs = await databaseService.getAllLogs();
+    
+    // If no session start time is set, return all logs
+    if (!this.sessionStartTime) {
+      return allLogs;
+    }
+    
+    // Filter logs from session start time onwards
+    return allLogs.filter(log => log.timestamp >= this.sessionStartTime!);
   }
 
   // Subscription system for real-time log updates

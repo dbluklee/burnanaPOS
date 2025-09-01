@@ -32,7 +32,7 @@ export default function Logs({ logEntries, onLogUndo }: LogsProps) {
   };
 
   return (
-    <div className="flex flex-col grow items-center justify-start min-h-0 min-w-0 overflow-hidden w-full" style={{ gap: 'clamp(0.2rem, 0.6vh, 0.4rem)' }} data-name="Logs">
+    <div className="flex flex-col flex-1 items-center justify-start min-h-0 min-w-0 overflow-y-auto overflow-x-hidden w-full" style={{ gap: 'clamp(0.2rem, 0.6vh, 0.4rem)' }} data-name="Logs">
       {logEntries.map((log) => (
         <Log
           key={log.id}

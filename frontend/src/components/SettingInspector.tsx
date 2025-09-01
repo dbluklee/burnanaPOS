@@ -1,13 +1,31 @@
 import React from 'react';
 import PlaceSettings from './PlaceSettings';
+import { tableColors } from './ColorSelector';
+
+interface Place {
+  id: string;
+  name: string;
+  color: string;
+  tableCount: number;
+}
 
 interface SettingInspectorProps {
   selectedTab: string;
   onSave?: (name: string, selectedColor: string) => void;
   onCancel?: () => void;
+  onDelete?: () => void;
+  isEditMode?: boolean;
+  editingPlace?: Place | null;
 }
 
-export default function SettingInspector({ selectedTab, onSave, onCancel }: SettingInspectorProps) {
+export default function SettingInspector({ 
+  selectedTab, 
+  onSave, 
+  onCancel, 
+  onDelete, 
+  isEditMode = false, 
+  editingPlace = null 
+}: SettingInspectorProps) {
   // Based on the selected tab, render the appropriate settings component
   // For now, we only have PlaceSettings, but this can be extended for Table, Category, Menu
   
@@ -18,6 +36,15 @@ export default function SettingInspector({ selectedTab, onSave, onCancel }: Sett
           <PlaceSettings
             onSave={onSave}
             onCancel={onCancel}
+            onDelete={onDelete}
+            isEditMode={isEditMode}
+            initialName={editingPlace?.name || ''}
+            initialColorIndex={editingPlace ? 
+              tableColors.indexOf(editingPlace.color) >= 0 
+                ? tableColors.indexOf(editingPlace.color) 
+                : 0 
+              : 0
+            }
           />
         );
       case 'table':
@@ -47,7 +74,7 @@ export default function SettingInspector({ selectedTab, onSave, onCancel }: Sett
   };
 
   return (
-    <div className="flex flex-col w-full h-full overflow-hidden" data-name="SettingInspector">
+    <div className="flex flex-col w-full h-full min-h-0 overflow-hidden" data-name="SettingInspector">
       {renderSettings()}
     </div>
   );

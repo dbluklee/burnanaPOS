@@ -38,6 +38,10 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
   const [animatingCardId, setAnimatingCardId] = React.useState<string | null>(null);
   const [tabTransitioning, setTabTransitioning] = React.useState(false);
   
+  // Card editing mode state
+  const [isCardEditMode, setIsCardEditMode] = React.useState(false);
+  const [editingPlace, setEditingPlace] = React.useState<Place | null>(null);
+  
   // Use the logging system
   const { 
     logs, 
@@ -48,6 +52,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
     logTableCreated,
     logTableDeleted,
     logCustomerArrival,
+    logUserSignIn,
     forceSyncNow,
     syncStatus
   } = useLogging();
@@ -197,6 +202,75 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
       await handlePlaceDelete(lastPlace);
     }
   };
+
+  const handleTestLogin = async () => {
+    await logUserSignIn(`user_${Date.now()}`);
+  };
+
+  // Long-press handler to enter edit mode
+  const handleCardLongPress = (place: Place) => {
+    if (place.id === 'add') return;
+    
+    console.log('Long-press detected on:', place.name);
+    setIsCardEditMode(true);
+    setEditingPlace(place);
+    setIsAddMode(true); // Show the settings panel
+  };
+
+  // Handle card reordering
+  const handleCardReorder = (reorderedPlaces: Place[]) => {
+    setSavedPlaces(reorderedPlaces);
+    console.log('Cards reordered:', reorderedPlaces.map(p => p.name));
+  };
+
+  // Handle editing completion
+  const handleEditSave = async (name: string, selectedColor: string) => {
+    if (editingPlace) {
+      // Start fade animation
+      setCardsTransitioning(true);
+      
+      // Fade out current cards
+      setTimeout(() => {
+        // Update the existing place
+        setSavedPlaces(prev => prev.map(p => 
+          p.id === editingPlace.id 
+            ? { ...p, name, color: selectedColor }
+            : p
+        ));
+        
+        // Exit edit mode
+        setIsCardEditMode(false);
+        setEditingPlace(null);
+        setIsAddMode(false);
+        
+        // Fade in updated cards
+        setTimeout(() => {
+          setCardsTransitioning(false);
+        }, 25);
+      }, 150);
+      
+      // Log the update
+      console.log('Updated place:', name);
+    } else {
+      // Regular add mode
+      await handleSave(name, selectedColor);
+    }
+  };
+
+  const handleEditCancel = () => {
+    setIsCardEditMode(false);
+    setEditingPlace(null);
+    setIsAddMode(false);
+  };
+
+  const handleEditDelete = async () => {
+    if (editingPlace) {
+      await handlePlaceDelete(editingPlace);
+      setIsCardEditMode(false);
+      setEditingPlace(null);
+      setIsAddMode(false);
+    }
+  };
   
   
   // Get current date/time formatted like in design
@@ -232,7 +306,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
 
   return (
     <div 
-      className="bg-black box-border content-stretch flex flex-col items-center justify-between overflow-hidden relative rounded-[2.25rem] w-full h-full" 
+      className="bg-black box-border flex flex-col items-center justify-between overflow-hidden relative rounded-[2.25rem] w-full h-full max-h-screen" 
       style={{ 
         padding: 'clamp(0.5rem, 1.25vw, 1.25rem)',
         touchAction: 'none',
@@ -287,6 +361,13 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
           >
             Del Place
           </button>
+          <button
+            onClick={handleTestLogin}
+            className="px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+            title="Simulate user login - starts session log filtering"
+          >
+            Login
+          </button>
           <div className="flex flex-col font-['Pretendard'] font-semibold h-full justify-center leading-[0] not-italic relative shrink-0 text-[#e0e0e0] text-right whitespace-nowrap" style={{ fontSize: 'clamp(0.9rem, 1.5vw, 1.5rem)' }} data-node-id="184:4010">
             <p className="leading-[normal]">{getCurrentDateTime()}</p>
           </div>
@@ -294,10 +375,10 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
       </div>
 
       {/* Body */}
-      <div className="basis-0 box-border content-stretch flex grow items-stretch min-h-0 min-w-0 overflow-hidden relative shrink-0 w-full" style={{ paddingTop: 'clamp(0.25rem, 0.5vh, 0.75rem)', paddingBottom: 'clamp(0.25rem, 0.5vh, 0.75rem)', gap: 'clamp(0.5rem, 1vw, 1rem)' }} data-name="Body" data-node-id="184:4011">
+      <div className="flex-1 box-border flex items-stretch min-h-0 min-w-0 overflow-hidden relative w-full" style={{ paddingTop: 'clamp(0.25rem, 0.5vh, 0.75rem)', paddingBottom: 'clamp(0.25rem, 0.5vh, 0.75rem)', gap: 'clamp(0.5rem, 1vw, 1rem)' }} data-name="Body" data-node-id="184:4011">
         {/* Content - 70% width */}
-        <div className="h-full min-h-0 relative rounded-[1.5rem] border border-[#363636]" style={{ flex: '7', minWidth: '0' }} data-name="Content" data-node-id="184:4012">
-          <div className="content-stretch flex flex-col items-center justify-start min-w-0 overflow-hidden relative size-full">
+        <div className="h-full min-h-0 max-h-full relative rounded-[1.5rem] border border-[#363636]" style={{ flex: '7', minWidth: '0' }} data-name="Content" data-node-id="184:4012">
+          <div className="flex flex-col items-center justify-start min-w-0 overflow-hidden relative w-full h-full">
             {/* Content Header */}
             <div className="box-border content-stretch flex items-center justify-between overflow-hidden px-[0.5rem] py-[0.5rem] relative shrink-0 w-full" style={{ height: 'clamp(3rem, 8vh, 4.5rem)' }} data-name="ContentHeader" data-node-id="184:4013">
               {/* Items area - 80% width */}
@@ -336,7 +417,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
             </div>
 
             {/* Content Body */}
-            <div className="basis-0 content-stretch flex grow items-start justify-start min-h-0 min-w-0 relative shrink-0 w-full h-full p-[1vw] overflow-y-auto overflow-x-hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }} data-name="ContentBody" data-node-id="184:4043">
+            <div className="flex-1 flex items-start justify-start min-h-0 min-w-0 relative w-full p-[1vw] overflow-y-auto overflow-x-hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }} data-name="ContentBody" data-node-id="184:4043">
               <style jsx>{`
                 div::-webkit-scrollbar {
                   display: none;
@@ -354,13 +435,16 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                       if (place.id === 'add') {
                         handleAddButtonClick();
                       } else {
-                        // For demo purposes, let's make double-click delete the place
                         console.log('Clicked place:', place.name);
-                        // You could add double-click detection here or use a different method
                       }
                     }}
+                    onCardLongPress={handleCardLongPress}
+                    onCardReorder={handleCardReorder}
+                    onEditCancel={handleEditCancel}
+                    editingPlace={editingPlace}
                     isTransitioning={cardsTransitioning}
                     animatingCardId={animatingCardId}
+                    isEditMode={isCardEditMode}
                   />
                 ) : (
                   <div 
@@ -387,8 +471,8 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
         </div>
 
         {/* Panel (POS Log / Settings) - 30% width */}
-        <div className="h-full relative rounded-[1.5rem] border border-[#363636]" style={{ flex: '3', minWidth: '0' }} data-name="Panel" data-node-id="184:4066">
-          <div className="box-border content-stretch flex flex-col h-full items-center justify-start min-w-0 overflow-hidden px-[0.5rem] py-0 relative w-full">
+        <div className="h-full min-h-0 max-h-full relative rounded-[1.5rem] border border-[#363636]" style={{ flex: '3', minWidth: '0' }} data-name="Panel" data-node-id="184:4066">
+          <div className="box-border flex flex-col h-full items-center justify-start min-w-0 overflow-hidden px-[0.5rem] py-0 relative w-full">
             <div className="box-border content-stretch flex items-center justify-start overflow-hidden px-[0.25rem] py-[0.5rem] relative shrink-0 w-full" style={{ height: 'clamp(2.5rem, 6vh, 3.5rem)' }} data-name="PanelHeader" data-node-id="184:4067">
               <div className="box-border content-stretch flex items-center justify-start overflow-hidden px-[0.25rem] py-[0.125rem] relative rounded-[1rem] shrink-0 h-full" data-name="PanelLabel" data-node-id="184:4068">
                 <div className="FontStyleTitle flex flex-col justify-center leading-[1.2] not-italic relative shrink-0 text-center text-nowrap text-white" data-node-id="184:4069">
@@ -396,14 +480,17 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                 </div>
               </div>
             </div>
-            <div className="basis-0 box-border content-stretch flex flex-col grow items-center justify-start min-h-0 min-w-0 px-[0.25rem] relative shrink-0 w-full overflow-hidden" style={{ paddingTop: '3vh', paddingBottom: '0.5rem' }} data-name="PanelBody" data-node-id="184:4071">
+            <div className="flex-1 box-border flex flex-col items-center justify-start min-h-0 min-w-0 px-[0.25rem] relative w-full overflow-hidden" style={{ paddingTop: '3vh', paddingBottom: '3vh' }} data-name="PanelBody" data-node-id="184:4071">
               <PanelContent
                 isAddMode={isAddMode}
                 selectedTab={selectedTab}
                 logEntries={logEntries}
                 onLogUndo={handleLogUndo}
-                onSave={handleSave}
-                onCancel={handleCancel}
+                onSave={isCardEditMode ? handleEditSave : handleSave}
+                onCancel={isCardEditMode ? handleEditCancel : handleCancel}
+                onDelete={handleEditDelete}
+                isEditMode={isCardEditMode}
+                editingPlace={editingPlace}
               />
             </div>
           </div>
