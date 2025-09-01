@@ -2,18 +2,22 @@ import React from 'react';
 import Block from './Block';
 import HighlightBlock from './HighlightBlock';
 import BlockSmall from './BlockSmall';
-import PromotionTopImg from './PromotionTopImg';
-import PromotionMidImg1 from './PromotionMidImg1';
-import PromotionMidImg2 from './PromotionMidImg2';
-import PromotionBottomImg from './PromotionBottomImg';
+import BlockPromotion from './BlockPromotion';
+
+// Image assets
+import promotionTopImage from '../assets/images/HomePage/promotion-top.jpg';
+import promotionMid1Image from '../assets/images/HomePage/promotion-mid1.jpg';
+import promotionMid2Image from '../assets/images/HomePage/promotion-mid2.jpg';
+import promotionBottomImage from '../assets/images/HomePage/promotion-bottom.jpg';
 
 // Icon assets for small blocks
-const burnanaLogoImage = "http://localhost:3845/assets/5b30d183d748f1b9ef488509025cc065028f2cfe.svg";
-const settingsIcon = "http://localhost:3845/assets/a9e34bf85f7a7e47c75418249dc610fa0bd434b7.svg";
-const helpIcon = "http://localhost:3845/assets/3b9267ca63577778a6707c3cd0639fe4b3eeeeea.svg";
-const languagesIcon = "http://localhost:3845/assets/a882400e83ac872dc3d665f08b44260bea86da02.svg";
-const mailIcon = "http://localhost:3845/assets/1c7c52abb0ff2acc1e3179c4895de33b35d49f0c.svg";
-const signOutIcon = "http://localhost:3845/assets/ee7379812239b24a60e6d123094cffd0085a93f9.svg"; // Logout icon from Figma
+import userRoundIcon from '../assets/HomePage/users-round.svg';
+import burnanaLogoImage from '../assets/Common/burnana-logo.svg';
+import settingsIcon from '../assets/HomePage/settings.svg';
+import helpIcon from '../assets/HomePage/help.svg';
+import languagesIcon from '../assets/HomePage/languages.svg';
+import mailIcon from '../assets/HomePage/mail.svg';
+import signOutIcon from '../assets/HomePage/sign-out.svg';
 
 interface HomePageProps {
   onSignOut?: () => void;
@@ -65,7 +69,11 @@ export default function HomePage({ onSignOut, onManagement }: HomePageProps) {
 
           {/* QR Code Image - 23% */}
           <div style={{ flex: '23', height: '100%' }}>
-            <PromotionTopImg />
+            <BlockPromotion 
+              imageUrl={promotionTopImage} 
+              alt="QR Code Payment" 
+              dataName="promotion-top"
+            />
           </div>
 
           {/* Function Icons Grid - 30% */}
@@ -77,9 +85,9 @@ export default function HomePage({ onSignOut, onManagement }: HomePageProps) {
                 <BlockSmall icon={signOutIcon} alt="Sign Out" onClick={onSignOut} />
               </div>
               
-              {/* Burnana Logo */}
+              {/* User Change Button */}
               <div style={{ flex: '1', aspectRatio: '1/1' }}>
-                <BlockSmall icon={burnanaLogoImage} alt="Burnana Logo" />
+                <BlockSmall icon={userRoundIcon} alt="User Change" />
               </div>
               
               {/* Settings Icon */}
@@ -120,7 +128,11 @@ export default function HomePage({ onSignOut, onManagement }: HomePageProps) {
         >
           {/* Chef Image - 18% */}
           <div style={{ flex: '18', height: '100%' }}>
-            <PromotionMidImg1 />
+            <BlockPromotion 
+              imageUrl={promotionMid1Image} 
+              alt="Smiling chef holding tablet" 
+              dataName="promotion-mid1"
+            />
           </div>
 
           {/* Dashboard Block - 50% */}
@@ -134,7 +146,11 @@ export default function HomePage({ onSignOut, onManagement }: HomePageProps) {
 
           {/* Analytics Image - 30% */}
           <div style={{ flex: '30', height: '100%' }}>
-            <PromotionMidImg2 />
+            <BlockPromotion 
+              imageUrl={promotionMid2Image} 
+              alt="Female analyst using computer dashboard for business data analysis" 
+              dataName="promotion-mid2"
+            />
           </div>
         </div>
 
@@ -158,7 +174,11 @@ export default function HomePage({ onSignOut, onManagement }: HomePageProps) {
 
           {/* Robot Image - 18% */}
           <div style={{ flex: '18', height: '100%' }}>
-            <PromotionBottomImg />
+            <BlockPromotion 
+              imageUrl={promotionBottomImage} 
+              alt="Anthropomorphic robot that performs regular human job" 
+              dataName="promotion-bottom"
+            />
           </div>
 
           {/* Analytics Block - 40% */}

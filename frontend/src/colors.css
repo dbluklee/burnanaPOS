@@ -159,3 +159,13 @@
   line-height: normal;
   letter-spacing: normal;
 }
+
+.FontStyleDisclaimer {
+  font-family: Pretendard;
+  font-size: clamp(0.5rem, 1vw, 1rem);
+  font-weight: 200;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: normal;
+  letter-spacing: normal;
+}

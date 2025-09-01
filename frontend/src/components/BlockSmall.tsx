@@ -7,7 +7,7 @@ interface BlockSmallProps {
 }
 
 export default function BlockSmall({ 
-  icon = "http://localhost:3845/assets/22d6221ca50c81ceea1200cd023e315074ba4ee7.svg", 
+  icon, 
   alt = "Icon",
   onClick
 }: BlockSmallProps) {
@@ -16,29 +16,22 @@ export default function BlockSmall({
       className={`relative w-full h-full flex flex-col overflow-hidden ${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
       style={{ 
         backgroundColor: 'var(--deep-dark)',
-        borderRadius: '2.25rem' // 36px converted to rem
+        borderRadius: '2.25rem', // 36px converted to rem
+        boxShadow: 'inset 0 4px 12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1)' // Inner shadow + subtle border
       }}
       onClick={onClick}
       data-name="BlockSmall" 
       data-node-id="132:339"
     >
-      {/* StyleLinearWhite border with inner shadow and rounded box */}
+      {/* Subtle border overlay */}
       <div 
         aria-hidden="true" 
-        className="absolute inset-0 pointer-events-none StyleLinearWhite" 
+        className="absolute inset-0 pointer-events-none" 
         style={{
-          padding: '0.1rem',
-          borderRadius: '2.25rem'
+          borderRadius: '2.25rem',
+          border: '1px solid rgba(255, 255, 255, 0.15)'
         }}
-      >
-        <div 
-          className="w-full h-full" 
-          style={{ 
-            backgroundColor: 'transparent',
-            borderRadius: '2.05rem' // Slightly smaller to account for padding
-          }} 
-        />
-      </div>
+      />
       {/* Icon centered in Block */}
       <div 
         className="absolute inset-0 flex items-center justify-center w-full h-full z-10"

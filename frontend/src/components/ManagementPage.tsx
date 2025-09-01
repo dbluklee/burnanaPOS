@@ -3,6 +3,9 @@ import ButtonItem from './ButtonItem';
 import AddButton from './AddButton';
 import Noti from './Noti';
 import PanelContent from './PanelContent';
+import PlaceCard from './PlaceCard';
+import ResponsiveCardGrid from './ResponsiveCardGrid';
+import { tableColors } from './ColorSelector';
 
 // Icon components as SVG strings (from Figma assets)
 const homeIconSvg = `data:image/svg+xml,<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 28L40 8L70 28V68C70 69.1046 69.1046 70 68 70H12C10.8954 70 10 69.1046 10 68V28Z" stroke="%23E0E0E0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M30 70V40H50V70" stroke="%23E0E0E0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -19,9 +22,33 @@ interface ManagementPageProps {
 
 
 
+interface Place {
+  id: string;
+  name: string;
+  color: string;
+  tableCount: number;
+}
+
 export default function ManagementPage({ onBack, onSignOut, onHome }: ManagementPageProps) {
   const [selectedTab, setSelectedTab] = React.useState('Place');
   const [isAddMode, setIsAddMode] = React.useState(false);
+  
+  // Test data - 11 places to fill the grid (leaving one empty slot for the add button)
+  const testPlaces: Place[] = [
+    { id: '1', name: '1st Floor', color: tableColors[0], tableCount: 12 },
+    { id: '2', name: '2nd Floor', color: tableColors[1], tableCount: 8 },
+    { id: '3', name: '3rd Floor', color: tableColors[2], tableCount: 15 },
+    { id: '4', name: 'Rooftop', color: tableColors[3], tableCount: 6 },
+    { id: '5', name: 'Garden', color: tableColors[4], tableCount: 10 },
+    { id: '6', name: 'Basement', color: tableColors[5], tableCount: 5 },
+    { id: '7', name: 'VIP Room', color: tableColors[6], tableCount: 3 },
+    { id: '8', name: 'Terrace', color: tableColors[7], tableCount: 9 },
+    { id: '9', name: 'Main Hall', color: tableColors[0], tableCount: 20 },
+    { id: '10', name: 'Private 1', color: tableColors[1], tableCount: 2 },
+    { id: '11', name: 'Private 2', color: tableColors[2], tableCount: 2 },
+  ];
+  
+  const [savedPlaces, setSavedPlaces] = React.useState<Place[]>(testPlaces);
   
   // Function to get appropriate notification message based on selected tab
   const getNotiMessage = (tab: string) => {
@@ -72,8 +99,13 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
   };
   
   const handleSavePlace = (placeName: string, selectedColor: string) => {
-    console.log('Saving place:', placeName, selectedColor);
-    // Add place creation logic here
+    const newPlace: Place = {
+      id: Date.now().toString(),
+      name: placeName,
+      color: selectedColor,
+      tableCount: 0 // Start with 0 tables, can be updated later
+    };
+    setSavedPlaces([...savedPlaces, newPlace]);
     setIsAddMode(false);
   };
   
@@ -97,8 +129,34 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
 
   const tabs = ['Category', 'Menu', 'Place', 'Table'];
 
+  // Prevent touch scrolling/swiping on tablets
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // Allow touch events on interactive elements
+    const target = e.target as HTMLElement;
+    const isInteractive = target.closest('button, [role="button"], input, textarea, select, a, [tabindex]');
+    
+    if (!isInteractive) {
+      e.preventDefault();
+    }
+  };
+
   return (
-    <div className="bg-black box-border content-stretch flex flex-col items-center justify-between overflow-hidden relative rounded-[2.25rem] w-full h-full" style={{ padding: 'clamp(0.5rem, 1.25vw, 1.25rem)' }} data-name="ManagementPlace" data-node-id="184:4003">
+    <div 
+      className="bg-black box-border content-stretch flex flex-col items-center justify-between overflow-hidden relative rounded-[2.25rem] w-full h-full" 
+      style={{ 
+        padding: 'clamp(0.5rem, 1.25vw, 1.25rem)',
+        touchAction: 'none',
+        userSelect: 'none'
+      }} 
+      data-name="ManagementPlace" 
+      data-node-id="184:4003"
+      onTouchMove={handleTouchMove}
+      onTouchStart={handleTouchStart}
+    >
       {/* Header */}
       <div className="box-border content-stretch flex items-center justify-between overflow-hidden px-[2vw] py-0 relative shrink-0 w-full" style={{ height: 'clamp(3rem, 6vh, 4rem)' }} data-name="Header" data-node-id="184:4004">
         <div 
@@ -152,20 +210,38 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
             </div>
 
             {/* Content Body */}
-            <div className="basis-0 content-stretch flex flex-col grow items-center justify-center min-h-0 min-w-0 overflow-hidden relative shrink-0 w-full" data-name="ContentBody" data-node-id="184:4043">
-              <div className="content-stretch flex flex-col items-center justify-center overflow-hidden relative shrink-0 w-full h-full" data-name="Notification" data-node-id="184:4044">
-                {isAddMode ? (
-                  <Noti 
-                    title="Use settings on the right."
-                    description=""
-                  />
-                ) : (
-                  <Noti 
-                    title={getNotiMessage(selectedTab).title}
-                    description={getNotiMessage(selectedTab).description}
-                  />
-                )}
-              </div>
+            <div className="basis-0 content-stretch flex grow items-start justify-start min-h-0 min-w-0 relative shrink-0 w-full h-full p-[1vw] overflow-y-auto overflow-x-hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }} data-name="ContentBody" data-node-id="184:4043">
+              <style jsx>{`
+                div::-webkit-scrollbar {
+                  display: none;
+                }
+              `}</style>
+              {selectedTab === 'Place' && savedPlaces.length > 0 ? (
+                <ResponsiveCardGrid 
+                  places={[...savedPlaces, { id: 'add', name: '', color: '', tableCount: 0 }]}
+                  onCardClick={(place) => {
+                    if (place.id === 'add') {
+                      handleAddButtonClick();
+                    } else {
+                      console.log('Clicked place:', place.name);
+                    }
+                  }}
+                />
+              ) : (
+                <div className="content-stretch flex flex-col items-center justify-center overflow-hidden relative shrink-0 w-full h-full" data-name="Notification" data-node-id="184:4044">
+                  {isAddMode ? (
+                    <Noti 
+                      title="Use settings on the right."
+                      description=""
+                    />
+                  ) : (
+                    <Noti 
+                      title={getNotiMessage(selectedTab).title}
+                      description={getNotiMessage(selectedTab).description}
+                    />
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

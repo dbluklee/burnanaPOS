@@ -1,6 +1,5 @@
 import React from 'react';
-
-const crossIcon = "http://localhost:3845/assets/46f9faeb301675c50200f723a5227c7d08cf3231.svg";
+import crossIcon from '../assets/ManagementPage/cross.svg';
 
 interface AddButtonProps {
   onClick?: () => void;

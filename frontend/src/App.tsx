@@ -10,6 +10,8 @@ import type { PageType } from './types/navigation';
 function App() {
   const [currentPage, setCurrentPage] = useState<PageType>('homepage');
   const [pageHistory, setPageHistory] = useState<PageType[]>(['homepage']);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [displayPage, setDisplayPage] = useState<PageType>('homepage');
 
   // Apply Mode-1 class to body for color variables
   useEffect(() => {
@@ -20,22 +22,55 @@ function App() {
   }, []);
 
   const navigateTo = (page: PageType) => {
-    setCurrentPage(page);
-    setPageHistory(prev => [...prev, page]);
+    setIsTransitioning(true);
+    
+    // Fade out
+    setTimeout(() => {
+      setCurrentPage(page);
+      setDisplayPage(page);
+      setPageHistory(prev => [...prev, page]);
+      
+      // Fade in
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 25);
+    }, 150);
   };
 
   const goBack = () => {
     if (pageHistory.length > 1) {
-      const newHistory = pageHistory.slice(0, -1);
-      const previousPage = newHistory[newHistory.length - 1];
-      setPageHistory(newHistory);
-      setCurrentPage(previousPage);
+      setIsTransitioning(true);
+      
+      // Fade out
+      setTimeout(() => {
+        const newHistory = pageHistory.slice(0, -1);
+        const previousPage = newHistory[newHistory.length - 1];
+        setPageHistory(newHistory);
+        setCurrentPage(previousPage);
+        setDisplayPage(previousPage);
+        
+        // Fade in
+        setTimeout(() => {
+          setIsTransitioning(false);
+        }, 25);
+      }, 150);
     }
   };
 
   const resetToWelcome = () => {
-    setCurrentPage('welcome');
-    setPageHistory(['welcome']);
+    setIsTransitioning(true);
+    
+    // Fade out
+    setTimeout(() => {
+      setCurrentPage('welcome');
+      setDisplayPage('welcome');
+      setPageHistory(['welcome']);
+      
+      // Fade in
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 25);
+    }, 150);
   };
 
   // Navigation handlers
@@ -49,7 +84,7 @@ function App() {
 
   // Render current page
   const renderCurrentPage = () => {
-    switch (currentPage) {
+    switch (displayPage) {
       case 'welcome':
         return (
           <WelcomeNew 
@@ -106,7 +141,13 @@ function App() {
   
   return (
     <div className="w-full h-full">
-      {renderCurrentPage()}
+      <div 
+        className={`w-full h-full transition-opacity duration-150 ease-in-out ${
+          isTransitioning ? 'opacity-0' : 'opacity-100'
+        }`}
+      >
+        {renderCurrentPage()}
+      </div>
     </div>
   );
 }

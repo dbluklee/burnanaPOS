@@ -2,18 +2,22 @@ import React from 'react';
 import Block from './Block';
 import HighlightBlock from './HighlightBlock';
 import BlockSmall from './BlockSmall';
-import PromotionTopImg from './PromotionTopImg';
-import PromotionMidImg1 from './PromotionMidImg1';
-import PromotionMidImg2 from './PromotionMidImg2';
-import PromotionBottomImg from './PromotionBottomImg';
+import BlockPromotion from './BlockPromotion';
+
+// Image assets
+import promotionTopImage from '../assets/images/HomePage/promotion-top.jpg';
+import promotionMid1Image from '../assets/images/HomePage/promotion-mid1.jpg';
+import promotionMid2Image from '../assets/images/HomePage/promotion-mid2.jpg';
+import promotionBottomImage from '../assets/images/HomePage/promotion-bottom.jpg';
 import Log from './Log';
 
 // Icon assets for small blocks
-const burnanaLogoImage = "http://localhost:3845/assets/41f5f313bb885b4c4cee1d750baf6a6d743abf68.png";
-const settingsIcon = "http://localhost:3845/assets/a9e34bf85f7a7e47c75418249dc610fa0bd434b7.svg";
-const helpIcon = "http://localhost:3845/assets/3b9267ca63577778a6707c3cd0639fe4b3eeeeea.svg";
-const languagesIcon = "http://localhost:3845/assets/a882400e83ac872dc3d665f08b44260bea86da02.svg";
-const mailIcon = "http://localhost:3845/assets/1c7c52abb0ff2acc1e3179c4895de33b35d49f0c.svg";
+import burnanaLogoImage from '../assets/Common/burnana-logo.svg';
+import userRoundIcon from '../assets/HomePage/users-round.svg';
+import settingsIcon from '../assets/HomePage/settings.svg';
+import helpIcon from '../assets/HomePage/help.svg';
+import languagesIcon from '../assets/HomePage/languages.svg';
+import mailIcon from '../assets/HomePage/mail.svg';
 
 export default function ComponentShowcase() {
   return (
@@ -62,7 +66,7 @@ export default function ComponentShowcase() {
           <div className="w-[440px] h-[220px]">
             <HighlightBlock 
               intro="Ask us anything, from data to operational tips."
-              highlightText="AI Agent always ready."
+              title="AI Agent"
             />
           </div>
         </div>
@@ -74,6 +78,9 @@ export default function ComponentShowcase() {
           <div className="flex gap-4 flex-wrap">
             <div className="w-[100px] h-[100px]">
               <BlockSmall icon="" alt="Empty" />
+            </div>
+            <div className="w-[100px] h-[100px]">
+              <BlockSmall icon={userRoundIcon} alt="User Change" />
             </div>
             <div className="w-[100px] h-[100px]">
               <BlockSmall icon={burnanaLogoImage} alt="Burnana Logo" />
@@ -95,41 +102,58 @@ export default function ComponentShowcase() {
 
         {/* Image Components */}
         <div className="space-y-8">
-          <h2 className="text-2xl font-semibold text-white">4. Promotion Image Components</h2>
+          <h2 className="text-2xl font-semibold text-white">4. BlockPromotion Component</h2>
+          <p className="text-gray-400">Unified component for all promotion images with consistent styling</p>
           
-          {/* PromotionTopImg */}
+          {/* PromotionTop */}
           <div className="space-y-2">
-            <h3 className="text-xl font-medium text-white">PromotionTopImg (QR Code)</h3>
+            <h3 className="text-xl font-medium text-white">BlockPromotion - Top (QR Code)</h3>
             <p className="text-gray-400">QR code payment scanning image</p>
             <div className="w-[273px] h-[220px]">
-              <PromotionTopImg />
+              <BlockPromotion 
+                imageUrl={promotionTopImage} 
+                alt="QR Code Payment" 
+                dataName="promotion-top"
+              />
             </div>
           </div>
 
-          {/* PromotionMidImg1 */}
+          {/* PromotionMid1 */}
           <div className="space-y-2">
-            <h3 className="text-xl font-medium text-white">PromotionMidImg1 (Chef)</h3>
+            <h3 className="text-xl font-medium text-white">BlockPromotion - Mid1 (Chef)</h3>
             <p className="text-gray-400">Smiling chef holding tablet in modern cafe</p>
             <div className="w-[220px] h-[219px]">
-              <PromotionMidImg1 />
+              <BlockPromotion 
+                imageUrl={promotionMid1Image} 
+                alt="Smiling chef holding tablet" 
+                dataName="promotion-mid1"
+              />
             </div>
           </div>
 
-          {/* PromotionMidImg2 */}
+          {/* PromotionMid2 */}
           <div className="space-y-2">
-            <h3 className="text-xl font-medium text-white">PromotionMidImg2 (Analytics)</h3>
+            <h3 className="text-xl font-medium text-white">BlockPromotion - Mid2 (Analytics)</h3>
             <p className="text-gray-400">Female analyst using computer dashboard for business data</p>
             <div className="w-[340px] h-[219px]">
-              <PromotionMidImg2 />
+              <BlockPromotion 
+                imageUrl={promotionMid2Image} 
+                alt="Female analyst using computer dashboard for business data analysis" 
+                dataName="promotion-mid2"
+              />
             </div>
           </div>
 
-          {/* PromotionBottomImg */}
+          {/* PromotionBottom */}
           <div className="space-y-2">
-            <h3 className="text-xl font-medium text-white">PromotionBottomImg (Robot)</h3>
+            <h3 className="text-xl font-medium text-white">BlockPromotion - Bottom (Robot)</h3>
             <p className="text-gray-400">AI robot assistant for customer service</p>
             <div className="w-[173px] h-[220px]">
-              <PromotionBottomImg />
+              <BlockPromotion 
+                imageUrl={promotionBottomImage} 
+                alt="Anthropomorphic robot that performs regular human job" 
+                dataName="promotion-bottom"
+              />
             </div>
           </div>
         </div>
