@@ -12,6 +12,46 @@ interface LogProps {
 }
 
 function Log({ time, text, itemLabel, property1 = "Default", onUndo }: LogProps) {
+  // Extract management items from text
+  const extractManagementItems = (logText: string) => {
+    const items: string[] = [];
+    let cleanedText = logText;
+    
+    // Extract specific place names (ending with "floor")
+    const placeRegex = /\b(\w+\s+floor)\b/gi;
+    const placeMatches = cleanedText.match(placeRegex);
+    if (placeMatches) {
+      items.push(...placeMatches);
+      cleanedText = cleanedText.replace(placeRegex, '').trim();
+    }
+    
+    // Extract table names (starting with "Table" followed by numbers/letters)
+    const tableRegex = /\b(Table\w*)\b/gi;
+    const tableMatches = cleanedText.match(tableRegex);
+    if (tableMatches) {
+      items.push(...tableMatches);
+      cleanedText = cleanedText.replace(tableRegex, '').trim();
+    }
+    
+    // Extract general management keywords
+    const managementKeywords = ['Place', 'Category', 'Menu'];
+    managementKeywords.forEach(keyword => {
+      const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+      const matches = cleanedText.match(regex);
+      if (matches) {
+        items.push(...matches);
+        cleanedText = cleanedText.replace(regex, '').trim();
+      }
+    });
+    
+    // Clean up extra spaces
+    cleanedText = cleanedText.replace(/\s+/g, ' ').trim();
+    
+    return { items, cleanedText };
+  };
+  
+  const { items: extractedItems, cleanedText } = extractManagementItems(text);
+  const displayItems = itemLabel ? [itemLabel, ...extractedItems] : extractedItems;
   const [slideDistance, setSlideDistance] = useState(0);
   const startX = useRef(0);
   const isDragging = useRef(false);
@@ -113,10 +153,10 @@ function Log({ time, text, itemLabel, property1 = "Default", onUndo }: LogProps)
   
   if (property1 === "Undo") {
     return (
-      <div className="flex items-center w-full h-full overflow-hidden" data-name="Property 1=Undo" data-node-id="256:2909">
+      <div className="flex items-center w-full min-h-[60px] overflow-hidden" data-name="Property 1=Undo" data-node-id="256:2909">
         {/* Undo icon with grey background positioned to the left */}
         <div 
-          className="flex items-center justify-center cursor-pointer shrink-0 h-full rounded-l-[0.3rem]" 
+          className="flex items-center justify-center cursor-pointer shrink-0 min-h-[60px] rounded-l-[0.3rem]" 
           data-name="Undo" 
           data-node-id="256:2910"
           onClick={onUndo}
@@ -136,7 +176,7 @@ function Log({ time, text, itemLabel, property1 = "Default", onUndo }: LogProps)
         
         {/* Log content that can slide to reveal/hide undo icon */}
         <div 
-          className="box-border flex items-center justify-start relative rounded-r-[0.3rem] flex-1 h-full transition-transform duration-300 ease-in-out cursor-grab active:cursor-grabbing" 
+          className="box-border flex items-center justify-start relative rounded-r-[0.3rem] flex-1 min-h-[60px] py-4 transition-transform duration-300 ease-in-out cursor-grab active:cursor-grabbing" 
           data-name="LogContent" 
           data-node-id="256:2912" 
           style={{ 
@@ -162,19 +202,23 @@ function Log({ time, text, itemLabel, property1 = "Default", onUndo }: LogProps)
             <div className="w-full h-full rounded-[0.3rem]" style={{ backgroundColor: 'transparent' }} />
           </div>
           <div className="flex items-center justify-center overflow-clip relative shrink-0 z-10" data-name="Time" data-node-id="256:2913" style={{ gap: '0.6rem', width: '3rem', padding: '0 0.25rem' }}>
-            <div className="flex flex-col font-['Pretendard'] font-medium justify-center leading-[0] not-italic relative shrink-0 text-center text-nowrap" data-node-id="256:2914" style={{ fontSize: '1rem', color: 'var(--white)' }}>
+            <div className="FontStyleText flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-center text-nowrap" data-node-id="256:2914" style={{ color: 'var(--light)' }}>
               <p className="leading-[normal] whitespace-pre">{time}</p>
             </div>
           </div>
-          <div className="flex-1 flex items-center justify-start min-w-0 overflow-clip relative z-10" data-name="Text" data-node-id="256:2915" style={{ padding: '0 0.5rem' }}>
-            {itemLabel && (
-              <div className="flex flex-row items-center shrink-0" style={{ marginRight: '1rem' }}>
-                <Item label={itemLabel} />
-              </div>
-            )}
-            <div className="basis-0 flex flex-col font-['Pretendard'] grow justify-center leading-[0] min-h-px min-w-px not-italic relative shrink-0 overflow-hidden" data-node-id="256:2918" style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.5)' }}>
-              <p className="leading-[normal] overflow-hidden text-ellipsis whitespace-nowrap">{text}</p>
-            </div>
+          <div className="flex-1 relative z-10 w-full FontStyleText" data-name="Text" data-node-id="256:2915" style={{ padding: '0 0.5rem', color: 'var(--light)', lineHeight: '1.2' }}>
+            <p className="leading-[1.2] break-words w-full" style={{ margin: 0 }}>
+              {displayItems.length > 0 && (
+                <>
+                  {displayItems.map((item, index) => (
+                    <span key={index} style={{ display: 'inline-block', marginRight: '0.5rem', verticalAlign: 'top' }}>
+                      <Item label={item} />
+                    </span>
+                  ))}
+                </>
+              )}
+              <span style={{ display: 'inline' }}>{cleanedText}</span>
+            </p>
           </div>
         </div>
       </div>
@@ -182,8 +226,8 @@ function Log({ time, text, itemLabel, property1 = "Default", onUndo }: LogProps)
   }
   
   return (
-    <div className="flex items-center justify-start relative w-full h-full" data-name="Property 1=Default" data-node-id="256:2907">
-      <div className="box-border flex items-center justify-start relative rounded-[0.3rem] w-full h-full" data-name="LogContent" data-node-id="256:2677" style={{ backgroundColor: 'var(--dark)', gap: '0.6rem', padding: '1rem 1rem', boxShadow: '0px 0.4rem 0.4rem 0px inset rgba(0,0,0,0.25)' }}>
+    <div className="flex items-center justify-start relative w-full min-h-[60px]" data-name="Property 1=Default" data-node-id="256:2907">
+      <div className="box-border flex items-center justify-start relative rounded-[0.3rem] w-full min-h-[60px] py-4" data-name="LogContent" data-node-id="256:2677" style={{ backgroundColor: 'var(--dark)', gap: '0.6rem', padding: '0 1rem', boxShadow: '0px 0.4rem 0.4rem 0px inset rgba(0,0,0,0.25)' }}>
         <div 
           aria-hidden="true" 
           className="absolute inset-0 pointer-events-none rounded-[0.3rem]" 
@@ -195,19 +239,23 @@ function Log({ time, text, itemLabel, property1 = "Default", onUndo }: LogProps)
           <div className="w-full h-full rounded-[0.3rem]" style={{ backgroundColor: 'transparent' }} />
         </div>
         <div className="flex items-center justify-center overflow-clip relative shrink-0 z-10" data-name="Time" data-node-id="256:2678" style={{ gap: '0.6rem', width: '3rem', padding: '0 0.25rem' }}>
-          <div className="flex flex-col font-['Pretendard'] font-medium justify-center leading-[0] not-italic relative shrink-0 text-center text-nowrap" data-node-id="256:2679" style={{ fontSize: '1rem', color: 'var(--white)' }}>
+          <div className="FontStyleText flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-center text-nowrap" data-node-id="256:2679" style={{ color: 'var(--light)' }}>
             <p className="leading-[normal] whitespace-pre">{time}</p>
           </div>
         </div>
-        <div className="flex-1 flex items-center justify-start min-w-0 overflow-clip relative z-10" data-name="Text" data-node-id="256:2680" style={{ padding: '0 0.5rem' }}>
-          {itemLabel && (
-            <div className="flex flex-row items-center shrink-0" style={{ marginRight: '1rem' }}>
-              <Item label={itemLabel} />
-            </div>
-          )}
-          <div className="basis-0 flex flex-col font-['Pretendard'] grow justify-center leading-[0] min-h-px min-w-px not-italic relative shrink-0 overflow-hidden" data-name="256:2683" style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.5)' }}>
-            <p className="leading-[normal] overflow-hidden text-ellipsis whitespace-nowrap">{text}</p>
-          </div>
+        <div className="flex-1 relative z-10 w-full FontStyleText" data-name="Text" data-node-id="256:2680" style={{ padding: '0 0.5rem', color: 'var(--light)', lineHeight: '1.2' }}>
+          <p className="leading-[1.2] break-words w-full" style={{ margin: 0 }}>
+            {displayItems.length > 0 && (
+              <>
+                {displayItems.map((item, index) => (
+                  <span key={index} style={{ display: 'inline-block', marginRight: '0.5rem', verticalAlign: 'top' }}>
+                    <Item label={item} />
+                  </span>
+                ))}
+              </>
+            )}
+            <span style={{ display: 'inline' }}>{cleanedText}</span>
+          </p>
         </div>
       </div>
     </div>

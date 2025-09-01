@@ -26,10 +26,13 @@ export default function ButtonItem({
             ? 'bg-[rgba(255,255,255,0.05)] border-[0.125rem] border-[#777777]' 
             : ''
         }`}
-        style={{ padding: 'clamp(0.2rem, 0.8vw, 0.6rem)' }}
+        style={{ padding: 'clamp(0.4rem, 1.2vw, 1rem)' }}
         data-name="ButtonItemInner"
       >
-        <div className="bg-clip-text flex flex-col font-['Pretendard'] font-semibold justify-center leading-[1] not-italic relative shrink-0 text-center text-white" style={{ fontSize: 'clamp(0.65rem, 1.1vw, 1rem)' }}>
+        <div 
+          className="FontStyleButtonItemText bg-clip-text flex flex-col justify-center leading-[1] not-italic relative shrink-0 text-center"
+          style={{ color: 'var(--light)' }}
+        >
           <span>{label}</span>
         </div>
       </div>
