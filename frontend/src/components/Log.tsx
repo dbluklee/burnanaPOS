@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Item from './Item';
-
-const undoIcon = "data:image/svg+xml,<svg width='80' height='80' viewBox='0 0 80 80' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M33.334 33.334L16.668 50.0007L33.334 66.6673' stroke='%23E74C3C' stroke-width='3.33333' stroke-linecap='round' stroke-linejoin='round'/><path d='M63.3327 16.6673V50.0007C63.3327 51.7689 62.6309 53.4649 61.3806 54.7152C60.1304 55.9654 58.4344 56.6673 56.666 56.6673H16.668' stroke='%23E74C3C' stroke-width='3.33333' stroke-linecap='round' stroke-linejoin='round'/></svg>";
+import undoIcon from '../assets/Common/undo.svg';
 
 interface LogProps {
   time: string;
@@ -9,9 +8,11 @@ interface LogProps {
   itemLabel?: string;
   property1?: "Default" | "Undo";
   onUndo?: () => void;
+  isActiveUndo?: boolean;
+  onSlideStateChange?: (isInUndoMode: boolean) => void;
 }
 
-function Log({ time, text, itemLabel, property1 = "Default", onUndo }: LogProps) {
+function Log({ time, text, itemLabel, property1: externalProperty1, onUndo, isActiveUndo = false, onSlideStateChange }: LogProps) {
   // Extract management items from text
   const extractManagementItems = (logText: string) => {
     const items: string[] = [];
@@ -56,28 +57,50 @@ function Log({ time, text, itemLabel, property1 = "Default", onUndo }: LogProps)
   const startX = useRef(0);
   const isDragging = useRef(false);
   
+  // Use external control for undo mode
+  const isUndoMode = isActiveUndo;
+  
+  // Reset slide distance when this log is no longer the active undo log
+  useEffect(() => {
+    if (!isActiveUndo && slideDistance > 0) {
+      setSlideDistance(0);
+    }
+  }, [isActiveUndo, slideDistance]);
+  
+  // Determine which property1 to use - external control or external prop
+  const property1 = isUndoMode ? "Undo" : (externalProperty1 || "Default");
+  
   const handleStart = (clientX: number) => {
-    if (property1 !== "Undo") return;
     startX.current = clientX;
     isDragging.current = true;
   };
   
   const handleMove = (clientX: number) => {
-    if (!isDragging.current || property1 !== "Undo") return;
+    if (!isDragging.current) return;
     const distance = clientX - startX.current;
-    // Allow sliding right to reveal undo icon, clamp between 0 and 64px
+    // Allow sliding right to reveal undo icon, clamp between 0 and the undo icon width (64px)
     const newDistance = Math.max(0, Math.min(distance, 64));
     setSlideDistance(newDistance);
+    
+    // Notify parent when entering undo mode
+    if (newDistance > 0 && !isUndoMode) {
+      onSlideStateChange?.(true);
+    }
   };
   
   const handleEnd = () => {
-    if (!isDragging.current || property1 !== "Undo") return;
+    if (!isDragging.current) return;
     isDragging.current = false;
-    // Snap behavior: if slid more than halfway, snap to full reveal
-    if (slideDistance > 32) {
+    // Snap behavior: if slid more than a small threshold (16px), snap to full reveal
+    if (slideDistance > 16) {
       setSlideDistance(64);
+      // Already in undo mode, no need to notify again
     } else {
       setSlideDistance(0);
+      // Notify parent when exiting undo mode
+      if (isUndoMode) {
+        onSlideStateChange?.(false);
+      }
     }
   };
   
@@ -131,38 +154,25 @@ function Log({ time, text, itemLabel, property1 = "Default", onUndo }: LogProps)
     };
   }, []);
 
-  // StyleLinearWhite border with inner shadow and rounded box
-  const borderElement = (
-    <div 
-      aria-hidden="true" 
-      className="absolute inset-0 pointer-events-none rounded-[0.3rem]" 
-      style={{
-        background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0))',
-        padding: '0.1rem'
-      }}
-    >
-      <div 
-        className="w-full h-full rounded-[0.3rem]" 
-        style={{ 
-          backgroundColor: 'var(--dark)',
-          boxShadow: '0px 0.4rem 0.4rem 0px inset rgba(0,0,0,0.25)'
-        }} 
-      />
-    </div>
-  );
   
   if (property1 === "Undo") {
     return (
-      <div className="flex items-center w-full min-h-[60px] overflow-hidden" data-name="Property 1=Undo" data-node-id="256:2909">
-        {/* Undo icon with grey background positioned to the left */}
+      <div className="relative w-full min-h-[60px] overflow-hidden" data-name="Property 1=Undo" data-node-id="256:2909">
+        {/* Bottom layer: Static undo icon with grey background - MUST stay fixed */}
         <div 
-          className="flex items-center justify-center cursor-pointer shrink-0 min-h-[60px] rounded-l-[0.3rem]" 
+          className="absolute left-0 top-0 flex items-center justify-center cursor-pointer shrink-0 min-h-[60px] rounded-l-[0.3rem] z-0" 
           data-name="Undo" 
           data-node-id="256:2910"
-          onClick={onUndo}
+          onClick={() => {
+            onUndo?.();
+            setSlideDistance(0);
+            onSlideStateChange?.(false);
+          }}
           style={{ 
             width: '4rem', 
-            backgroundColor: '#666666' // Grey background
+            backgroundColor: '#666666', // Grey background
+            height: '100%',
+            transform: 'translateX(0px)' // Explicitly prevent any transformation
           }}
         >
           <div className="overflow-clip relative shrink-0" data-name="Icon / Undo2" data-node-id="256:2911" style={{ width: '3rem', height: '3rem' }}>
@@ -174,22 +184,26 @@ function Log({ time, text, itemLabel, property1 = "Default", onUndo }: LogProps)
           </div>
         </div>
         
-        {/* Log content that can slide to reveal/hide undo icon */}
+        {/* Top layer: Log content that slides right to reveal undo icon */}
         <div 
-          className="box-border flex items-center justify-start relative rounded-r-[0.3rem] flex-1 min-h-[60px] py-4 transition-transform duration-300 ease-in-out cursor-grab active:cursor-grabbing" 
+          className="box-border flex items-center justify-start absolute top-0 left-0 rounded-[0.3rem] w-full min-h-[60px] py-4 transition-transform duration-300 ease-in-out cursor-grab active:cursor-grabbing z-10" 
           data-name="LogContent" 
           data-node-id="256:2912" 
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           style={{ 
             backgroundColor: 'var(--dark)', 
             gap: '0.6rem', 
             padding: '1rem 1rem', 
             boxShadow: '0px 0.4rem 0.4rem 0px inset rgba(0,0,0,0.25)',
-            transform: `translateX(${slideDistance - 64}px)` // Transform based on slide distance, starting from hidden position (-64px)
+            transform: `translateX(${slideDistance}px)`,
+            height: '100%',
+            touchAction: 'none'
           }}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
           onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
         >
           <div 
             aria-hidden="true" 
@@ -226,8 +240,56 @@ function Log({ time, text, itemLabel, property1 = "Default", onUndo }: LogProps)
   }
   
   return (
-    <div className="flex items-center justify-start relative w-full min-h-[60px]" data-name="Property 1=Default" data-node-id="256:2907">
-      <div className="box-border flex items-center justify-start relative rounded-[0.3rem] w-full min-h-[60px] py-4" data-name="LogContent" data-node-id="256:2677" style={{ backgroundColor: 'var(--dark)', gap: '0.6rem', padding: '0 1rem', boxShadow: '0px 0.4rem 0.4rem 0px inset rgba(0,0,0,0.25)' }}>
+    <div className="relative w-full min-h-[60px] overflow-hidden" data-name="Property 1=Default" data-node-id="256:2907">
+      {/* Bottom layer: Static undo icon with grey background - only show when sliding */}
+      {isUndoMode && (
+        <div 
+          className="absolute left-0 top-0 flex items-center justify-center cursor-pointer shrink-0 min-h-[60px] rounded-l-[0.3rem] z-0" 
+          data-name="Undo" 
+          data-node-id="256:2910"
+          onClick={() => {
+            onUndo?.();
+            setSlideDistance(0);
+            onSlideStateChange?.(false);
+          }}
+          style={{ 
+            width: '4rem', 
+            backgroundColor: '#666666', // Grey background
+            height: '100%',
+            transform: 'translateX(0px)' // Explicitly prevent any transformation
+          }}
+        >
+          <div className="overflow-clip relative shrink-0" data-name="Icon / Undo2" data-node-id="256:2911" style={{ width: '3rem', height: '3rem' }}>
+            <div className="absolute" style={{ inset: '16.667%' }} data-name="Vector">
+              <div className="absolute" style={{ inset: '-6.25%' }}>
+                <img alt="Undo" className="block max-w-none size-full" src={undoIcon} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Top layer: Log content that can slide right */}
+      <div 
+        className="box-border flex items-center justify-start absolute top-0 left-0 rounded-[0.3rem] w-full min-h-[60px] py-4 transition-transform duration-300 ease-in-out cursor-grab active:cursor-grabbing z-10" 
+        data-name="LogContent" 
+        data-node-id="256:2677" 
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{ 
+          backgroundColor: 'var(--dark)', 
+          gap: '0.6rem', 
+          padding: '1rem 1rem', 
+          boxShadow: '0px 0.4rem 0.4rem 0px inset rgba(0,0,0,0.25)',
+          transform: `translateX(${slideDistance}px)`,
+          height: '100%',
+          touchAction: 'none'
+        }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+      >
         <div 
           aria-hidden="true" 
           className="absolute inset-0 pointer-events-none rounded-[0.3rem]" 
