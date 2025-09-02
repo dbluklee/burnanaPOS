@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
-import WelcomeNew from './components/WelcomeNew';
+import WelcomePage from './components/WelcomePage';
 import SignUpPage from './components/SignUpPage';
 import SignInPage from './components/SignInPage';
 import HomePage from './components/HomePage';
 import ManagementPage from './components/ManagementPage';
-import ComponentShowcase from './components/ComponentShowcase';
+import ComponentShowcasePage from './components/ComponentShowcasePage';
 import type { PageType } from './types/navigation';
 import { useLogger } from './hooks/useLogging';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<PageType>('homepage');
-  const [pageHistory, setPageHistory] = useState<PageType[]>(['homepage']);
+  const [currentPage, setCurrentPage] = useState<PageType>('welcome');
+  const [pageHistory, setPageHistory] = useState<PageType[]>(['welcome']);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [displayPage, setDisplayPage] = useState<PageType>('homepage');
+  const [displayPage, setDisplayPage] = useState<PageType>('welcome');
   
   const { logNavigation } = useLogger();
 
@@ -93,7 +93,7 @@ function App() {
     switch (displayPage) {
       case 'welcome':
         return (
-          <WelcomeNew 
+          <WelcomePage 
             onSignUp={handleSignUp} 
             onSignIn={handleSignIn} 
           />
@@ -134,7 +134,7 @@ function App() {
       
       default:
         return (
-          <WelcomeNew 
+          <WelcomePage 
             onSignUp={handleSignUp} 
             onSignIn={handleSignIn} 
           />
@@ -143,7 +143,7 @@ function App() {
   };
 
   // Show normal app flow
-  // return <ComponentShowcase />;
+  // return <ComponentShowcasePage />;
   
   return (
     <div className="w-full h-full">
@@ -158,4 +158,4 @@ function App() {
   );
 }
 
-export default App
+export default App;

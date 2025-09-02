@@ -88,9 +88,10 @@ class DatabaseService {
     
     const transaction = this.db.transaction(LOG_STORE, 'readonly');
     const store = transaction.objectStore(LOG_STORE);
-    const index = store.index('synced');
     
-    return await index.getAll(false); // Get all unsynced logs
+    // Get all records and filter manually to avoid IndexedDB key issues
+    const allLogs = await store.getAll();
+    return allLogs.filter(log => log.synced === false);
   }
 
   async markLogAsSynced(logId: number): Promise<void> {

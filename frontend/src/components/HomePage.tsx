@@ -1,8 +1,8 @@
 import React from 'react';
-import Block from './Block';
-import HighlightBlock from './HighlightBlock';
-import BlockSmall from './BlockSmall';
-import BlockPromotion from './BlockPromotion';
+import BlockComp from './BlockComp';
+import HighlightBlock from './BlockHighlightComp';
+import BlockSmall from './BlockSmallComp';
+import BlockPromotion from './BlockPromoComp';
 
 // Image assets
 import promotionTopImage from '../assets/images/HomePage/promotion-top.jpg';
@@ -59,7 +59,7 @@ export default function HomePage({ onSignOut, onManagement }: HomePageProps) {
         >
           {/* Management Block - 45% */}
           <div style={{ flex: '45', height: '100%' }}>
-            <Block 
+            <BlockComp 
               intro="Let's begin sales!"
               title="Management"
               description="All the information about our store can be modified here!"
@@ -137,7 +137,7 @@ export default function HomePage({ onSignOut, onManagement }: HomePageProps) {
 
           {/* Dashboard Block - 50% */}
           <div style={{ flex: '50', height: '100%' }}>
-            <Block 
+            <BlockComp 
               intro=""
               title="Dashboard"
               description="A real-time control tower for our store, all at a glance."
@@ -183,7 +183,7 @@ export default function HomePage({ onSignOut, onManagement }: HomePageProps) {
 
           {/* Analytics Block - 40% */}
           <div style={{ flex: '40', height: '100%' }}>
-            <Block 
+            <BlockComp 
               intro="If you want to do business better"
               title="Analytics"
               description="Check it every day to make better strategies!"

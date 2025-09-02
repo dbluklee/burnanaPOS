@@ -1,36 +1,42 @@
 import { useState } from 'react';
 import { DESIGN_TOKENS } from '../types/design-tokens';
+import { userService, type SignInData } from '../services/userService';
 
 interface SignInPageProps {
   onBack?: () => void;
   onSignInComplete?: () => void;
 }
 
-type SignInMethod = 'phone' | 'storeNumber';
-
 export default function SignInPage({ onBack, onSignInComplete }: SignInPageProps) {
   const { colors, fonts } = DESIGN_TOKENS;
 
-  const [signInMethod, setSignInMethod] = useState<SignInMethod>('phone');
-  const [phoneNumber, setPhoneNumber] = useState('');
   const [storeNumber, setStoreNumber] = useState('');
-  const [isAuthRequested, setIsAuthRequested] = useState(false);
+  const [userPin, setUserPin] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handlePhoneAuth = () => {
-    console.log('Phone authentication requested for:', phoneNumber);
-    setIsAuthRequested(true);
-    // Dummy implementation - simulate moving to main homepage after delay
-    setTimeout(() => {
-      alert('Phone authentication successful! (dummy implementation)');
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const signInData: SignInData = {
+        storeNumber,
+        userPin
+      };
+
+      const user = await userService.signIn(signInData);
+      
+      // Store user info in localStorage for session
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      
       onSignInComplete?.();
-    }, 1500);
-  };
-
-  const handleStoreNumberAuth = () => {
-    console.log('Store number authentication for:', storeNumber);
-    // Dummy implementation - directly navigate to homepage
-    alert('Store number authentication successful! (dummy implementation)');
-    onSignInComplete?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign in failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const inputStyle = {
@@ -45,45 +51,14 @@ export default function SignInPage({ onBack, onSignInComplete }: SignInPageProps
     outline: 'none',
   };
 
-  const buttonStyle = {
-    width: '100%',
-    padding: '12px 24px',
-    borderRadius: '8px',
-    border: 'none',
-    fontFamily: fonts.pretendard,
-    fontSize: '16px',
-    fontWeight: 800,
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-  };
-
-  const primaryButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: colors.basicWhite,
-    color: colors.bgBlack,
-  };
-
-  const secondaryButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: 'transparent',
-    color: colors.basicWhite,
-    border: `1px solid ${colors.buttonBorder}`,
-  };
-
-  const tabStyle = (active: boolean) => ({
-    flex: 1,
-    padding: '12px 24px',
-    borderRadius: '8px',
-    border: `1px solid ${colors.buttonBorder}`,
-    backgroundColor: active ? colors.buttonBackground : 'transparent',
+  const labelStyle = {
+    display: 'block',
+    marginBottom: '8px',
     color: colors.basicWhite,
     fontFamily: fonts.pretendard,
     fontSize: '14px',
     fontWeight: 600,
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    opacity: active ? 1 : 0.7,
-  });
+  };
 
   return (
     <div 
@@ -113,144 +88,86 @@ export default function SignInPage({ onBack, onSignInComplete }: SignInPageProps
               opacity: 0.7,
             }}
           >
-            Welcome back to BurnanaPOS
+            Enter your store credentials
           </p>
         </div>
 
-        {/* Sign In Method Tabs */}
-        <div className="flex gap-2 mb-6">
-          <button
-            onClick={() => setSignInMethod('phone')}
-            style={tabStyle(signInMethod === 'phone')}
+        {/* Error Message */}
+        {error && (
+          <div 
+            className="p-4 rounded-lg mb-6"
+            style={{ backgroundColor: 'rgba(255,0,0,0.1)', border: '1px solid rgba(255,0,0,0.3)' }}
           >
-            Phone Authentication
-          </button>
-          <button
-            onClick={() => setSignInMethod('storeNumber')}
-            style={tabStyle(signInMethod === 'storeNumber')}
-          >
-            Store Number
-          </button>
-        </div>
+            <p style={{ color: '#ff6b6b', fontFamily: fonts.pretendard, fontSize: '14px' }}>
+              {error}
+            </p>
+          </div>
+        )}
 
-        {/* Sign In Forms */}
-        <div className="space-y-6">
-          {signInMethod === 'phone' ? (
-            <div className="space-y-4">
-              <div>
-                <label 
-                  style={{
-                    display: 'block',
-                    marginBottom: '8px',
-                    color: colors.basicWhite,
-                    fontFamily: fonts.pretendard,
-                    fontSize: '14px',
-                    fontWeight: 600,
-                  }}
-                >
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  style={inputStyle}
-                  placeholder="Enter your phone number"
-                  disabled={isAuthRequested}
-                />
-              </div>
-              
-              <button
-                onClick={handlePhoneAuth}
-                disabled={!phoneNumber || isAuthRequested}
-                style={{
-                  ...primaryButtonStyle,
-                  opacity: (!phoneNumber || isAuthRequested) ? 0.5 : 1,
-                  cursor: (!phoneNumber || isAuthRequested) ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {isAuthRequested ? 'Authentication in Progress...' : 'Request Phone Authentication'}
-              </button>
+        {/* Sign In Form */}
+        <form onSubmit={handleSignIn} className="space-y-6">
+          <div>
+            <label style={labelStyle}>Store Number</label>
+            <input
+              type="text"
+              value={storeNumber}
+              onChange={(e) => setStoreNumber(e.target.value)}
+              style={inputStyle}
+              placeholder="Enter your store number"
+              required
+              disabled={isLoading}
+            />
+          </div>
 
-              {isAuthRequested && (
-                <div 
-                  style={{
-                    padding: '12px',
-                    borderRadius: '8px',
-                    backgroundColor: colors.buttonBackground,
-                    border: `1px solid ${colors.buttonBorder}`,
-                    color: colors.basicWhite,
-                    fontFamily: fonts.pretendard,
-                    fontSize: '14px',
-                    textAlign: 'center',
-                  }}
-                >
-                  Please check your phone for the authentication code...
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <label 
-                  style={{
-                    display: 'block',
-                    marginBottom: '8px',
-                    color: colors.basicWhite,
-                    fontFamily: fonts.pretendard,
-                    fontSize: '14px',
-                    fontWeight: 600,
-                  }}
-                >
-                  Store Number
-                </label>
-                <input
-                  type="text"
-                  value={storeNumber}
-                  onChange={(e) => setStoreNumber(e.target.value)}
-                  style={inputStyle}
-                  placeholder="Enter your store number"
-                />
-              </div>
-              
-              <button
-                onClick={handleStoreNumberAuth}
-                disabled={!storeNumber}
-                style={{
-                  ...primaryButtonStyle,
-                  opacity: !storeNumber ? 0.5 : 1,
-                  cursor: !storeNumber ? 'not-allowed' : 'pointer',
-                }}
-              >
-                Sign In with Store Number
-              </button>
-            </div>
-          )}
-        </div>
+          <div>
+            <label style={labelStyle}>User PIN</label>
+            <input
+              type="password"
+              value={userPin}
+              onChange={(e) => setUserPin(e.target.value)}
+              style={inputStyle}
+              placeholder="Enter your 4-digit PIN"
+              required
+              disabled={isLoading}
+              maxLength={4}
+            />
+          </div>
 
-        {/* Back Button */}
-        <div className="mt-8">
-          <button
-            onClick={onBack}
-            style={secondaryButtonStyle}
-          >
-            Back to Welcome
-          </button>
-        </div>
-
-        {/* Additional Info */}
-        <div className="mt-6 text-center">
-          <p 
-            style={{
-              color: colors.basicWhite,
-              fontFamily: fonts.pretendard,
-              fontSize: '12px',
-              opacity: 0.6,
-            }}
-          >
-            Note: This is a dummy authentication system for demonstration purposes
-          </p>
-        </div>
+          {/* Buttons */}
+          <div className="flex gap-4 pt-4">
+            <button
+              type="button"
+              onClick={onBack}
+              className="flex-1 py-3 px-6 rounded-lg transition-all duration-200"
+              style={{
+                backgroundColor: 'transparent',
+                border: `1px solid ${colors.buttonBorder}`,
+                color: colors.basicWhite,
+                fontFamily: fonts.pretendard,
+                fontSize: '16px',
+                fontWeight: 600,
+              }}
+              disabled={isLoading}
+            >
+              Back
+            </button>
+            <button
+              type="submit"
+              className="flex-1 py-3 px-6 rounded-lg transition-all duration-200 hover:opacity-80"
+              style={{
+                backgroundColor: isLoading ? 'rgba(255,255,255,0.5)' : colors.basicWhite,
+                border: 'none',
+                color: colors.bgBlack,
+                fontFamily: fonts.pretendard,
+                fontSize: '16px',
+                fontWeight: 800,
+              }}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Signing In...' : 'Sign In'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
