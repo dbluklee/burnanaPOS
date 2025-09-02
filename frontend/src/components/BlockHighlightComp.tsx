@@ -99,11 +99,15 @@ export default function BlockHighlightComp({
       </div>
       
       {/* Arrow positioned at bottom-right */}
-      <div className="absolute bottom-[1rem] right-[1rem] z-10">
+      <div className="absolute bottom-[0.1rem] right-[0.1rem] z-10 opacity-50">
         <img 
           alt="" 
           className="block" 
           src={arrowIcon} 
+            style={{ 
+              transform: 'scale(0.6)', 
+              transformOrigin: 'bottom right'
+            }} 
         />
       </div>
     </div>

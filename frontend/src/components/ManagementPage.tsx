@@ -3,6 +3,7 @@ import ButtonItemComp from './ButtonItemComp';
 import ButtonAddComp from './ButtonAddComp'; 
 import Noti from './NotiComp';
 import PanelContent from './PanelContentComp';
+import PanelHeaderComp from './PanelHeaderComp';
 import PlaceCard from './PlaceCardComp';
 import ResponsiveCardGrid from './ResponsiveCardGridComp';
 import { tableColors } from './ColorSelectorComp';
@@ -555,13 +556,9 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
         {/* Panel (POS Log / Settings) - 30% width */}
         <div className="h-full min-h-0 max-h-full relative rounded-[1.5rem] border border-[#363636]" style={{ flex: '3', minWidth: '0' }} data-name="Panel" data-node-id="184:4066">
           <div className="box-border flex flex-col h-full items-center justify-start min-w-0 overflow-hidden px-[0.5rem] py-0 relative w-full">
-            <div className="box-border content-stretch flex items-center justify-start overflow-hidden px-[0.25rem] py-[0.5rem] relative shrink-0 w-full" style={{ height: 'clamp(2.5rem, 6vh, 3.5rem)' }} data-name="PanelHeader" data-node-id="184:4067">
-              <div className="box-border content-stretch flex items-center justify-start overflow-hidden px-[0.25rem] py-[0.125rem] relative rounded-[1rem] shrink-0 h-full" data-name="PanelLabel" data-node-id="184:4068">
-                <div className="FontStyleTitle flex flex-col justify-center leading-[1.2] not-italic relative shrink-0 text-center text-nowrap text-white" data-node-id="184:4069">
-                  <span>{isAddMode ? 'Place Settings' : 'POS Log'}</span>
-                </div>
-              </div>
-            </div>
+            <PanelHeaderComp 
+              title={isAddMode ? 'Place Settings' : 'POS Log'} 
+            />
             <div className="flex-1 box-border flex flex-col items-center justify-start min-h-0 min-w-0 px-[0.25rem] relative w-full overflow-hidden" style={{ paddingTop: '3vh', paddingBottom: '3vh' }} data-name="PanelBody" data-node-id="184:4071">
               <PanelContent
                 isAddMode={isAddMode}

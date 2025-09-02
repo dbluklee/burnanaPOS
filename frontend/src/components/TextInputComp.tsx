@@ -25,7 +25,7 @@ export default function TextInputComp({
       data-name="TextInput"
     >
       <label 
-        className="FontStyleTitle text-white not-italic"
+        className="FontStyleSubTitle text-white not-italic"
         htmlFor={name}
       >
         {name}
@@ -36,15 +36,15 @@ export default function TextInputComp({
         value={value || ''}
         placeholder={placeholder}
         onChange={(e) => onChange?.(e.target.value)}
-        className="FontStyleText box-border flex items-center px-[1.5rem] py-[1rem] rounded-[0.375rem] bg-[#e0e0e0] placeholder-gray-500 focus:outline-none transition-colors"
+        className="FontStyleText box-border flex items-center px-[1rem] py-[0.5rem] rounded-[0.375rem] bg-[var(--light)] placeholder-gray-500 focus:outline-none transition-colors"
         style={{ 
-          minHeight: '60px',
-          width: '80%',
-          color: '#000000'
+          minHeight: '40px',
+          width: '95%',
+          color: 'var(--black)'
         }}
       />
       {description && (
-        <div className="FontStyleText text-[#e0e0e0] not-italic">
+        <div className="FontStyleDisclaimer text-[var(--light)] not-italic">
           {description}
         </div>
       )}

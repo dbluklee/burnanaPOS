@@ -11,7 +11,7 @@ import logsRouter from './routes/logs';
 import usersRouter from './routes/users';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = parseInt(process.env.PORT || '3001', 10);
 
 // Middleware
 app.use(helmet());
@@ -37,9 +37,12 @@ const startServer = async () => {
     await initializeDatabase();
     console.log('✅ PostgreSQL database initialized successfully');
     
-    // Start server
-    app.listen(PORT, () => {
+    // Start server - bind to all interfaces for tablet access
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`🍌 BurnanaPOS API server running on port ${PORT}`);
+      console.log(`🌐 Server accessible at:`);
+      console.log(`   - Local: http://localhost:${PORT}`);
+      console.log(`   - Network: http://192.168.50.89:${PORT}`);
       console.log(`📊 Database: PostgreSQL on ${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || '5432'}`);
       console.log(`📋 Database name: ${process.env.DB_NAME || 'burnana_pos'}`);
     });

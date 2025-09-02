@@ -7,12 +7,14 @@ import ManagementPage from './components/ManagementPage';
 import ComponentShowcasePage from './components/ComponentShowcasePage';
 import type { PageType } from './types/navigation';
 import { useLogger } from './hooks/useLogging';
+import { enterFullscreen, exitFullscreen, isFullscreen } from './utils/fullscreen';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<PageType>('welcome');
   const [pageHistory, setPageHistory] = useState<PageType[]>(['welcome']);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [displayPage, setDisplayPage] = useState<PageType>('welcome');
+  const [isInFullscreen, setIsInFullscreen] = useState(false);
   
   const { logNavigation } = useLogger();
 
@@ -24,33 +26,71 @@ function App() {
     };
   }, []);
 
-  const navigateTo = (page: PageType) => {
-    setIsTransitioning(true);
-    
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsInFullscreen(isFullscreen());
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, []);
+
+  const navigateTo = async (page: PageType, requestFullscreen: boolean = false) => {
     // Log navigation
     logNavigation(currentPage, page);
     
-    // Fade out
+    // Enter fullscreen mode for auth pages if requested and not already in fullscreen
+    if (requestFullscreen && !isInFullscreen) {
+      try {
+        await enterFullscreen();
+        setIsInFullscreen(true);
+      } catch (error) {
+        console.log('Fullscreen request failed - user may need to interact first');
+      }
+    }
+    
+    // Regular fade transition
+    setIsTransitioning(true);
+    
     setTimeout(() => {
       setCurrentPage(page);
       setDisplayPage(page);
       setPageHistory(prev => [...prev, page]);
       
-      // Fade in
       setTimeout(() => {
         setIsTransitioning(false);
       }, 25);
     }, 150);
   };
 
-  const goBack = () => {
+  const goBack = async () => {
     if (pageHistory.length > 1) {
       setIsTransitioning(true);
       
+      // Only exit fullscreen when actually going back to welcome page
+      const newHistory = pageHistory.slice(0, -1);
+      const previousPage = newHistory[newHistory.length - 1];
+      
+      if (previousPage === 'welcome' && isFullscreen()) {
+        try {
+          await exitFullscreen();
+        } catch (error) {
+          console.log('Failed to exit fullscreen');
+        }
+      }
+      
       // Fade out
       setTimeout(() => {
-        const newHistory = pageHistory.slice(0, -1);
-        const previousPage = newHistory[newHistory.length - 1];
         setPageHistory(newHistory);
         setCurrentPage(previousPage);
         setDisplayPage(previousPage);
@@ -63,8 +103,17 @@ function App() {
     }
   };
 
-  const resetToWelcome = () => {
+  const resetToWelcome = async () => {
     setIsTransitioning(true);
+    
+    // Exit fullscreen when returning to welcome
+    if (isFullscreen()) {
+      try {
+        await exitFullscreen();
+      } catch (error) {
+        console.log('Failed to exit fullscreen');
+      }
+    }
     
     // Fade out
     setTimeout(() => {
@@ -79,11 +128,17 @@ function App() {
     }, 150);
   };
 
-  // Navigation handlers
-  const handleSignUp = () => navigateTo('signup');
-  const handleSignIn = () => navigateTo('signin');
-  const handleSignUpComplete = () => navigateTo('homepage');
-  const handleSignInComplete = () => navigateTo('homepage');
+  // Navigation handlers with fullscreen for auth pages
+  const handleSignUp = () => navigateTo('signup', true);
+  const handleSignIn = () => navigateTo('signin', true);
+  const handleSignUpComplete = () => {
+    // Keep fullscreen mode when going to homepage after auth
+    navigateTo('homepage');
+  };
+  const handleSignInComplete = () => {
+    // Keep fullscreen mode when going to homepage after auth
+    navigateTo('homepage');
+  };
   const handleSignOut = () => resetToWelcome();
   const handleManagement = () => navigateTo('management');
   const handleHome = () => navigateTo('homepage');

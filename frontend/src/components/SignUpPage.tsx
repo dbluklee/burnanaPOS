@@ -26,15 +26,15 @@ export default function SignUpPage({ onBack, onSignUpComplete }: SignUpPageProps
   }, []);
 
   // Calculate dynamic layout based on screen size
-  const isMobile = dimensions.width < 768;
-  const isTablet = dimensions.width >= 768 && dimensions.width < 1024;
+  const isMobile = dimensions.width < 600;
+  const isTablet = dimensions.width >= 600 && dimensions.width < 1200;
 
   return (
     <div 
       className="flex overflow-hidden"
       style={{ 
         width: '100vw',
-        height: '100vh',
+        height: isTablet ? '100svh' : '100vh', // Use small viewport height on tablets
         position: 'fixed',
         top: 0,
         left: 0,
@@ -62,7 +62,7 @@ export default function SignUpPage({ onBack, onSignUpComplete }: SignUpPageProps
           <div 
             className="h-full"
             style={{ 
-              width: isTablet ? '40%' : '50%',
+              width: isTablet ? '35%' : '50%', // Give more space to form on tablets
               transition: 'width 0.3s ease-in-out'
             }}
           >
@@ -71,19 +71,24 @@ export default function SignUpPage({ onBack, onSignUpComplete }: SignUpPageProps
           
           {/* Right Side: SignUpComp */}
           <div 
-            className="h-full flex items-center justify-center"
+            className="h-full flex flex-col"
             style={{ 
-              width: isTablet ? '60%' : '50%',
+              width: isTablet ? '65%' : '50%', // Match the adjusted width
               backgroundColor: '#000000',
               transition: 'width 0.3s ease-in-out',
-              padding: 'clamp(1rem, 2vw, 2rem)'
+              padding: isTablet ? 'clamp(0.25rem, 0.5vh, 0.75rem)' : 'clamp(1rem, 2vw, 2rem)',
+              minHeight: 0
             }}
           >
             <div 
+              className="flex-1 overflow-hidden"
               style={{ 
                 width: '100%',
                 maxWidth: isTablet ? '500px' : '600px',
-                height: '100%'
+                margin: '0 auto',
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: 0
               }}
             >
               <SignUpComp onBack={onBack} onSignUpComplete={onSignUpComplete} />

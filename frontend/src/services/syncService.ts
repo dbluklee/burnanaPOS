@@ -79,33 +79,38 @@ class SyncService {
       let syncedCount = 0;
       const errors: string[] = [];
 
-      for (let i = 0; i < serverLogs.length; i += batchSize) {
-        const batch = serverLogs.slice(i, i + batchSize);
-        const correspondingLocalLogs = unsyncedLogs.slice(i, i + batchSize);
+      // Upload logs one by one to the existing /api/logs endpoint
+      for (let i = 0; i < serverLogs.length; i++) {
+        const log = serverLogs[i];
+        const correspondingLocalLog = unsyncedLogs[i];
 
         try {
           const response: AxiosResponse = await axios.post(
-            `${this.baseUrl}/logs/batch`,
-            { logs: batch },
+            `${this.baseUrl}/logs`,
+            log,
             { 
               timeout: 10000,
               headers: { 'Content-Type': 'application/json' }
             }
           );
 
-          if (response.data.success) {
-            // Mark these logs as synced in local database
-            const syncedIds = correspondingLocalLogs.map(log => log.id!);
-            await databaseService.markMultipleLogsAsSynced(syncedIds);
-            syncedCount += batch.length;
-            console.log(`✅ Synced batch of ${batch.length} logs`);
+          if (response.data.id) {
+            // Mark this log as synced in local database
+            await databaseService.markLogAsSynced(correspondingLocalLog.id!);
+            syncedCount++;
+            
+            // Log progress every 10 logs
+            if (syncedCount % 10 === 0) {
+              console.log(`✅ Synced ${syncedCount}/${serverLogs.length} logs`);
+            }
           } else {
-            errors.push(`Server rejected batch: ${response.data.message}`);
+            errors.push(`Server rejected log: ${JSON.stringify(log)}`);
           }
         } catch (error) {
           const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-          errors.push(`Batch sync failed: ${errorMsg}`);
-          console.error('❌ Batch sync error:', error);
+          errors.push(`Log sync failed: ${errorMsg}`);
+          console.error('❌ Log sync error:', error);
+          // Continue with next log even if one fails
         }
       }
 

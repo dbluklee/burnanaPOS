@@ -97,7 +97,7 @@
 /* Font size styles */
 .FontStyleBlockHighlight {
   font-family: Pretendard;
-  font-size: clamp(3rem, 12vmin, 8rem);
+  font-size: clamp(2rem, 8vmin, 4rem);
   font-weight: 600;
   font-stretch: normal;
   font-style: normal;
@@ -112,7 +112,7 @@
 
 .FontStyleBlockTitle {
   font-family: Pretendard;
-  font-size: clamp(3rem, 10vmin, 6rem);
+  font-size: clamp(2rem, 7vmin, 4rem);
   font-weight: 600;
   font-stretch: normal;
   font-style: normal;
@@ -122,7 +122,7 @@
 
 .FontStyleBlockText {
   font-family: Pretendard;
-  font-size: clamp(1.5rem, 5vmin, 2.5rem);
+  font-size: clamp(1rem, 2.5vmin, 2rem);
   font-weight: 500;
   font-stretch: normal;
   font-style: normal;
@@ -142,8 +142,18 @@
 
 .FontStyleTitle {
   font-family: Pretendard;
-  font-size: clamp(1.2rem, 3.5vw, 2rem);
+  font-size: clamp(0.5rem, 2vw, 2rem);
   font-weight: 500;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: normal;
+  letter-spacing: normal;
+}
+
+.FontStyleSubTitle {
+  font-family: Pretendard;
+  font-size: clamp(0.4rem, 1.5vw, 1.7rem);
+  font-weight: 400;
   font-stretch: normal;
   font-style: normal;
   line-height: normal;
@@ -152,7 +162,7 @@
 
 .FontStyleText {
   font-family: Pretendard;
-  font-size: clamp(0.9rem, 2vw, 1.5rem);
+  font-size: clamp(0.3rem, 1vw, 1.5rem);
   font-weight: 400;
   font-stretch: normal;
   font-style: normal;

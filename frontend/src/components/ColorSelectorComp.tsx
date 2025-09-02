@@ -28,13 +28,13 @@ export default function ColorSelectorComp({
   return (
     <div className="box-border flex flex-col gap-[1rem] w-full items-start" data-name="ColorSelector">
       {/* Title */}
-      <div className="FontStyleTitle text-white not-italic">
+      <div className="FontStyleSubTitle text-white not-italic">
         {title}
       </div>
       
       {/* Color Palette - the area with color circles */}
       <div 
-        className="flex items-center justify-center rounded-[0.375rem] bg-transparent overflow-hidden" 
+        className="flex items-center justify-center bg-transparent overflow-hidden" 
         style={{ 
           minHeight: '60px',
           width: '80%',
@@ -42,21 +42,21 @@ export default function ColorSelectorComp({
         }} 
         data-name="ColorPalette"
       >
-        <div className="flex flex-col w-full" style={{ gap: 'clamp(1.2rem, 3.6vh, 2.4rem)' }}>
+        <div className="flex flex-col w-full" style={{ gap: 'clamp(0.8rem, 3vh, 1.5rem)' }}>
           {/* First Row */}
-          <div className="flex items-center justify-around relative w-full" style={{ gap: 'clamp(0.8rem, 1.6vw, 1.2rem)' }} data-name="Colors1">
+          <div className="flex items-center justify-around relative w-full" style={{ gap: 'clamp(0.4rem, 0.8vw, 0.6rem)' }} data-name="Colors1">
             {[0, 1, 2, 3].map((index) => (
               <div
                 key={index}
-                className="rounded-full cursor-pointer transition-all hover:scale-110 flex-shrink-0 relative"
+                className="rounded-full cursor-pointer transition-all flex-shrink-0 relative"
                 style={{ 
                   backgroundColor: tableColors[index],
-                  width: 'clamp(3rem, 6vw, 4.2rem)',
+                  width: 'clamp(1.5rem, 4vw, 2.2rem)',
                   aspectRatio: '1',
                   boxShadow: selectedColorIndex === index 
                     ? '0 0 0 clamp(0.2rem, 0.4vw, 0.3rem) rgba(255,255,255,0.8), 0 0 clamp(1.5rem, 3vw, 2rem) rgba(255,255,255,0.4)' 
                     : 'none',
-                  transform: selectedColorIndex === index ? 'scale(1.1)' : 'scale(1)'
+                  transform: selectedColorIndex === index ? 'scale(1.05)' : 'scale(1)'
                 }}
                 onClick={() => onColorSelect(index)}
               >
@@ -70,19 +70,19 @@ export default function ColorSelectorComp({
             ))}
           </div>
           {/* Second Row */}
-          <div className="flex items-center justify-around relative w-full" style={{ gap: 'clamp(0.8rem, 1.6vw, 1.2rem)' }} data-name="Colors2">
+          <div className="flex items-center justify-around relative w-full" style={{ gap: 'clamp(0.4rem, 0.8vw, 0.6rem)' }} data-name="Colors2">
             {[4, 5, 6, 7].map((index) => (
               <div
                 key={index}
                 className="rounded-full cursor-pointer transition-all hover:scale-110 flex-shrink-0 relative"
                 style={{ 
                   backgroundColor: tableColors[index],
-                  width: 'clamp(3rem, 6vw, 4.2rem)',
+                  width: 'clamp(1.5rem, 4vw, 2.2rem)',
                   aspectRatio: '1',
                   boxShadow: selectedColorIndex === index 
                     ? '0 0 0 clamp(0.2rem, 0.4vw, 0.3rem) rgba(255,255,255,0.8), 0 0 clamp(1.5rem, 3vw, 2rem) rgba(255,255,255,0.4)' 
                     : 'none',
-                  transform: selectedColorIndex === index ? 'scale(1.1)' : 'scale(1)'
+                  transform: selectedColorIndex === index ? 'scale(1.05)' : 'scale(1)'
                 }}
                 onClick={() => onColorSelect(index)}
               >
@@ -100,7 +100,7 @@ export default function ColorSelectorComp({
       
       {/* Description */}
       {description && (
-        <div className="FontStyleText text-[#e0e0e0] not-italic">
+        <div className="FontStyleDisclaimer text-[#e0e0e0] not-italic">
           {description}
         </div>
       )}

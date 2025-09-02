@@ -40,6 +40,7 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [registeredUser, setRegisteredUser] = useState<UserProfile | null>(null);
+  const [phoneVerificationMessage, setPhoneVerificationMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const updateSize = () => {
@@ -128,7 +129,12 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
 
   const handlePhoneAuth = () => {
     console.log('Phone authentication requested');
-    alert('Phone authentication requested (dummy implementation)');
+    setPhoneVerificationMessage('Phone verification sent! Check your SMS messages. (This is a demo implementation)');
+    
+    // Clear the message after 5 seconds
+    setTimeout(() => {
+      setPhoneVerificationMessage(null);
+    }, 5000);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -157,18 +163,24 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
   };
 
   // Calculate responsive values based on container size
+  // Check window width for tablet detection instead of container width
+  const windowWidth = window.innerWidth;
+  const isTabletSize = windowWidth >= 600 && windowWidth < 1200; // Broader range for tablets
   const scaleFactor = Math.min(containerSize.width / 400, containerSize.height / 600);
-  const responsiveScale = Math.max(0.7, Math.min(1.2, scaleFactor));
+  // Improved scaling for tablets - less aggressive scaling
+  const responsiveScale = isTabletSize 
+    ? Math.max(0.85, Math.min(1.0, scaleFactor))  // More conservative scaling for tablets
+    : Math.max(0.7, Math.min(1.2, scaleFactor));   // Original scaling for mobile/desktop
   
   const inputStyle = {
     width: '100%',
-    padding: `${Math.max(6, 8 * responsiveScale)}px ${Math.max(8, 12 * responsiveScale)}px`,
-    borderRadius: `${Math.max(4, 6 * responsiveScale)}px`,
+    padding: '8px 12px',
+    borderRadius: '6px',
     border: `1px solid ${colors.buttonBorder}`,
     backgroundColor: colors.buttonBackground,
     color: 'var(--white)',
     fontFamily: fonts.pretendard,
-    fontSize: `${Math.max(0.7, 0.9 * responsiveScale)}rem`,
+    fontSize: '0.9rem',
     fontWeight: 400,
     outline: 'none',
     boxSizing: 'border-box' as const,
@@ -177,34 +189,41 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
 
   const labelStyle = {
     display: 'block',
-    marginBottom: `${Math.max(3, 4 * responsiveScale)}px`,
+    marginBottom: '4px',
     color: 'var(--white)',
     fontFamily: fonts.pretendard,
-    fontSize: `${Math.max(0.8, 1.0 * responsiveScale)}rem`,
+    fontSize: '0.85rem',
     fontWeight: 500,
   };
 
   return (
     <div 
       ref={containerRef}
-      className="h-full w-full flex flex-col items-center justify-center overflow-hidden"
+      className="h-full w-full flex flex-col overflow-hidden"
       style={{ minHeight: 0, minWidth: 0 }}
     >
       <div 
-        className="w-full overflow-y-auto overflow-x-hidden max-h-full" 
+        className="flex-1 overflow-y-auto overflow-x-hidden" 
         style={{ 
-          padding: `0 ${Math.max(8, 16 * responsiveScale)}px`,
-          maxWidth: '100%'
+          padding: isTabletSize 
+            ? `clamp(4px, 1vh, 12px) ${Math.max(8, 16 * responsiveScale)}px clamp(4px, 1vh, 12px)`
+            : `clamp(8px, 2vh, 24px) ${Math.max(8, 16 * responsiveScale)}px clamp(8px, 2vh, 24px)`,
+          maxWidth: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-start',
+          minHeight: '100%'
         }}
       >
+        <div style={{ flex: '0 0 auto', width: '100%' }}>
         {/* Header */}
-        <div className="text-center" style={{ marginBottom: `${Math.max(16, 24 * responsiveScale)}px` }}>
+        <div className="text-center" style={{ marginBottom: isTabletSize ? 'clamp(8px, 2vh, 16px)' : `${Math.max(16, 24 * responsiveScale)}px` }}>
           <h1 
             className="FontStyleBlockTitle"
             style={{
               color: 'var(--white)',
               marginBottom: `${Math.max(4, 8 * responsiveScale)}px`,
-              fontSize: `${Math.max(1.2, 1.8 * responsiveScale)}rem`,
+              fontSize: isTabletSize ? '1.3rem' : `${Math.max(1.2, 1.8 * responsiveScale)}rem`,
               transition: 'font-size 0.2s ease-in-out'
             }}
           >
@@ -312,42 +331,84 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
               </div>
             )}
             
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: `${Math.max(12, 16 * responsiveScale)}px`, width: '100%' }}>
-              <div>
-                <label style={labelStyle}>Business Registration Number</label>
-                <input
-                  type="text"
-                  value={formData.businessRegistrationNumber}
-                  onChange={(e) => handleBusinessRegNumberChange(e.target.value)}
-                  style={inputStyle}
-                  placeholder="123-45-67890"
-                  maxLength={12}
-                  required
-                />
+            {phoneVerificationMessage && (
+              <div 
+                className="p-4 rounded-lg mb-6"
+                style={{ backgroundColor: 'rgba(0,255,0,0.1)', border: '1px solid rgba(0,255,0,0.3)' }}
+              >
+                <p style={{ color: '#6bff6b', fontFamily: fonts.pretendard, fontSize: '14px' }}>
+                  {phoneVerificationMessage}
+                </p>
+              </div>
+            )}
+            
+            <form onSubmit={handleSubmit} style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '16px', 
+              width: '100%' 
+            }}>
+              {/* Row 1: Business Registration Number and Store Name */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: windowWidth < 480 ? '1fr' : '1fr 1fr', // Single column only on very small screens
+                gap: '12px',
+                width: '100%'
+              }}>
+                <div>
+                  <label style={labelStyle}>Business Registration Number</label>
+                  <input
+                    type="text"
+                    value={formData.businessRegistrationNumber}
+                    onChange={(e) => handleBusinessRegNumberChange(e.target.value)}
+                    style={inputStyle}
+                    placeholder="123-45-67890"
+                    maxLength={12}
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Store Name</label>
+                  <input
+                    type="text"
+                    value={formData.storeName}
+                    onChange={(e) => handleInputChange('storeName', e.target.value)}
+                    style={inputStyle}
+                    placeholder="Enter store name"
+                    required
+                  />
+                </div>
               </div>
 
-              <div>
-                <label style={labelStyle}>Store Name</label>
-                <input
-                  type="text"
-                  value={formData.storeName}
-                  onChange={(e) => handleInputChange('storeName', e.target.value)}
-                  style={inputStyle}
-                  placeholder="Enter store name"
-                  required
-                />
-              </div>
-
-              <div>
-                <label style={labelStyle}>Owner Name</label>
-                <input
-                  type="text"
-                  value={formData.ownerName}
-                  onChange={(e) => handleInputChange('ownerName', e.target.value)}
-                  style={inputStyle}
-                  placeholder="Enter owner's name"
-                  required
-                />
+              {/* Row 2: Owner Name and Email (moved up) */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: windowWidth < 480 ? '1fr' : '1fr 1fr', // Single column only on very small screens
+                gap: '12px',
+                width: '100%'
+              }}>
+                <div>
+                  <label style={labelStyle}>Owner Name</label>
+                  <input
+                    type="text"
+                    value={formData.ownerName}
+                    onChange={(e) => handleInputChange('ownerName', e.target.value)}
+                    style={inputStyle}
+                    placeholder="Enter owner's name"
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Email</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    style={inputStyle}
+                    placeholder="Enter email address"
+                    required
+                  />
+                </div>
               </div>
 
               <div>
@@ -366,21 +427,9 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
                     label="Verify"
                     onClick={handlePhoneAuth}
                     className="FontStyleTitle"
-                    style={{ height: 'clamp(36px, 5vh, 48px)', minWidth: 'clamp(60px, 8vw, 80px)', flexShrink: 0 }}
+                    style={{ height: '40px', minWidth: '70px', flexShrink: 0 }}
                   />
                 </div>
-              </div>
-
-              <div>
-                <label style={labelStyle}>Email</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  style={inputStyle}
-                  placeholder="Enter email address"
-                  required
-                />
               </div>
 
               <div>
@@ -388,7 +437,12 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
                 <textarea
                   value={formData.storeAddress}
                   onChange={(e) => handleInputChange('storeAddress', e.target.value)}
-                  style={{ ...inputStyle, minHeight: 'clamp(60px, 10vh, 80px)', resize: 'vertical', maxWidth: '100%' }}
+                  style={{ 
+                    ...inputStyle, 
+                    minHeight: '60px', 
+                    resize: 'vertical', 
+                    maxWidth: '100%' 
+                  }}
                   placeholder="Enter store address"
                   required
                 />
@@ -406,12 +460,12 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
               </div>
 
               {/* Buttons */}
-              <div className="flex gap-4" style={{ paddingTop: 'clamp(0.5rem, 1vh, 1rem)' }}>
+              <div className="flex gap-4" style={{ paddingTop: '12px' }}>
                 <ButtonItemComp 
                   label="Back"
                   onClick={onBack}
                   className="flex-1"
-                  style={{ height: 'clamp(40px, 6vh, 56px)' }}
+                  style={{ height: '44px' }}
                   disabled={isLoading}
                 />
                 <button
@@ -424,13 +478,14 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
                   onClick={handleSubmit}
                   isSelected={true}
                   className="flex-1"
-                  style={{ height: 'clamp(40px, 6vh, 56px)' }}
+                  style={{ height: '44px' }}
                   disabled={isLoading}
                 />
               </div>
             </form>
           </>
         )}
+        </div>
       </div>
     </div>
   );
