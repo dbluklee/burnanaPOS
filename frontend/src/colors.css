@@ -132,8 +132,8 @@
 
 .FontStyleButtonItemText {
   font-family: Pretendard;
-  font-size: clamp(1rem, 3vmin, 2rem);
-  font-weight: 500;
+  font-size: clamp(1rem, 1.5vmin, 2rem);
+  font-weight: 400;
   font-stretch: normal;
   font-style: normal;
   line-height: normal;

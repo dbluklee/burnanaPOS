@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { DESIGN_TOKENS } from '../types/design-tokens';
 import { userService, type SignUpData, type UserProfile } from '../services/userService';
 import ButtonItemComp from './ButtonItemComp';
@@ -20,6 +20,12 @@ interface SignUpForm {
 
 export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps) {
   const { colors, fonts } = DESIGN_TOKENS;
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  const [containerSize, setContainerSize] = useState({
+    width: 0,
+    height: 0
+  });
 
   const [formData, setFormData] = useState<SignUpForm>({
     businessRegistrationNumber: '',
@@ -34,6 +40,39 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [registeredUser, setRegisteredUser] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    const updateSize = () => {
+      if (containerRef.current) {
+        const { clientWidth, clientHeight } = containerRef.current;
+        setContainerSize({
+          width: clientWidth,
+          height: clientHeight
+        });
+      }
+    };
+
+    // Initial size
+    updateSize();
+
+    // ResizeObserver for more accurate container size tracking
+    let resizeObserver: ResizeObserver | null = null;
+    
+    if (containerRef.current) {
+      resizeObserver = new ResizeObserver(updateSize);
+      resizeObserver.observe(containerRef.current);
+    }
+
+    // Fallback to window resize
+    window.addEventListener('resize', updateSize);
+
+    return () => {
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+      window.removeEventListener('resize', updateSize);
+    };
+  }, []);
 
   const handleInputChange = (field: keyof SignUpForm, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -117,40 +156,56 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
     }
   };
 
+  // Calculate responsive values based on container size
+  const scaleFactor = Math.min(containerSize.width / 400, containerSize.height / 600);
+  const responsiveScale = Math.max(0.7, Math.min(1.2, scaleFactor));
+  
   const inputStyle = {
     width: '100%',
-    padding: 'clamp(8px, 1.5vh, 12px) clamp(12px, 2vw, 16px)',
-    borderRadius: 'clamp(6px, 0.8vw, 8px)',
+    padding: `${Math.max(6, 8 * responsiveScale)}px ${Math.max(8, 12 * responsiveScale)}px`,
+    borderRadius: `${Math.max(4, 6 * responsiveScale)}px`,
     border: `1px solid ${colors.buttonBorder}`,
     backgroundColor: colors.buttonBackground,
     color: 'var(--white)',
     fontFamily: fonts.pretendard,
-    fontSize: 'clamp(0.8rem, 1.5vw, 1.2rem)',
+    fontSize: `${Math.max(0.7, 0.9 * responsiveScale)}rem`,
     fontWeight: 400,
     outline: 'none',
     boxSizing: 'border-box' as const,
+    transition: 'all 0.2s ease-in-out',
   };
 
   const labelStyle = {
     display: 'block',
-    marginBottom: 'clamp(4px, 0.8vh, 8px)',
+    marginBottom: `${Math.max(3, 4 * responsiveScale)}px`,
     color: 'var(--white)',
     fontFamily: fonts.pretendard,
-    fontSize: 'clamp(0.9rem, 2vw, 1.3rem)',
+    fontSize: `${Math.max(0.8, 1.0 * responsiveScale)}rem`,
     fontWeight: 500,
   };
 
   return (
-    <div className="h-full flex flex-col items-center justify-center overflow-hidden">
-      <div className="w-full overflow-y-auto overflow-x-hidden max-h-full" style={{ padding: '0 clamp(1rem, 2vw, 2rem)' }}>
+    <div 
+      ref={containerRef}
+      className="h-full w-full flex flex-col items-center justify-center overflow-hidden"
+      style={{ minHeight: 0, minWidth: 0 }}
+    >
+      <div 
+        className="w-full overflow-y-auto overflow-x-hidden max-h-full" 
+        style={{ 
+          padding: `0 ${Math.max(8, 16 * responsiveScale)}px`,
+          maxWidth: '100%'
+        }}
+      >
         {/* Header */}
-        <div className="text-center" style={{ marginBottom: 'clamp(1.5rem, 3vh, 2.5rem)' }}>
+        <div className="text-center" style={{ marginBottom: `${Math.max(16, 24 * responsiveScale)}px` }}>
           <h1 
             className="FontStyleBlockTitle"
             style={{
               color: 'var(--white)',
-              marginBottom: 'clamp(4px, 0.8vh, 8px)',
-              fontSize: 'clamp(1.5rem, 4vw, 2.5rem)'
+              marginBottom: `${Math.max(4, 8 * responsiveScale)}px`,
+              fontSize: `${Math.max(1.2, 1.8 * responsiveScale)}rem`,
+              transition: 'font-size 0.2s ease-in-out'
             }}
           >
             {registeredUser ? 'Registration Complete!' : 'Sign Up'}
@@ -159,7 +214,8 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
             className="FontStyleBlockText"
             style={{
               color: 'var(--light)',
-              fontSize: 'clamp(0.9rem, 2vw, 1.3rem)'
+              fontSize: `${Math.max(0.8, 1.0 * responsiveScale)}rem`,
+              transition: 'font-size 0.2s ease-in-out'
             }}
           >
             {registeredUser 
@@ -256,7 +312,7 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
               </div>
             )}
             
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(1rem, 2vh, 1.5rem)', width: '100%' }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: `${Math.max(12, 16 * responsiveScale)}px`, width: '100%' }}>
               <div>
                 <label style={labelStyle}>Business Registration Number</label>
                 <input
