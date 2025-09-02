@@ -87,7 +87,15 @@ export default function HomePage({ onSignOut, onManagement }: HomePageProps) {
               
               {/* User Change Button */}
               <div style={{ flex: '1', aspectRatio: '1/1' }}>
-                <BlockSmall icon={userRoundIcon} alt="User Change" />
+                <BlockSmall 
+                  icon={userRoundIcon} 
+                  alt="User Change" 
+                  enableFlip={true}
+                  backContent={{
+                    storeNumber: "001",
+                    userPin: "1234"
+                  }}
+                />
               </div>
               
               {/* Settings Icon */}
