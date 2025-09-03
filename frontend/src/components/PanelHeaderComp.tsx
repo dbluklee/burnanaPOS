@@ -9,7 +9,7 @@ interface PanelHeaderCompProps {
 export default function PanelHeaderComp({ title, className = "", style }: PanelHeaderCompProps) {
   return (
     <div 
-      className={`box-border content-stretch flex items-center justify-start overflow-hidden px-[0.25rem] pt-[1rem] pb-[0.5rem] relative shrink-0 w-full ${className}`} 
+      className={`box-border content-stretch flex items-center justify-start overflow-hidden px-[0.25rem] pt-[1rem] relative shrink-0 w-full ${className}`} 
       style={{ height: 'clamp(2.5rem, 6vh, 3.5rem)', ...style }} 
       data-name="PanelHeader" 
       data-node-id="184:4067"
@@ -20,7 +20,7 @@ export default function PanelHeaderComp({ title, className = "", style }: PanelH
         data-node-id="184:4068"
       >
         <div 
-          className="FontStyleTitle flex flex-col justify-center leading-[1.2] not-italic relative shrink-0 text-center text-nowrap text-white" 
+          className="FontStyleTitle flex flex-col justify-center leading-[1.2] not-italic relative shrink-0 text-center text-nowrap text-white " 
           data-node-id="184:4069"
         >
           <span>{title}</span>

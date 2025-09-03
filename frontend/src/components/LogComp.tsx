@@ -18,6 +18,16 @@ function LogComp({ time, text, itemLabel, property1: externalProperty1, onUndo, 
     const items: string[] = [];
     let cleanedText = logText;
     
+    // First, extract items in {{label}} format (highest priority)
+    const bracketRegex = /\{\{([^}]+)\}\}/g;
+    const bracketMatches = [...cleanedText.matchAll(bracketRegex)];
+    if (bracketMatches.length > 0) {
+      bracketMatches.forEach(match => {
+        items.push(match[1]); // Extract content inside {{}}
+        cleanedText = cleanedText.replace(match[0], '').trim();
+      });
+    }
+    
     // Extract specific place names (ending with "floor")
     const placeRegex = /\b(\w+\s+floor)\b/gi;
     const placeMatches = cleanedText.match(placeRegex);

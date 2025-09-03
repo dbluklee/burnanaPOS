@@ -1,8 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import BlockComp from './BlockComp';
 import HighlightBlock from './BlockHighlightComp';
-import BlockSmall from './BlockSmallComp';
 import BlockPromotion from './BlockPromoComp';
+import BlockSignOut from './BlockSignOut';
+import BlockInfo from './BlockInfo';
+import BlockSetting from './BlockSetting';
+import BlockFAQ from './BlockFAQ';
+import BlockLanguage from './BlockLanguage';
+import BlockEmail from './BlockEmail';
+import type { UserProfile } from '../services/userService';
 
 // Image assets
 import promotionTopImage from '../assets/images/HomePage/promotion-top.jpg';
@@ -11,13 +17,6 @@ import promotionMid2Image from '../assets/images/HomePage/promotion-mid2.jpg';
 import promotionBottomImage from '../assets/images/HomePage/promotion-bottom.jpg';
 
 // Icon assets for small blocks
-import userRoundIcon from '../assets/HomePage/users-round.svg';
-import burnanaLogoImage from '../assets/Common/burnana-logo.svg';
-import settingsIcon from '../assets/HomePage/settings.svg';
-import helpIcon from '../assets/HomePage/help.svg';
-import languagesIcon from '../assets/HomePage/languages.svg';
-import mailIcon from '../assets/HomePage/mail.svg';
-import signOutIcon from '../assets/HomePage/sign-out.svg';
 
 interface HomePageProps {
   onSignOut?: () => void;
@@ -25,6 +24,20 @@ interface HomePageProps {
 }
 
 export default function HomePage({ onSignOut, onManagement }: HomePageProps) {
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    // Get current user from localStorage
+    const storedUser = localStorage.getItem('currentUser');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser) as UserProfile;
+        setCurrentUser(user);
+      } catch (error) {
+        console.error('Failed to parse stored user data:', error);
+      }
+    }
+  }, []);
   return (
     <div 
       className="relative w-full h-full overflow-hidden bg-black" 
@@ -82,43 +95,41 @@ export default function HomePage({ onSignOut, onManagement }: HomePageProps) {
             <div className="flex gap-[1vw]" style={{ height: 'calc((100% - 1vh) / 2)' }}>
               {/* Sign Out Block */}
               <div style={{ flex: '1', aspectRatio: '1/1' }}>
-                <BlockSmall icon={signOutIcon} alt="Sign Out" onClick={onSignOut} />
+                <BlockSignOut onClick={onSignOut} />
               </div>
               
-              {/* User Change Button */}
+              {/* Info Block with User Info */}
               <div style={{ flex: '1', aspectRatio: '1/1' }}>
-                <BlockSmall 
-                  icon={userRoundIcon} 
-                  alt="User Change" 
+                <BlockInfo 
                   enableFlip={true}
                   backContent={{
-                    storeNumber: "001",
-                    userPin: "1234"
+                    storeNumber: currentUser?.storeNumber || "---",
+                    userPin: currentUser?.userPin || "----"
                   }}
                 />
               </div>
               
-              {/* Settings Icon */}
+              {/* Settings Block */}
               <div style={{ flex: '1', aspectRatio: '1/1' }}>
-                <BlockSmall icon={settingsIcon} alt="Settings" />
+                <BlockSetting />
               </div>
             </div>
             
             {/* Bottom Row Icons */}
             <div className="flex gap-[1vw]" style={{ height: 'calc((100% - 1vh) / 2)' }}>
-              {/* Help Icon */}
+              {/* FAQ Block */}
               <div style={{ flex: '1', aspectRatio: '1/1' }}>
-                <BlockSmall icon={helpIcon} alt="Help" />
+                <BlockFAQ />
               </div>
               
-              {/* Languages Icon */}
+              {/* Language Block */}
               <div style={{ flex: '1', aspectRatio: '1/1' }}>
-                <BlockSmall icon={languagesIcon} alt="Languages" />
+                <BlockLanguage />
               </div>
               
-              {/* Mail Icon */}
+              {/* Email Block */}
               <div style={{ flex: '1', aspectRatio: '1/1' }}>
-                <BlockSmall icon={mailIcon} alt="Mail" />
+                <BlockEmail />
               </div>
             </div>
           </div>

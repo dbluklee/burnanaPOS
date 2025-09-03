@@ -22,7 +22,7 @@ export default function ButtonsSetComp({
       <div className="flex items-center justify-center overflow-clip relative shrink-0 w-full" data-name="SaveCancelArea">
         <div className="flex items-center justify-center relative" style={{ gap: '3rem' }} data-name="SaveCancelButton">
           <div 
-            className="box-border flex h-[60px] items-center justify-center overflow-clip px-8 py-2.5 relative rounded-[37.5px] shrink-0 cursor-pointer hover:opacity-80 transition-opacity bg-white/10 hover:bg-white/20" 
+            className="box-border flex h-[60px] items-center justify-center overflow-clip px-8 py-2.5 relative rounded-[37.5px] shrink-0 cursor-pointer bg-white/10" 
             data-name="SaveButton"
             onClick={onSave}
           >
@@ -31,7 +31,7 @@ export default function ButtonsSetComp({
             </div>
           </div>
           <div 
-            className="box-border flex h-[60px] items-center justify-center overflow-clip px-8 py-2.5 relative rounded-[37.5px] shrink-0 cursor-pointer hover:opacity-80 transition-opacity bg-white/10 hover:bg-white/20" 
+            className="box-border flex h-[60px] items-center justify-center overflow-clip px-8 py-2.5 relative rounded-[37.5px] shrink-0 cursor-pointer bg-white/10" 
             data-name="CancelButton"
             onClick={onCancel}
           >

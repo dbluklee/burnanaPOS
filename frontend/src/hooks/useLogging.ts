@@ -18,8 +18,13 @@ interface UseLoggingReturn {
   logNavigation: (from: string, to: string) => Promise<void>;
   logPlaceCreated: (placeName: string) => Promise<void>;
   logPlaceDeleted: (placeName: string) => Promise<void>;
+  logPlaceUpdated: (placeName: string) => Promise<void>;
   logTableCreated: (tableName: string, placeName: string) => Promise<void>;
   logTableDeleted: (tableName: string, placeName: string) => Promise<void>;
+  logMenuCreated: (menuName: string) => Promise<void>;
+  logMenuDeleted: (menuName: string) => Promise<void>;
+  logCategoryCreated: (categoryName: string) => Promise<void>;
+  logCategoryDeleted: (categoryName: string) => Promise<void>;
   logCustomerArrival: (placeName: string, tableName: string, customerCount?: number) => Promise<void>;
   logError: (errorMessage: string, additionalData?: Record<string, any>) => Promise<void>;
   
@@ -32,6 +37,8 @@ interface UseLoggingReturn {
   undoLog: (logId: number) => Promise<boolean>;
   refreshLogs: () => Promise<void>;
   forceSyncNow: () => Promise<void>;
+  clearAllLocalData: () => Promise<void>;
+  refreshPlacesData: () => Promise<void>;
 }
 
 export function useLogging(autoRefresh: boolean = true): UseLoggingReturn {
@@ -152,12 +159,32 @@ export function useLogging(autoRefresh: boolean = true): UseLoggingReturn {
     await loggingService.logPlaceDeleted(placeName);
   }, []);
 
+  const logPlaceUpdated = useCallback(async (placeName: string) => {
+    await loggingService.logPlaceUpdated(placeName);
+  }, []);
+
   const logTableCreated = useCallback(async (tableName: string, placeName: string) => {
     await loggingService.logTableCreated(tableName, placeName);
   }, []);
 
   const logTableDeleted = useCallback(async (tableName: string, placeName: string) => {
     await loggingService.logTableDeleted(tableName, placeName);
+  }, []);
+
+  const logMenuCreated = useCallback(async (menuName: string) => {
+    await loggingService.logMenuCreated(menuName);
+  }, []);
+
+  const logMenuDeleted = useCallback(async (menuName: string) => {
+    await loggingService.logMenuDeleted(menuName);
+  }, []);
+
+  const logCategoryCreated = useCallback(async (categoryName: string) => {
+    await loggingService.logCategoryCreated(categoryName);
+  }, []);
+
+  const logCategoryDeleted = useCallback(async (categoryName: string) => {
+    await loggingService.logCategoryDeleted(categoryName);
   }, []);
 
   const logCustomerArrival = useCallback(async (placeName: string, tableName: string, customerCount?: number) => {
@@ -221,6 +248,26 @@ export function useLogging(autoRefresh: boolean = true): UseLoggingReturn {
     }
   }, []);
 
+  const clearAllLocalData = useCallback(async () => {
+    try {
+      await loggingService.clearAllLocalDataAndNotify();
+      // Refresh logs after clearing
+      await refreshLogs();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to clear local data';
+      setError(errorMessage);
+      console.error('❌ Failed to clear local data:', err);
+    }
+  }, [refreshLogs]);
+
+  const refreshPlacesData = useCallback(async () => {
+    try {
+      await loggingService.refreshPlacesData();
+    } catch (err) {
+      console.error('❌ Failed to refresh places data:', err);
+    }
+  }, []);
+
   return {
     logs,
     isLoading,
@@ -232,8 +279,13 @@ export function useLogging(autoRefresh: boolean = true): UseLoggingReturn {
     logNavigation,
     logPlaceCreated,
     logPlaceDeleted,
+    logPlaceUpdated,
     logTableCreated,
     logTableDeleted,
+    logMenuCreated,
+    logMenuDeleted,
+    logCategoryCreated,
+    logCategoryDeleted,
     logCustomerArrival,
     logError,
     
@@ -246,6 +298,8 @@ export function useLogging(autoRefresh: boolean = true): UseLoggingReturn {
     undoLog,
     refreshLogs,
     forceSyncNow,
+    clearAllLocalData,
+    refreshPlacesData,
   };
 }
 
@@ -272,9 +326,17 @@ export function useLogger() {
     logNavigation: loggingService.logNavigation.bind(loggingService),
     logPlaceCreated: loggingService.logPlaceCreated.bind(loggingService),
     logPlaceDeleted: loggingService.logPlaceDeleted.bind(loggingService),
+    logPlaceUpdated: loggingService.logPlaceUpdated.bind(loggingService),
     logTableCreated: loggingService.logTableCreated.bind(loggingService),
     logTableDeleted: loggingService.logTableDeleted.bind(loggingService),
+    logMenuCreated: loggingService.logMenuCreated.bind(loggingService),
+    logMenuDeleted: loggingService.logMenuDeleted.bind(loggingService),
+    logCategoryCreated: loggingService.logCategoryCreated.bind(loggingService),
+    logCategoryDeleted: loggingService.logCategoryDeleted.bind(loggingService),
     logCustomerArrival: loggingService.logCustomerArrival.bind(loggingService),
     logError: loggingService.logError.bind(loggingService),
+    logUserSignIn: loggingService.logUserSignIn.bind(loggingService),
+    logUserSignUp: loggingService.logUserSignUp.bind(loggingService),
+    logUserSignOut: loggingService.logUserSignOut.bind(loggingService),
   };
 }

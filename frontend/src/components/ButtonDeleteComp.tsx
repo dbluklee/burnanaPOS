@@ -185,7 +185,7 @@ export default function ButtonDeleteComp({ onDelete, disabled }: ButtonDeleteCom
       ) : (
         // Default state: Shows "Delete" button (similar to Image #1)
         <div 
-          className="box-border flex items-center justify-center relative rounded-[30px] shrink-0 cursor-pointer hover:opacity-80 transition-opacity w-full h-full border-2 border-[#777777]" 
+          className="box-border flex items-center justify-center relative rounded-[30px] shrink-0 cursor-pointer w-full h-full border-2 border-[#777777]" 
           style={{ 
             backgroundColor: 'rgba(255,255,255,0.05)',
             padding: 'clamp(0.1rem, 0.3vh, 0.2rem)'

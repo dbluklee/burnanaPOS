@@ -29,7 +29,7 @@ export default function BlockSmallComp({
   };
   return (
     <div 
-      className={`relative w-full h-full ${enableFlip || onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+      className={`relative w-full h-full ${enableFlip || onClick ? 'cursor-pointer' : ''}`}
       style={{ 
         perspective: '1000px',
       }}

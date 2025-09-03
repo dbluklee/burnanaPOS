@@ -12,6 +12,29 @@ const tableColors = [
   'var(--table-color-8)'
 ];
 
+// Mapping CSS variables to hex colors for database storage
+const tableColorHexMap: Record<string, string> = {
+  'var(--table-color-1)': '#FF6B6B',
+  'var(--table-color-2)': '#4ECDC4',
+  'var(--table-color-3)': '#45B7D1',
+  'var(--table-color-4)': '#96CEB4',
+  'var(--table-color-5)': '#FECA57',
+  'var(--table-color-6)': '#FF9FF3',
+  'var(--table-color-7)': '#54A0FF',
+  'var(--table-color-8)': '#5F27CD'
+};
+
+// Helper function to convert CSS variable to hex color
+export const getHexColor = (cssVariable: string): string => {
+  return tableColorHexMap[cssVariable] || cssVariable;
+};
+
+// Helper function to convert hex color back to CSS variable
+export const getCSSVariable = (hexColor: string): string => {
+  const entry = Object.entries(tableColorHexMap).find(([_, hex]) => hex === hexColor);
+  return entry ? entry[0] : hexColor;
+};
+
 interface ColorSelectorCompProps {
   selectedColorIndex: number;
   onColorSelect: (index: number) => void;
@@ -74,7 +97,7 @@ export default function ColorSelectorComp({
             {[4, 5, 6, 7].map((index) => (
               <div
                 key={index}
-                className="rounded-full cursor-pointer transition-all hover:scale-110 flex-shrink-0 relative"
+                className="rounded-full cursor-pointer flex-shrink-0 relative"
                 style={{ 
                   backgroundColor: tableColors[index],
                   width: 'clamp(1.5rem, 4vw, 2.2rem)',

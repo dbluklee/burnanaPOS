@@ -9,7 +9,7 @@ interface ButtonAddCompProps {
 export default function ButtonAddComp({ onClick, className = "" }: ButtonAddCompProps) {
   return (
     <div 
-      className={`content-stretch flex flex-col items-center justify-center relative size-full cursor-pointer hover:opacity-80 transition-opacity ${className}`} 
+      className={`content-stretch flex flex-col items-center justify-center relative size-full cursor-pointer ${className}`} 
       data-name="AddButton" 
       data-node-id="261:1423"
       onClick={onClick}

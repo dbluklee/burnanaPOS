@@ -13,7 +13,6 @@ import Log from './LogComp';
 
 // Icon assets for small blocks
 import burnanaLogoImage from '../assets/Common/burnana-logo.svg';
-import userRoundIcon from '../assets/HomePage/users-round.svg';
 import settingsIcon from '../assets/HomePage/settings.svg';
 import helpIcon from '../assets/HomePage/help.svg';
 import languagesIcon from '../assets/HomePage/languages.svg';
@@ -78,9 +77,6 @@ export default function ComponentShowcasePage() {
           <div className="flex gap-4 flex-wrap">
             <div className="w-[100px] h-[100px]">
               <BlockSmall icon="" alt="Empty" />
-            </div>
-            <div className="w-[100px] h-[100px]">
-              <BlockSmall icon={userRoundIcon} alt="User Change" />
             </div>
             <div className="w-[100px] h-[100px]">
               <BlockSmall icon={burnanaLogoImage} alt="Burnana Logo" />
@@ -206,7 +202,7 @@ export default function ComponentShowcasePage() {
         <div className="text-center pt-12 border-t border-gray-700">
           <button 
             onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg"
           >
             Back to HomePage
           </button>

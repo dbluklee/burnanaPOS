@@ -1,6 +1,7 @@
 // Main logging service that captures events and manages log display
 import { databaseService, type LogEntry } from './database';
 import { syncService } from './syncService';
+import { placeService, type PlaceData } from './placeService';
 
 // Event types that can be logged
 export enum EventType {
@@ -24,6 +25,12 @@ export enum EventType {
   TABLE_CREATED = 'table_created',
   TABLE_UPDATED = 'table_updated',
   TABLE_DELETED = 'table_deleted',
+  MENU_CREATED = 'menu_created',
+  MENU_UPDATED = 'menu_updated',
+  MENU_DELETED = 'menu_deleted',
+  CATEGORY_CREATED = 'category_created',
+  CATEGORY_UPDATED = 'category_updated',
+  CATEGORY_DELETED = 'category_deleted',
 
   // System events
   SYSTEM_STARTUP = 'system_startup',
@@ -56,12 +63,23 @@ class LoggingService {
   private isInitialized: boolean = false;
   private logSubscribers: Set<(logs: LogEntry[]) => void> = new Set();
   private sessionStartTime: number | null = null;
+  private places: PlaceData[] = []; // Cache of places from database
 
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
 
     try {
       await databaseService.initialize();
+      
+      // Load places from database for ItemComp processing
+      await this.loadPlacesFromDB();
+      
+      // Restore session start time from localStorage if available
+      const savedSessionStartTime = localStorage.getItem('sessionStartTime');
+      if (savedSessionStartTime) {
+        this.sessionStartTime = parseInt(savedSessionStartTime, 10);
+        console.log('📅 Session start time restored from localStorage:', new Date(this.sessionStartTime).toLocaleString());
+      }
       
       // Start auto-sync if online
       if (navigator.onLine) {
@@ -71,15 +89,9 @@ class LoggingService {
       this.isInitialized = true;
       console.log('🚀 Logging service initialized');
 
-      // Log system startup
-      await this.log(EventType.SYSTEM_STARTUP, 'The dashboard has been started.');
-
-      // Check initial connection
-      if (navigator.onLine) {
-        await this.log(EventType.CONNECTION_ESTABLISHED, 'Connection to the server was successful.');
-      } else {
-        await this.log(EventType.CONNECTION_LOST, 'No internet connection. Working offline.');
-      }
+      // Only log system messages if there's an active session
+      // System startup logs are not useful for session-based logging
+      // These messages will be logged when user actually signs in
 
     } catch (error) {
       console.error('❌ Failed to initialize logging service:', error);
@@ -124,11 +136,6 @@ class LoggingService {
 
       console.log(`📝 Log created: [${eventType}] ${formattedMessage}`);
 
-      // Try to sync immediately if online
-      if (navigator.onLine) {
-        await syncService.sendLogImmediately(completeLogEntry);
-      }
-
       // Notify subscribers about new log
       this.notifySubscribers();
 
@@ -140,11 +147,50 @@ class LoggingService {
   private extractItemTags(message: string, context?: LogContext): string[] {
     const tags: string[] = [];
 
-    // Extract place names (ending with "floor")
-    const placeRegex = /\b(\w+\s+floor)\b/gi;
-    const placeMatches = message.match(placeRegex);
-    if (placeMatches) {
-      tags.push(...placeMatches);
+    // Add context-based tags first (most reliable)
+    if (context?.placeName) {
+      tags.push(context.placeName);
+      console.log('🏷️ Added context place tag:', context.placeName);
+    }
+    if (context?.tableName) {
+      tags.push(context.tableName);
+      console.log('🏷️ Added context table tag:', context.tableName);
+    }
+
+    // Check if any words in the message match actual place names from database
+    const allPlaceNames = this.getAllPlaceNames();
+    console.log('🏢 Available place names from DB:', allPlaceNames);
+    console.log('💬 Message to check:', message);
+    
+    allPlaceNames.forEach(placeName => {
+      if (message.includes(placeName)) {
+        tags.push(placeName);
+        console.log('✅ Found DB place name in message:', placeName);
+      }
+    });
+
+    // Extract English place names (ending with "floor") - fallback for places not in DB yet
+    const englishPlaceRegex = /\b(\w+\s+floor)\b/gi;
+    const englishPlaceMatches = message.match(englishPlaceRegex);
+    if (englishPlaceMatches) {
+      tags.push(...englishPlaceMatches);
+      console.log('🏷️ Added English place tags:', englishPlaceMatches);
+    }
+
+    // Extract Korean place names (ending with "층") - fallback for places not in DB yet
+    const koreanPlaceRegex = /([0-9]+층|[일이삼사오육칠팔구십백천만]+층)/g;
+    const koreanPlaceMatches = message.match(koreanPlaceRegex);
+    if (koreanPlaceMatches) {
+      tags.push(...koreanPlaceMatches);
+      console.log('🏷️ Added Korean place tags:', koreanPlaceMatches);
+    }
+
+    // Extract general Korean place names (common patterns) - fallback for places not in DB yet
+    const generalKoreanPlaceRegex = /([가-힣0-9]+\s*층|[가-힣0-9]+\s*관|[가-힣0-9]+\s*동|[가-힣0-9]+\s*실)/g;
+    const generalKoreanPlaceMatches = message.match(generalKoreanPlaceRegex);
+    if (generalKoreanPlaceMatches) {
+      tags.push(...generalKoreanPlaceMatches);
+      console.log('🏷️ Added general Korean place tags:', generalKoreanPlaceMatches);
     }
 
     // Extract table names (starting with "Table")
@@ -152,14 +198,7 @@ class LoggingService {
     const tableMatches = message.match(tableRegex);
     if (tableMatches) {
       tags.push(...tableMatches);
-    }
-
-    // Add context-based tags
-    if (context?.placeName) {
-      tags.push(context.placeName);
-    }
-    if (context?.tableName) {
-      tags.push(context.tableName);
+      console.log('🏷️ Added table tags:', tableMatches);
     }
 
     // Extract management keywords
@@ -168,10 +207,13 @@ class LoggingService {
       const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
       if (regex.test(message)) {
         tags.push(keyword);
+        console.log('🏷️ Added management keyword:', keyword);
       }
     });
 
-    return [...new Set(tags)]; // Remove duplicates
+    const finalTags = [...new Set(tags)]; // Remove duplicates
+    console.log('🎯 Final extracted tags:', finalTags);
+    return finalTags;
   }
 
   private formatMessage(message: string, context?: LogContext): string {
@@ -187,8 +229,10 @@ class LoggingService {
 
   private formatTime(timestamp: number): string {
     const date = new Date(timestamp);
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
+    // Convert to Korean time (Asia/Seoul timezone)
+    const koreanTime = new Date(date.toLocaleString("en-US", {timeZone: "Asia/Seoul"}));
+    const hours = koreanTime.getHours().toString().padStart(2, '0');
+    const minutes = koreanTime.getMinutes().toString().padStart(2, '0');
     return `${hours}:${minutes}`;
   }
 
@@ -198,34 +242,56 @@ class LoggingService {
   }
 
   async logPlaceCreated(placeName: string): Promise<void> {
-    await this.log(EventType.PLACE_CREATED, `${placeName} has been created.`, { placeName });
+    await this.log(EventType.PLACE_CREATED, `{{${placeName}}} has been created.`, { place: placeName });
   }
 
   async logPlaceDeleted(placeName: string): Promise<void> {
-    await this.log(EventType.PLACE_DELETED, `${placeName} has been deleted.`, { placeName });
+    await this.log(EventType.PLACE_DELETED, `{{${placeName}}} has been deleted.`, { place: placeName });
+  }
+
+  async logPlaceUpdated(placeName: string): Promise<void> {
+    await this.log(EventType.PLACE_UPDATED, `{{${placeName}}} has been modified.`, { place: placeName });
   }
 
   async logTableCreated(tableName: string, placeName: string): Promise<void> {
-    await this.log(EventType.TABLE_CREATED, `${placeName} ${tableName} has been created.`, {
-      tableName,
-      placeName
+    await this.log(EventType.TABLE_CREATED, `{{${placeName}}} {{${tableName}}} has been created.`, {
+      table: tableName,
+      place: placeName
     });
   }
 
   async logTableDeleted(tableName: string, placeName: string): Promise<void> {
-    await this.log(EventType.TABLE_DELETED, `${placeName} ${tableName} has been deleted.`, {
-      tableName,
-      placeName
+    await this.log(EventType.TABLE_DELETED, `{{${placeName}}} {{${tableName}}} has been deleted.`, {
+      table: tableName,
+      place: placeName
     });
   }
 
   async logCustomerArrival(placeName: string, tableName: string, customerCount: number = 1): Promise<void> {
     const customerText = customerCount === 1 ? 'A customer' : `${customerCount} customers`;
-    await this.log(EventType.CUSTOMER_ARRIVED, `${placeName} ${tableName} ${customerText} has arrived.`, {
-      placeName,
-      tableName,
+    await this.log(EventType.CUSTOMER_ARRIVED, `{{${placeName}}} {{${tableName}}} ${customerText} has arrived.`, {
+      place: placeName,
+      table: tableName,
       customerCount
     });
+  }
+
+  // Future Menu logging methods
+  async logMenuCreated(menuName: string): Promise<void> {
+    await this.log(EventType.MENU_CREATED, `{{${menuName}}} has been created.`, { menu: menuName });
+  }
+
+  async logMenuDeleted(menuName: string): Promise<void> {
+    await this.log(EventType.MENU_DELETED, `{{${menuName}}} has been deleted.`, { menu: menuName });
+  }
+
+  // Future Category logging methods
+  async logCategoryCreated(categoryName: string): Promise<void> {
+    await this.log(EventType.CATEGORY_CREATED, `{{${categoryName}}} has been created.`, { category: categoryName });
+  }
+
+  async logCategoryDeleted(categoryName: string): Promise<void> {
+    await this.log(EventType.CATEGORY_DELETED, `{{${categoryName}}} has been deleted.`, { category: categoryName });
   }
 
   async logError(errorMessage: string, additionalData?: Record<string, any>): Promise<void> {
@@ -237,25 +303,76 @@ class LoggingService {
 
   // Authentication event methods
   async logUserSignIn(userId: string): Promise<void> {
+    console.log('🔄 Starting fresh login session for user:', userId);
     this.setCurrentUser(userId);
+    
+    // Clear all local logs and start fresh session automatically
+    console.log('🧹 Clearing all local data for fresh session...');
+    await this.clearAllLocalData();
+    
+    // Reload places from database for ItemComp processing
+    await this.loadPlacesFromDB();
+    
+    // Small delay to ensure clearing is complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     this.markSessionStart(); // Mark session start when user signs in
+    console.log('✅ Fresh session started for user:', userId);
+    
     await this.log(EventType.USER_SIGNIN, `User ${userId} has signed in.`);
+    
+    // Log system status after session starts
+    await this.log(EventType.SYSTEM_STARTUP, 'The dashboard has been started.');
+    if (navigator.onLine) {
+      await this.log(EventType.CONNECTION_ESTABLISHED, 'Connection to the server was successful.');
+    } else {
+      await this.log(EventType.CONNECTION_LOST, 'No internet connection. Working offline.');
+    }
   }
 
   async logUserSignUp(userId: string): Promise<void> {
+    console.log('🔄 Starting fresh signup session for user:', userId);
     this.setCurrentUser(userId);
+    
+    // Clear all local logs and start fresh session automatically
+    console.log('🧹 Clearing all local data for fresh session...');
+    await this.clearAllLocalData();
+    
+    // Small delay to ensure clearing is complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     this.markSessionStart(); // Mark session start when user signs up
+    console.log('✅ Fresh session started for user:', userId);
+    
     await this.log(EventType.USER_SIGNUP, `User ${userId} has signed up.`);
+    
+    // Log system status after session starts
+    await this.log(EventType.SYSTEM_STARTUP, 'The dashboard has been started.');
+    if (navigator.onLine) {
+      await this.log(EventType.CONNECTION_ESTABLISHED, 'Connection to the server was successful.');
+    } else {
+      await this.log(EventType.CONNECTION_LOST, 'No internet connection. Working offline.');
+    }
   }
 
   async logUserSignOut(): Promise<void> {
     await this.log(EventType.USER_SIGNOUT, `User ${this.currentUserId} has signed out.`);
-    // Don't reset session start time on sign out - keep the session logs available
+    
+    // Force sync all accumulated logs with the database before logout
+    console.log('🔄 Syncing accumulated logs before logout...');
+    await this.forceSyncNow();
+    
+    // Clear session start time on sign out to ensure fresh session on next login
+    this.sessionStartTime = null;
+    localStorage.removeItem('sessionStartTime');
+    console.log('📅 Session cleared on user sign out');
   }
 
   // Session management
   markSessionStart(): void {
     this.sessionStartTime = Date.now();
+    // Persist session start time to localStorage
+    localStorage.setItem('sessionStartTime', this.sessionStartTime.toString());
     console.log('📅 Session start time marked:', new Date(this.sessionStartTime).toLocaleString());
   }
 
@@ -364,6 +481,44 @@ class LoggingService {
     this.currentUserId = userId;
   }
 
+  // Place data management for ItemComp processing
+  private async loadPlacesFromDB(): Promise<void> {
+    try {
+      this.places = await placeService.getAllPlaces();
+      console.log(`📍 Loaded ${this.places.length} places for ItemComp processing`);
+    } catch (error) {
+      console.error('❌ Failed to load places from database:', error);
+      this.places = [];
+    }
+  }
+
+  async refreshPlacesData(): Promise<void> {
+    await this.loadPlacesFromDB();
+  }
+
+  getPlaceByName(placeName: string): PlaceData | undefined {
+    return this.places.find(place => place.name === placeName);
+  }
+
+  getAllPlaceNames(): string[] {
+    return this.places.map(place => place.name);
+  }
+
+  // Clear all local logs and session data
+  async clearAllLocalData(): Promise<void> {
+    await databaseService.clearAllLogs();
+    this.sessionStartTime = null;
+    localStorage.removeItem('sessionStartTime');
+    console.log('🧹 All local logs and session data cleared');
+  }
+
+  // Clear and notify subscribers (for manual clearing)
+  async clearAllLocalDataAndNotify(): Promise<void> {
+    await this.clearAllLocalData();
+    // Notify subscribers about the change
+    this.notifySubscribers();
+  }
+
   // Cleanup
   async destroy(): Promise<void> {
     syncService.destroy();
@@ -375,3 +530,9 @@ class LoggingService {
 }
 
 export const loggingService = new LoggingService();
+
+// Expose for debugging in development
+if (import.meta.env.DEV) {
+  (window as any).clearAllLocalData = () => loggingService.clearAllLocalDataAndNotify();
+  (window as any).loggingService = loggingService;
+}

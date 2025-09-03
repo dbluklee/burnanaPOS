@@ -66,7 +66,7 @@ export default function PlaceCardComp({
   // Default state
   return (
     <div 
-      className="box-border flex flex-col items-start justify-end relative w-full h-full cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-lg"
+      className="box-border flex flex-col items-start justify-end relative w-full h-full cursor-pointer"
       style={{ 
         backgroundColor: color,
         padding: '15%',

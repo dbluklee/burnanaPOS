@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PlaceCard from './PlaceCardComp';
+import { getCSSVariable } from './ColorSelectorComp';
 
 interface Place {
   id: string;
@@ -462,7 +463,7 @@ export default function ResponsiveCardGridComp({
               <PlaceCard
                 placeName={place.name}
                 tableCount={place.tableCount}
-                color={place.color}
+                color={getCSSVariable(place.color)} // Convert hex color back to CSS variable
                 property={place.id === 'add' ? 'Empty' : 'Default'}
                 onClick={() => {}} // Disable PlaceCard's own click handler
               />

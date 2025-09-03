@@ -6,7 +6,7 @@ import PanelContent from './PanelContentComp';
 import PanelHeaderComp from './PanelHeaderComp';
 import PlaceCard from './PlaceCardComp';
 import ResponsiveCardGrid from './ResponsiveCardGridComp';
-import { tableColors } from './ColorSelectorComp';
+import { tableColors, getHexColor, getCSSVariable } from './ColorSelectorComp';
 import { useLogging } from '../hooks/useLogging';
 import SyncStatus from './SyncStatus';
 import { placeService, type PlaceData } from '../services/placeService';
@@ -55,12 +55,14 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
     undoLog, 
     logPlaceCreated, 
     logPlaceDeleted,
+    logPlaceUpdated,
     logTableCreated,
     logTableDeleted,
     logCustomerArrival,
     logUserSignIn,
     forceSyncNow,
-    syncStatus
+    syncStatus,
+    refreshPlacesData
   } = useLogging();
   
   const [savedPlaces, setSavedPlaces] = React.useState<Place[]>([]);
@@ -160,7 +162,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
         const newPlaceData = await placeService.createPlace({
           store_number: storeNumber,
           name,
-          color: selectedColor,
+          color: getHexColor(selectedColor), // Convert CSS variable to hex
           table_count: 0,
           user_pin: userPin
         });
@@ -198,6 +200,9 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
         
         // Log the creation
         await logPlaceCreated(name);
+        
+        // Refresh places data in logging service for ItemComp processing
+        await refreshPlacesData();
         
         console.log('✅ Place created successfully:', newPlace);
       } catch (error) {
@@ -243,6 +248,9 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
       
       // Log the deletion
       await logPlaceDeleted(place.name);
+      
+      // Refresh places data in logging service for ItemComp processing
+      await refreshPlacesData();
       
       console.log('✅ Place deleted successfully:', place.name);
     } catch (error) {
@@ -298,10 +306,16 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
         // Update place on server
         await placeService.updatePlace(parseInt(editingPlace.id), {
           name,
-          color: selectedColor,
+          color: getHexColor(selectedColor), // Convert CSS variable to hex
           store_number: storeNumber,
           user_pin: userPin
         });
+        
+        // Log the place update
+        await logPlaceUpdated(name);
+        
+        // Refresh places data for ItemComp processing
+        await refreshPlacesData();
         
         // Start fade animation
         setCardsTransitioning(true);
@@ -403,7 +417,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
       {/* Header */}
       <div className="box-border content-stretch flex items-center justify-between overflow-hidden px-[2vw] py-0 relative shrink-0 w-full" style={{ height: 'clamp(3rem, 6vh, 4rem)' }} data-name="Header" data-node-id="184:4004">
         <div 
-          className="content-stretch flex flex-col gap-2.5 items-center justify-center overflow-hidden relative shrink-0 cursor-pointer hover:opacity-80 transition-opacity" 
+          className="content-stretch flex flex-col gap-2.5 items-center justify-center overflow-hidden relative shrink-0 cursor-pointer" 
           style={{ width: '2rem', height: '2rem' }} 
           data-name="Home" 
           data-node-id="184:4005"
@@ -425,28 +439,28 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
           {/* Test buttons for logging system */}
           <button
             onClick={handleTestCustomerArrival}
-            className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            className="px-2 py-1 text-xs bg-blue-600 text-white rounded"
             title="Test customer arrival log"
           >
             Test Customer
           </button>
           <button
             onClick={handleTestSync}
-            className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+            className="px-2 py-1 text-xs bg-green-600 text-white rounded"
             title="Force sync logs to server"
           >
             Sync Now
           </button>
           <button
             onClick={handleTestDeletePlace}
-            className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+            className="px-2 py-1 text-xs bg-red-600 text-white rounded"
             title="Delete last place (test animation)"
           >
             Del Place
           </button>
           <button
             onClick={handleTestLogin}
-            className="px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+            className="px-2 py-1 text-xs bg-purple-600 text-white rounded"
             title="Simulate user login - starts session log filtering"
           >
             Login

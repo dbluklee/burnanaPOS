@@ -139,7 +139,10 @@ class DatabaseService {
 
   async clearAllLogs(): Promise<void> {
     if (!this.db) throw new Error('Database not initialized');
+    // Clear both logs and sync metadata for a complete fresh start
     await this.db.clear(LOG_STORE);
+    await this.db.clear(SYNC_META_STORE);
+    console.log('🗑️ Cleared all logs and sync metadata from IndexedDB');
   }
 
   async close(): Promise<void> {

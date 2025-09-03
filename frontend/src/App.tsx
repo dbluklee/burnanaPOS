@@ -6,7 +6,6 @@ import HomePage from './components/HomePage';
 import ManagementPage from './components/ManagementPage';
 import ComponentShowcasePage from './components/ComponentShowcasePage';
 import type { PageType } from './types/navigation';
-import { useLogger } from './hooks/useLogging';
 import { enterFullscreen, exitFullscreen, isFullscreen } from './utils/fullscreen';
 
 function App() {
@@ -16,7 +15,6 @@ function App() {
   const [displayPage, setDisplayPage] = useState<PageType>('welcome');
   const [isInFullscreen, setIsInFullscreen] = useState(false);
   
-  const { logNavigation } = useLogger();
 
   // Apply Mode-1 class to body for color variables
   useEffect(() => {
@@ -46,9 +44,6 @@ function App() {
   }, []);
 
   const navigateTo = async (page: PageType, requestFullscreen: boolean = false) => {
-    // Log navigation
-    logNavigation(currentPage, page);
-    
     // Enter fullscreen mode for auth pages if requested and not already in fullscreen
     if (requestFullscreen && !isInFullscreen) {
       try {

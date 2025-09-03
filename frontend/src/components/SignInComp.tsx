@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { DESIGN_TOKENS } from '../types/design-tokens';
 import { userService, type SignInData } from '../services/userService';
+import { useLogger } from '../hooks/useLogging';
 import MobileSignInComp, { type MobileSignInForm } from './MobileSignInComp';
 import PinSignInComp, { type PinSignInForm } from './PinSignInComp';
 
@@ -15,6 +16,7 @@ type TabType = 'MOBILE' | 'PIN_PASSWORD';
 export default function SignInComp({ onBack, onSignInComplete }: SignInCompProps) {
   const { colors, fonts } = DESIGN_TOKENS;
   const containerRef = useRef<HTMLDivElement>(null);
+  const { logUserSignIn } = useLogger();
   
   const [containerSize, setContainerSize] = useState({
     width: 0,
@@ -120,6 +122,9 @@ export default function SignInComp({ onBack, onSignInComplete }: SignInCompProps
       const user = await userService.signIn(signInData);
       
       localStorage.setItem('currentUser', JSON.stringify(user));
+      
+      // Initialize logging session with user sign in
+      await logUserSignIn(user.userPin);
       
       onSignInComplete?.();
     } catch (err) {

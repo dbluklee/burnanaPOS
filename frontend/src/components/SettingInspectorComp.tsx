@@ -1,6 +1,6 @@
 import React from 'react';
 import PlaceSettings from './PlaceSettingsComp';
-import { tableColors } from './ColorSelectorComp';
+import { tableColors, getCSSVariable } from './ColorSelectorComp';
 
 interface Place {
   id: string;
@@ -43,9 +43,12 @@ export default function SettingInspectorComp({
             isEditMode={isEditMode}
             initialName={editingPlace?.name || ''}
             initialColorIndex={editingPlace ? 
-              tableColors.indexOf(editingPlace.color) >= 0 
-                ? tableColors.indexOf(editingPlace.color) 
-                : 0 
+              (() => {
+                // Convert hex color back to CSS variable, then find its index
+                const cssVariable = getCSSVariable(editingPlace.color);
+                const colorIndex = tableColors.indexOf(cssVariable);
+                return colorIndex >= 0 ? colorIndex : 0;
+              })()
               : 0
             }
             initialStoreNumber={editingPlace?.storeNumber || ''}
