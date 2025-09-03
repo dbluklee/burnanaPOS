@@ -114,6 +114,14 @@ export default function SignInComp({ onBack, onSignInComplete }: SignInCompProps
     setError(null);
 
     try {
+      // First check server connection
+      const connectionStatus = await userService.checkServerConnection();
+      
+      if (!connectionStatus.connected) {
+        setError(`Connection failed: ${connectionStatus.message}`);
+        return;
+      }
+
       const signInData: SignInData = {
         storeNumber: pinForm.storeId,
         userPin: pinForm.userPin
@@ -125,6 +133,10 @@ export default function SignInComp({ onBack, onSignInComplete }: SignInCompProps
       
       // Initialize logging session with user sign in
       await logUserSignIn(user.userPin);
+      
+      // Log server connection status after session is started
+      const { loggingService } = await import('../services/loggingService');
+      await loggingService.logServerConnection(connectionStatus.connected, connectionStatus.message);
       
       onSignInComplete?.();
     } catch (err) {

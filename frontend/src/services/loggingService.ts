@@ -298,6 +298,14 @@ class LoggingService {
     await this.log(EventType.USER_SIGNIN, `User ${userId} has signed in.`);
   }
 
+  async logServerConnection(isConnected: boolean, message: string): Promise<void> {
+    if (isConnected) {
+      await this.log(EventType.CONNECTION_ESTABLISHED, `Server connection verified: ${message}`);
+    } else {
+      await this.log(EventType.CONNECTION_LOST, `Server connection failed: ${message}`);
+    }
+  }
+
   async logUserSignUp(userId: string): Promise<void> {
     console.log('🔄 Starting fresh signup session for user:', userId);
     this.setCurrentUser(userId);

@@ -28,6 +28,35 @@ export interface SignInData {
 }
 
 class UserService {
+  async checkServerConnection(): Promise<{ connected: boolean; message: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: 5000, // 5 second timeout
+      });
+
+      if (response.ok) {
+        return { 
+          connected: true, 
+          message: 'Server connection successful' 
+        };
+      } else {
+        return { 
+          connected: false, 
+          message: `Server responded with status ${response.status}` 
+        };
+      }
+    } catch (error) {
+      return { 
+        connected: false, 
+        message: `Server connection failed: ${error instanceof Error ? error.message : 'Unknown error'}` 
+      };
+    }
+  }
+
   async register(signUpData: SignUpData): Promise<UserProfile> {
     const response = await fetch(`${API_BASE}/users/register`, {
       method: 'POST',
