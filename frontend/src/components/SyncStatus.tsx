@@ -34,28 +34,26 @@ export default function SyncStatus({ syncStatus }: SyncStatusProps) {
 
   return (
     <div className="flex items-center gap-2 px-2 py-1 text-xs">
-      {/* Connection indicator */}
+      {/* Connection indicator - always online */}
       <div 
-        className={`w-2 h-2 rounded-full ${
-          syncStatus.online ? 'bg-green-500' : 'bg-red-500'
-        }`}
-        title={syncStatus.online ? 'Online' : 'Offline'}
+        className="w-2 h-2 rounded-full bg-green-500"
+        title="Connected"
       ></div>
       
-      {/* Status text */}
-      <span className={syncStatus.online ? 'text-green-400' : 'text-red-400'}>
-        {syncStatus.online ? 'Online' : 'Offline'}
+      {/* Status text - always connected */}
+      <span className="text-green-400">
+        Connected
       </span>
       
       {/* Pending count */}
       {syncStatus.pendingCount > 0 && (
         <span className="text-yellow-400">
-          ({syncStatus.pendingCount} pending)
+          ({syncStatus.pendingCount} syncing)
         </span>
       )}
       
       {/* Last sync time */}
-      {syncStatus.online && syncStatus.lastSyncTime && (
+      {syncStatus.lastSyncTime && (
         <span className="text-gray-400">
           • Last sync: {formatLastSync(syncStatus.lastSyncTime)}
         </span>

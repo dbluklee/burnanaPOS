@@ -5,10 +5,10 @@ export class Log {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        `INSERT INTO logs (type, message, user_pin, store_number, place_name, metadata)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO logs (type, message, user_pin, store_number, metadata)
+         VALUES ($1, $2, $3, $4, $5)
          RETURNING *`,
-        [log.type, log.message, log.user_pin || null, log.store_number || null, log.place_name || null, log.metadata || null]
+        [log.type, log.message, log.user_pin || null, log.store_number || null, log.metadata || null]
       );
       
       return result.rows[0];

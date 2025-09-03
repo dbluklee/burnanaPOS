@@ -68,7 +68,6 @@ export const initializeDatabase = async (): Promise<void> => {
           message TEXT NOT NULL,
           user_pin VARCHAR(20),
           store_number VARCHAR(100),
-          place_name VARCHAR(200),
           metadata TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -122,7 +121,6 @@ export interface LogRecord {
   message: string;
   user_pin?: string;
   store_number?: string;
-  place_name?: string;
   metadata?: string;
   created_at?: Date;
 }

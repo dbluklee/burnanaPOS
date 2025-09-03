@@ -9,7 +9,7 @@ interface ServerLogEntry {
   userId: string;
   timestamp: number;
   text: string;
-  itemTags?: string[];
+  additionalData?: any; // Additional metadata including preData/postData
 }
 
 interface SyncResponse {
@@ -21,35 +21,18 @@ interface SyncResponse {
 class SyncService {
   private baseUrl: string;
   private syncInterval: number | null = null;
-  private isOnline: boolean = navigator.onLine;
   private syncInProgress: boolean = false;
 
   constructor() {
     // In development, we'll use a mock API endpoint
     // In production, this would be your actual server endpoint
     this.baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
-    
-    // Listen for online/offline events
-    window.addEventListener('online', this.handleOnline.bind(this));
-    window.addEventListener('offline', this.handleOffline.bind(this));
   }
 
-  private handleOnline(): void {
-    this.isOnline = true;
-    console.log('💡 Connection restored. Starting automatic sync...');
-    this.startAutoSync();
-    this.syncPendingLogs();
-  }
-
-  private handleOffline(): void {
-    this.isOnline = false;
-    console.log('🔌 Connection lost. Stopping automatic sync...');
-    this.stopAutoSync();
-  }
 
   async syncPendingLogs(): Promise<SyncResponse> {
-    if (!this.isOnline || this.syncInProgress) {
-      return { success: false, syncedCount: 0, errors: ['Offline or sync in progress'] };
+    if (this.syncInProgress) {
+      return { success: false, syncedCount: 0, errors: ['Sync already in progress'] };
     }
 
     this.syncInProgress = true;
@@ -71,7 +54,7 @@ class SyncService {
         userId: log.userId,
         timestamp: log.timestamp,
         text: log.text,
-        itemTags: log.itemTags
+        additionalData: log.additionalData
       }));
 
       // Send logs to server in batches
@@ -94,7 +77,7 @@ class SyncService {
             }
           );
 
-          if (response.data.id) {
+          if (response.data.success || response.data.data || response.data.id) {
             // Mark this log as synced in local database
             await databaseService.markLogAsSynced(correspondingLocalLog.id!);
             syncedCount++;
@@ -142,11 +125,6 @@ class SyncService {
   }
 
   async sendLogImmediately(log: LogEntry): Promise<boolean> {
-    if (!this.isOnline) {
-      console.log('📱 Offline: Log saved locally for later sync');
-      return false;
-    }
-
     try {
       const serverLog: ServerLogEntry = {
         eventId: log.eventId,
@@ -154,7 +132,7 @@ class SyncService {
         userId: log.userId,
         timestamp: log.timestamp,
         text: log.text,
-        itemTags: log.itemTags
+        additionalData: log.additionalData
       };
 
       const response: AxiosResponse = await axios.post(
@@ -166,7 +144,7 @@ class SyncService {
         }
       );
 
-      if (response.data.success && log.id) {
+      if ((response.data.success || response.data.data) && log.id) {
         await databaseService.markLogAsSynced(log.id);
         console.log('✅ Log sent immediately to server');
         return true;
@@ -186,9 +164,7 @@ class SyncService {
     }
 
     this.syncInterval = window.setInterval(() => {
-      if (this.isOnline) {
-        this.syncPendingLogs();
-      }
+      this.syncPendingLogs();
     }, intervalMinutes * 60 * 1000);
 
     console.log(`🔄 Auto-sync started (every ${intervalMinutes} minutes)`);
@@ -207,7 +183,7 @@ class SyncService {
     const unsyncedLogs = await databaseService.getUnsyncedLogs();
     
     return {
-      online: this.isOnline,
+      online: true, // Always online
       lastSyncTime: metadata?.lastSyncTime,
       pendingCount: unsyncedLogs.length
     };
@@ -228,8 +204,6 @@ class SyncService {
 
   destroy(): void {
     this.stopAutoSync();
-    window.removeEventListener('online', this.handleOnline.bind(this));
-    window.removeEventListener('offline', this.handleOffline.bind(this));
   }
 }
 

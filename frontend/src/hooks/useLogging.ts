@@ -16,11 +16,11 @@ interface UseLoggingReturn {
   // Logging methods
   log: (eventType: EventType, message: string, context?: any) => Promise<void>;
   logNavigation: (from: string, to: string) => Promise<void>;
-  logPlaceCreated: (placeName: string) => Promise<void>;
-  logPlaceDeleted: (placeName: string) => Promise<void>;
-  logPlaceUpdated: (placeName: string) => Promise<void>;
-  logTableCreated: (tableName: string, placeName: string) => Promise<void>;
-  logTableDeleted: (tableName: string, placeName: string) => Promise<void>;
+  logPlaceCreated: (placeName: string, color: string) => Promise<void>;
+  logPlaceDeleted: (placeName: string, color: string) => Promise<void>;
+  logPlaceUpdated: (oldPlaceName: string, oldColor: string, newPlaceName: string, newColor: string) => Promise<void>;
+  logTableCreated: (tableName: string, placeName: string, tableData?: any) => Promise<void>;
+  logTableDeleted: (tableName: string, placeName: string, tableData?: any) => Promise<void>;
   logMenuCreated: (menuName: string) => Promise<void>;
   logMenuDeleted: (menuName: string) => Promise<void>;
   logCategoryCreated: (categoryName: string) => Promise<void>;
@@ -151,24 +151,24 @@ export function useLogging(autoRefresh: boolean = true): UseLoggingReturn {
     await loggingService.logNavigation(from, to);
   }, []);
 
-  const logPlaceCreated = useCallback(async (placeName: string) => {
-    await loggingService.logPlaceCreated(placeName);
+  const logPlaceCreated = useCallback(async (placeName: string, color: string) => {
+    await loggingService.logPlaceCreated(placeName, color);
   }, []);
 
-  const logPlaceDeleted = useCallback(async (placeName: string) => {
-    await loggingService.logPlaceDeleted(placeName);
+  const logPlaceDeleted = useCallback(async (placeName: string, color: string) => {
+    await loggingService.logPlaceDeleted(placeName, color);
   }, []);
 
-  const logPlaceUpdated = useCallback(async (placeName: string) => {
-    await loggingService.logPlaceUpdated(placeName);
+  const logPlaceUpdated = useCallback(async (oldPlaceName: string, oldColor: string, newPlaceName: string, newColor: string) => {
+    await loggingService.logPlaceUpdated(oldPlaceName, oldColor, newPlaceName, newColor);
   }, []);
 
-  const logTableCreated = useCallback(async (tableName: string, placeName: string) => {
-    await loggingService.logTableCreated(tableName, placeName);
+  const logTableCreated = useCallback(async (tableName: string, placeName: string, tableData?: any) => {
+    await loggingService.logTableCreated(tableName, placeName, tableData);
   }, []);
 
-  const logTableDeleted = useCallback(async (tableName: string, placeName: string) => {
-    await loggingService.logTableDeleted(tableName, placeName);
+  const logTableDeleted = useCallback(async (tableName: string, placeName: string, tableData?: any) => {
+    await loggingService.logTableDeleted(tableName, placeName, tableData);
   }, []);
 
   const logMenuCreated = useCallback(async (menuName: string) => {

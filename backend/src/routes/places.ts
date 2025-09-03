@@ -1,6 +1,5 @@
 import express from 'express';
 import { Place } from '../models/Place';
-import { Log } from '../models/Log';
 
 const router = express.Router();
 
@@ -67,16 +66,6 @@ router.post('/', async (req, res) => {
       user_pin
     });
     
-    // Log the creation
-    await Log.create({
-      type: 'PLACE_CREATED',
-      message: `Place "${name}" created at store ${store_number}`,
-      user_pin,
-      store_number,
-      place_name: name,
-      metadata: JSON.stringify({ color, table_count: table_count || 0 })
-    });
-    
     res.status(201).json(newPlace);
   } catch (error) {
     console.error('Error creating place:', error);
@@ -94,18 +83,6 @@ router.put('/:id', async (req, res) => {
     
     const updates = req.body;
     const updatedPlace = await Place.update(id, updates);
-    
-    // Log the update
-    if (updates.user_pin) {
-      await Log.create({
-        type: 'PLACE_UPDATED',
-        message: `Place "${updatedPlace.name}" updated`,
-        user_pin: updates.user_pin,
-        store_number: updatedPlace.store_number,
-        place_name: updatedPlace.name,
-        metadata: JSON.stringify(updates)
-      });
-    }
     
     res.json(updatedPlace);
   } catch (error) {
@@ -126,22 +103,11 @@ router.delete('/:id', async (req, res) => {
       return res.status(400).json({ error: 'Invalid place ID' });
     }
     
-    // Get place details before deletion for logging
-    const place = await Place.findById(id);
     const deleted = await Place.delete(id);
     
     if (!deleted) {
       return res.status(404).json({ error: 'Place not found' });
     }
-    
-    // Log the deletion
-    await Log.create({
-      type: 'PLACE_DELETED',
-      message: `Place "${place.name}" deleted from store ${place.store_number}`,
-      user_pin: place.user_pin,
-      store_number: place.store_number,
-      place_name: place.name
-    });
     
     res.json({ message: 'Place deleted successfully' });
   } catch (error) {

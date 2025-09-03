@@ -199,7 +199,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
         }, 150);
         
         // Log the creation
-        await logPlaceCreated(name);
+        await logPlaceCreated(name, getHexColor(selectedColor));
         
         // Refresh places data in logging service for ItemComp processing
         await refreshPlacesData();
@@ -249,7 +249,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
       }, 150);
       
       // Log the deletion
-      await logPlaceDeleted(place.name);
+      await logPlaceDeleted(place.name, place.color);
       
       // Refresh places data in logging service for ItemComp processing
       await refreshPlacesData();
@@ -293,8 +293,8 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
           user_pin: userPin
         });
         
-        // Log the place update
-        await logPlaceUpdated(name);
+        // Log the place update  
+        await logPlaceUpdated(editingPlace.name, editingPlace.color, name, getHexColor(selectedColor));
         
         // Refresh places data for ItemComp processing
         await refreshPlacesData();

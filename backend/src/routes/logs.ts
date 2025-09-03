@@ -67,9 +67,9 @@ router.post('/', async (req, res) => {
     // Support both frontend format and direct API format
     const { 
       // Frontend format
-      eventId, text, userId, storeNumber, timestamp, itemTags,
+      eventId, text, userId, storeNumber, timestamp, additionalData,
       // Direct API format
-      type, message, user_pin, store_number, place_name, metadata 
+      type, message, user_pin, store_number, metadata 
     } = req.body;
     
     // Map frontend format to backend format
@@ -85,13 +85,20 @@ router.post('/', async (req, res) => {
       });
     }
     
+    // Combine all metadata
+    let combinedMetadata = metadata || {};
+    
+    // Handle additionalData from frontend (contains preData/postData)
+    if (additionalData) {
+      combinedMetadata = { ...combinedMetadata, ...additionalData };
+    }
+
     const newLog = await Log.create({
       type: logType,
       message: logMessage,
       user_pin: userPin,
       store_number: storeNum,
-      place_name,
-      metadata: metadata || (itemTags ? { itemTags } : undefined)
+      metadata: Object.keys(combinedMetadata).length > 0 ? JSON.stringify(combinedMetadata) : undefined
     });
     
     // Return success response in the format frontend expects

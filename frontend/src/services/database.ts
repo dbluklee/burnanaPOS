@@ -9,7 +9,7 @@ export interface LogEntry {
   timestamp: number; // Unix timestamp
   timeFormatted: string; // Human-readable time (e.g., "10:31")
   text: string; // Log message including Item references
-  itemTags?: string[]; // Extracted item tags for easier querying
+  additionalData?: any; // Additional metadata including preData/postData
   synced: boolean; // Whether this entry has been synced to server
   createdAt: number; // When the log was created locally
 }
@@ -27,6 +27,10 @@ const SYNC_META_STORE = 'sync_metadata';
 
 class DatabaseService {
   private db: IDBPDatabase | null = null;
+
+  get isInitialized(): boolean {
+    return this.db !== null;
+  }
 
   async initialize(): Promise<void> {
     this.db = await openDB(DB_NAME, DB_VERSION, {
@@ -63,6 +67,7 @@ class DatabaseService {
       createdAt: Date.now(),
     };
 
+    console.log('📝 Adding log entry to IndexedDB:', logEntry);
     return await this.db.add(LOG_STORE, logEntry);
   }
 
@@ -150,6 +155,15 @@ class DatabaseService {
       this.db.close();
       this.db = null;
     }
+  }
+
+  async deleteDatabase(): Promise<void> {
+    if (this.db) {
+      this.db.close();
+      this.db = null;
+    }
+    await indexedDB.deleteDatabase(DB_NAME);
+    console.log('🗑️ IndexedDB database deleted completely');
   }
 }
 
