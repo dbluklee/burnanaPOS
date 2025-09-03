@@ -180,6 +180,7 @@ export default function ButtonComp({
         <div 
           className="box-border content-stretch flex items-center justify-center overflow-hidden relative shrink-0 h-full"
           style={{ 
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
             padding: isSwipeActive ? 'clamp(0.1rem, 0.05vw, 0.4rem) 0.25rem' : 'clamp(0.2rem, 0.5vw, 0.4rem) clamp(0.8rem, 2.4vw, 2rem)',
             width: '8vw' // Fixed width for DeleteItem
           }}
