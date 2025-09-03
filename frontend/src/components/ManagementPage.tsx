@@ -263,26 +263,6 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
     }
   };
 
-  // Test functions for demonstrating logging
-  const handleTestCustomerArrival = async () => {
-    await logCustomerArrival('1st floor', 'Table1', Math.floor(Math.random() * 4) + 1);
-  };
-
-  const handleTestSync = async () => {
-    await forceSyncNow();
-  };
-
-  const handleTestDeletePlace = async () => {
-    if (savedPlaces.length > 0) {
-      const lastPlace = savedPlaces[savedPlaces.length - 1];
-      await handlePlaceDelete(lastPlace);
-    }
-  };
-
-  const handleTestLogin = async () => {
-    await logUserSignIn(`user_${Date.now()}`);
-  };
-
   // Long-press handler to enter edit mode
   const handleCardLongPress = (place: Place) => {
     if (place.id === 'add') return;
@@ -442,35 +422,6 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
           {/* Sync status indicator */}
           <SyncStatus syncStatus={syncStatus} />
           
-          {/* Test buttons for logging system */}
-          <button
-            onClick={handleTestCustomerArrival}
-            className="px-2 py-1 text-xs bg-blue-600 text-white rounded"
-            title="Test customer arrival log"
-          >
-            Test Customer
-          </button>
-          <button
-            onClick={handleTestSync}
-            className="px-2 py-1 text-xs bg-green-600 text-white rounded"
-            title="Force sync logs to server"
-          >
-            Sync Now
-          </button>
-          <button
-            onClick={handleTestDeletePlace}
-            className="px-2 py-1 text-xs bg-red-600 text-white rounded"
-            title="Delete last place (test animation)"
-          >
-            Del Place
-          </button>
-          <button
-            onClick={handleTestLogin}
-            className="px-2 py-1 text-xs bg-purple-600 text-white rounded"
-            title="Simulate user login - starts session log filtering"
-          >
-            Login
-          </button>
           <div className="flex flex-col font-['Pretendard'] font-semibold h-full justify-center leading-[0] not-italic relative shrink-0 text-[#e0e0e0] text-right whitespace-nowrap" style={{ fontSize: 'clamp(0.9rem, 1.5vw, 1.5rem)' }} data-node-id="184:4010">
             <p className="leading-[normal]">{getCurrentDateTime()}</p>
           </div>
