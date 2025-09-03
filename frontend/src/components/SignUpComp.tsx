@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { DESIGN_TOKENS } from '../types/design-tokens';
 import { userService, type SignUpData, type UserProfile } from '../services/userService';
-import ButtonItemComp from './ButtonItemComp';
+import ButtonComp from './ButtonComp';
 
 interface SignUpCompProps {
   onBack?: () => void;
@@ -307,7 +307,7 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
               </p>
             </div>
             
-            <ButtonItemComp 
+            <ButtonComp 
               label="Continue to Dashboard"
               onClick={onSignUpComplete}
               isSelected={true}
@@ -423,7 +423,7 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
                     maxLength={13}
                     required
                   />
-                  <ButtonItemComp 
+                  <ButtonComp 
                     label="Verify"
                     onClick={handlePhoneAuth}
                     className="FontStyleTitle"
@@ -461,7 +461,7 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
 
               {/* Buttons */}
               <div className="flex gap-4" style={{ paddingTop: '12px' }}>
-                <ButtonItemComp 
+                <ButtonComp 
                   label="Back"
                   onClick={onBack}
                   className="flex-1"
@@ -473,7 +473,7 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
                   style={{ display: 'none' }}
                   disabled={isLoading}
                 />
-                <ButtonItemComp 
+                <ButtonComp 
                   label={isLoading ? 'Creating Account...' : 'Create Account'}
                   onClick={handleSubmit}
                   isSelected={true}

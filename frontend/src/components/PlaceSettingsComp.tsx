@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import ColorSelector, { tableColors } from './ColorSelectorComp';
 import TextInput from './TextInputComp';
-import ButtonSaveCancelComp from './ButtonSaveCancelComp';
-import DeleteButton from './ButtonDeleteComp';
+import ButtonsSetComp from './ButtonsSetComp';
 
 interface PlaceSettingsCompProps {
   onSave?: (placeName: string, selectedColor: string) => void;
@@ -60,27 +59,16 @@ export default function PlaceSettingsComp({
 
       <div className="h-10 shrink-0 w-full" data-name="gap" />
       
-      {/* Save/Cancel Buttons */}
+      {/* Button Set - Save/Cancel and Delete */}
       <div className="flex justify-center w-full">
-        <ButtonSaveCancelComp
+        <ButtonsSetComp
           onSave={handleSave}
           onCancel={handleCancel}
+          onDelete={handleDelete}
+          isEditMode={isEditMode}
           disabled={!placeName.trim()} // Disable if place name is empty
         />
       </div>
-      
-      {/* Delete Button - Only show in edit mode */}
-      {isEditMode && (
-        <>
-          <div className="shrink-0 w-full" style={{ height: '2vh' }} data-name="gap" />
-          <div className="box-border flex flex-col items-center justify-center overflow-clip p-[10px] shrink-0 w-full" data-name="DeleteArea">
-            <DeleteButton 
-              onDelete={handleDelete}
-              disabled={!placeName.trim()}
-            />
-          </div>
-        </>
-      )}
     </div>
   );
 }

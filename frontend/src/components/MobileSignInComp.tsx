@@ -1,5 +1,5 @@
 import React from 'react';
-import ButtonItemComp from './ButtonItemComp';
+import ButtonComp from './ButtonComp';
 import ButtonSaveCancelComp from './ButtonSaveCancelComp';
 
 interface MobileSignInForm {
@@ -59,7 +59,7 @@ export default function MobileSignInComp({
             maxLength={13}
             required
           />
-          <ButtonItemComp 
+          <ButtonComp 
             label="Auth"
             onClick={onPhoneAuth}
             className="FontStyleTitle"

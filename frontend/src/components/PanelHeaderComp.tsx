@@ -10,7 +10,9 @@ export default function PanelHeaderComp({ title, className = "", style }: PanelH
   return (
     <div 
       className={`box-border content-stretch flex items-center justify-start overflow-hidden px-[0.25rem] pt-[1rem] relative shrink-0 w-full ${className}`} 
-      style={{ height: 'clamp(2.5rem, 6vh, 3.5rem)', ...style }} 
+      style={{ 
+        height: 'clamp(2.5rem, 6vh, 3.5rem)', 
+        ...style }} 
       data-name="PanelHeader" 
       data-node-id="184:4067"
     >

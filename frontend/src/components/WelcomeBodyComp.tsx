@@ -1,5 +1,5 @@
 import React from 'react';
-import ButtonItemComp from './ButtonItemComp';
+import ButtonComp from './ButtonComp';
 
 interface WelcomeBodyCompProps {
   intro: string;
@@ -37,13 +37,13 @@ export default function WelcomeBodyComp({ intro, title, description, onSignUp, o
         className="flex gap-4 flex-wrap"
         data-name="WelcomeBodyButtons"
       >
-        <ButtonItemComp 
+        <ButtonComp 
           label="Sign Up" 
           onClick={onSignUp}
           isSelected={true}
           className="h-[clamp(2.5rem,4vh,3.5rem)] min-w-[8rem]"
         />
-        <ButtonItemComp 
+        <ButtonComp 
           label="Sign In" 
           onClick={onSignIn}
           isSelected={true}

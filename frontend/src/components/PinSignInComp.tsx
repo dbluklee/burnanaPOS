@@ -1,5 +1,5 @@
 import React from 'react';
-import ButtonItemComp from './ButtonItemComp';
+import ButtonComp from './ButtonComp';
 import ButtonSaveCancelComp from './ButtonSaveCancelComp';
 
 interface PinSignInForm {

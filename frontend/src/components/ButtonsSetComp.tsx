@@ -1,5 +1,6 @@
 import React from 'react';
-import DeleteButton from './ButtonDeleteComp';
+import ButtonComp from './ButtonComp';
+import ButtonSaveCancelComp from './ButtonSaveCancelComp';
 
 interface ButtonsSetCompProps {
   onSave?: () => void;
@@ -19,37 +20,26 @@ export default function ButtonsSetComp({
   return (
     <div className="flex flex-col items-center justify-center w-full" data-name="SetButtons">
       {/* Save/Cancel Buttons */}
-      <div className="flex items-center justify-center overflow-clip relative shrink-0 w-full" data-name="SaveCancelArea">
-        <div className="flex items-center justify-center relative" style={{ gap: '3rem' }} data-name="SaveCancelButton">
-          <div 
-            className="box-border flex h-[60px] items-center justify-center overflow-clip px-8 py-2.5 relative rounded-[37.5px] shrink-0 cursor-pointer bg-white/10" 
-            data-name="SaveButton"
-            onClick={onSave}
-          >
-            <div className="FontStyleTitle flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-center text-nowrap text-white">
-              <p className="leading-[normal] whitespace-pre">SAVE</p>
-            </div>
-          </div>
-          <div 
-            className="box-border flex h-[60px] items-center justify-center overflow-clip px-8 py-2.5 relative rounded-[37.5px] shrink-0 cursor-pointer bg-white/10" 
-            data-name="CancelButton"
-            onClick={onCancel}
-          >
-            <div className="FontStyleTitle flex flex-col justify-center leading-[0] not-italic relative shrink-0 text-center text-nowrap text-white">
-              <p className="leading-[normal] whitespace-pre">CANCEL</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ButtonSaveCancelComp 
+        onSave={onSave}
+        onCancel={onCancel}
+        saveLabel="SAVE"
+        cancelLabel="CANCEL"
+        disabled={disabled}
+      />
       
       {/* Delete Button - Only show in edit mode with 2vh gap */}
       {isEditMode && (
         <>
           <div className="shrink-0 w-full" style={{ height: '2vh' }} data-name="gap" />
           <div className="box-border flex flex-col items-center justify-center overflow-clip p-[10px] shrink-0 w-full" data-name="DeleteArea">
-            <DeleteButton 
-              onDelete={onDelete || (() => {})}
+            <ButtonComp 
+              label="Delete"
+              type="delete"
+              onDelete={onDelete}
               disabled={disabled}
+              isSelected={true}
+              className="h-[clamp(2.5rem,4vh,3.5rem)] min-w-[5rem]"
             />
           </div>
         </>

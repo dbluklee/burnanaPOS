@@ -1,5 +1,5 @@
 import React from 'react';
-import ButtonItemComp from './ButtonItemComp';
+import ButtonComp from './ButtonComp';
 import ButtonAddComp from './ButtonAddComp'; 
 import Noti from './NotiComp';
 import PanelContent from './PanelContentComp';
@@ -481,7 +481,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
               {/* Items area - 80% width */}
               <div className="content-stretch flex h-full items-center justify-evenly min-h-0 min-w-0 relative shrink-0" style={{ flex: '8' }} data-name="Items" data-node-id="184:4014">
                 {tabs.map((tab, index) => (
-                  <ButtonItemComp
+                  <ButtonComp
                     key={tab}
                     label={tab}
                     isSelected={selectedTab === tab}

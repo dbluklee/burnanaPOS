@@ -1,5 +1,5 @@
 import React from 'react';
-import ButtonItemComp from './ButtonItemComp';
+import ButtonComp from './ButtonComp';
 
 interface ButtonSaveCancelCompProps {
   cancelLabel?: string;
@@ -26,17 +26,17 @@ export default function ButtonSaveCancelComp({
         paddingTop: 'clamp(0.5rem, 1vh, 1rem)' 
       }}
     >
-      <ButtonItemComp 
+      <ButtonComp 
         label={cancelLabel}
         onClick={onCancel}
-        className="h-[clamp(2.5rem,4vh,3.5rem)] min-w-[8rem]"
+        className="h-[clamp(2.5rem,4vh,3.5rem)] min-w-[5rem]"
         disabled={disabled || isLoading}
       />
-      <ButtonItemComp 
+      <ButtonComp 
         label={saveLabel}
         onClick={onSave}
         isSelected={true}
-        className="h-[clamp(2.5rem,4vh,3.5rem)] min-w-[8rem]"
+        className="h-[clamp(2.5rem,4vh,3.5rem)] min-w-[5rem]"
         disabled={disabled || isLoading}
       />
     </div>
