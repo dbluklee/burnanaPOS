@@ -77,18 +77,13 @@ export default function ColorSelectorComp({
                   width: 'clamp(1.5rem, 4vw, 2.2rem)',
                   aspectRatio: '1',
                   boxShadow: selectedColorIndex === index 
-                    ? '0 0 0 clamp(0.2rem, 0.4vw, 0.3rem) rgba(255,255,255,0.8), 0 0 clamp(1.5rem, 3vw, 2rem) rgba(255,255,255,0.4)' 
-                    : 'none',
-                  transform: selectedColorIndex === index ? 'scale(1.05)' : 'scale(1)'
+                    ? '0 8px 25px rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.2), 0 0 0 2px rgba(255,255,255,0.9)' 
+                    : '0 2px 4px rgba(0,0,0,0.1)',
+                  transform: selectedColorIndex === index ? 'scale(1.15) translateZ(0)' : 'scale(1)',
+                  zIndex: selectedColorIndex === index ? 10 : 1
                 }}
                 onClick={() => onColorSelect(index)}
               >
-                {selectedColorIndex === index && (
-                  <div 
-                    className="absolute inset-0 rounded-full border-2 border-white pointer-events-none"
-                    style={{ margin: '-2px' }}
-                  />
-                )}
               </div>
             ))}
           </div>
@@ -103,18 +98,13 @@ export default function ColorSelectorComp({
                   width: 'clamp(1.5rem, 4vw, 2.2rem)',
                   aspectRatio: '1',
                   boxShadow: selectedColorIndex === index 
-                    ? '0 0 0 clamp(0.2rem, 0.4vw, 0.3rem) rgba(255,255,255,0.8), 0 0 clamp(1.5rem, 3vw, 2rem) rgba(255,255,255,0.4)' 
-                    : 'none',
-                  transform: selectedColorIndex === index ? 'scale(1.05)' : 'scale(1)'
+                    ? '0 8px 25px rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.2), 0 0 0 2px rgba(255,255,255,0.9)' 
+                    : '0 2px 4px rgba(0,0,0,0.1)',
+                  transform: selectedColorIndex === index ? 'scale(1.15) translateZ(0)' : 'scale(1)',
+                  zIndex: selectedColorIndex === index ? 10 : 1
                 }}
                 onClick={() => onColorSelect(index)}
               >
-                {selectedColorIndex === index && (
-                  <div 
-                    className="absolute inset-0 rounded-full border-2 border-white pointer-events-none"
-                    style={{ margin: '-2px' }}
-                  />
-                )}
               </div>
             ))}
           </div>
