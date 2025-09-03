@@ -224,10 +224,12 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
   };
 
   const handlePlaceDelete = async (place: Place) => {
+    console.log('🗑️ handlePlaceDelete called for place:', place);
     try {
       setLoading(true);
       
       // Delete from server
+      console.log('🗑️ Calling API to delete place ID:', place.id);
       await placeService.deletePlace(parseInt(place.id));
       
       // Start fade animation
@@ -361,11 +363,15 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
   };
 
   const handleEditDelete = async () => {
+    console.log('🗑️ handleEditDelete called', { editingPlace, isCardEditMode });
     if (editingPlace) {
+      console.log('🗑️ Deleting place:', editingPlace.name);
       await handlePlaceDelete(editingPlace);
       setIsCardEditMode(false);
       setEditingPlace(null);
       setIsAddMode(false);
+    } else {
+      console.warn('🗑️ No editing place found - cannot delete');
     }
   };
   
@@ -581,7 +587,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                 onLogUndo={handleLogUndo}
                 onSave={isCardEditMode ? handleEditSave : handleSave}
                 onCancel={isCardEditMode ? handleEditCancel : handleCancel}
-                onDelete={handleEditDelete}
+                onDelete={isCardEditMode ? handleEditDelete : undefined}
                 isEditMode={isCardEditMode}
                 editingPlace={editingPlace}
               />

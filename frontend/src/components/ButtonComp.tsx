@@ -26,6 +26,7 @@ export default function ButtonComp({
   const [swipeDistance, setSwipeDistance] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const startX = useRef(0);
+  const currentSwipeDistance = useRef(0);
   const buttonRef = useRef<HTMLDivElement>(null);
   
   const maxSwipeDistance = 62;
@@ -35,31 +36,41 @@ export default function ButtonComp({
   const handleStart = (clientX: number) => {
     if (disabled || type !== 'delete') return;
     
-    if (!isSwipeActive) {
-      setIsSwipeActive(true);
-      return;
-    }
+    console.log('🗑️ Delete button handleStart', { isSwipeActive, clientX });
     
+    // Always start dragging immediately - no two-step process needed
+    setIsSwipeActive(true);
     startX.current = clientX;
     setIsDragging(true);
+    console.log('🗑️ Starting immediate drag from position:', clientX);
   };
 
   const handleMove = (clientX: number) => {
     if (!isDragging || disabled || type !== 'delete') return;
     const distance = clientX - startX.current;
     const newDistance = Math.max(0, Math.min(distance, maxSwipeDistance));
+    console.log('🗑️ Swipe move', { clientX, startX: startX.current, distance, newDistance, currentSwipeDistance: swipeDistance });
+    currentSwipeDistance.current = newDistance;
     setSwipeDistance(newDistance);
   };
 
   const handleEnd = () => {
     if (!isDragging || disabled || type !== 'delete') return;
+    
+    // Use the ref value which is always current, not the potentially stale state
+    const finalDistance = currentSwipeDistance.current;
     setIsDragging(false);
     
-    if (swipeDistance >= deleteThreshold) {
+    console.log('🗑️ Delete swipe ended. Distance:', finalDistance, 'State distance:', swipeDistance, 'Threshold:', deleteThreshold);
+    if (finalDistance >= deleteThreshold) {
+      console.log('🗑️ Swipe threshold reached, calling onDelete');
       onDelete?.();
+      currentSwipeDistance.current = 0;
       setSwipeDistance(0);
       setIsSwipeActive(false);
     } else {
+      console.log('🗑️ Swipe threshold not reached, snapping back');
+      currentSwipeDistance.current = 0;
       setSwipeDistance(0);
     }
   };
