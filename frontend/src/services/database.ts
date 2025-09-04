@@ -68,7 +68,6 @@ class DatabaseService {
       createdAt: Date.now(),
     };
 
-    console.log('📝 Adding log entry to IndexedDB:', logEntry);
     return await this.db.add(LOG_STORE, logEntry);
   }
 

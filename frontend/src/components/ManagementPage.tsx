@@ -138,7 +138,6 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
     // Find the log entry to get the server ID
     const logEntry = logEntries.find(entry => entry.id === logId);
     const undoId = logEntry?.serverId || logId; // Use serverId if available, otherwise fallback to local ID
-    console.log(`Undo action for log ${logId}, using server ID: ${undoId}`);
     
     const success = await undoLog(undoId);
     
@@ -146,7 +145,6 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
       // Refresh places data to reflect the undo changes
       await loadPlaces();
       await refreshPlacesData();
-      console.log('✅ Places refreshed after undo');
     }
   };
   
@@ -218,7 +216,6 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
         // Refresh places data in logging service for ItemComp processing
         await refreshPlacesData();
         
-        console.log('✅ Place created successfully:', newPlace);
       } catch (error) {
         console.error('❌ Failed to create place:', error);
         alert('Failed to create place. Please try again.');
@@ -268,7 +265,6 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
       // Refresh places data in logging service for ItemComp processing
       await refreshPlacesData();
       
-      console.log('✅ Place deleted successfully:', place.name);
     } catch (error) {
       console.error('❌ Failed to delete place:', error);
       alert('Failed to delete place. Please try again.');
@@ -337,7 +333,6 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
         }, 150);
         
         // Log the update
-        console.log('✅ Updated place:', name);
       } catch (error) {
         console.error('❌ Failed to update place:', error);
         alert('Failed to update place. Please try again.');

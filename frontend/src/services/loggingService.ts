@@ -75,7 +75,6 @@ class LoggingService {
   
   private setCurrentUser(userId: string) {
     // This is handled by the auth service, we just need this method to avoid errors
-    console.log('Setting current user:', userId);
   }
   
   private getStoreNumber(): string {
@@ -104,14 +103,12 @@ class LoggingService {
       const savedSessionStartTime = localStorage.getItem('sessionStartTime');
       if (savedSessionStartTime) {
         this.sessionStartTime = parseInt(savedSessionStartTime, 10);
-        console.log('📅 Session start time restored from localStorage:', new Date(this.sessionStartTime).toLocaleString());
       }
       
       // Start auto-sync immediately
       syncService.startAutoSync();
 
       this.isInitialized = true;
-      console.log('🚀 Logging service initialized');
 
       // Only log system messages if there's an active session
       // System startup logs are not useful for session-based logging
@@ -155,7 +152,6 @@ class LoggingService {
         synced: false,
       };
 
-      console.log(`📝 Log created: [${eventType}] ${formattedMessage}`);
 
       // Immediately sync the log to server
       await syncService.sendLogImmediately(completeLogEntry);
@@ -197,7 +193,6 @@ class LoggingService {
   async logPlaceCreated(placeName: string, color: string): Promise<void> {
     // Auto-initialize if not already initialized
     if (!this.isInitialized) {
-      console.log('🔄 Auto-initializing logging service for place creation...');
       await this.initialize();
     }
     
@@ -214,7 +209,6 @@ class LoggingService {
   async logPlaceDeleted(placeName: string, color: string): Promise<void> {
     // Auto-initialize if not already initialized
     if (!this.isInitialized) {
-      console.log('🔄 Auto-initializing logging service for place deletion...');
       await this.initialize();
     }
     
@@ -231,7 +225,6 @@ class LoggingService {
   async logPlaceUpdated(oldPlaceName: string, oldColor: string, newPlaceName: string, newColor: string): Promise<void> {
     // Auto-initialize if not already initialized
     if (!this.isInitialized) {
-      console.log('🔄 Auto-initializing logging service for place update...');
       await this.initialize();
     }
     
@@ -305,11 +298,9 @@ class LoggingService {
 
   // Authentication event methods
   async logUserSignIn(userId: string): Promise<void> {
-    console.log('🔄 Starting fresh login session for user:', userId);
     this.setCurrentUser(userId);
     
     // Clear all local logs and start fresh session automatically
-    console.log('🧹 Clearing all local data for fresh session...');
     await this.clearAllLocalData();
     
     // Reload places from database for ItemComp processing
@@ -319,7 +310,6 @@ class LoggingService {
     await new Promise(resolve => setTimeout(resolve, 100));
     
     this.markSessionStart(); // Mark session start when user signs in
-    console.log('✅ Fresh session started for user:', userId);
     
     await this.log(EventType.USER_SIGNIN, `User ${userId} has signed in.`);
   }
@@ -333,18 +323,15 @@ class LoggingService {
   }
 
   async logUserSignUp(userId: string): Promise<void> {
-    console.log('🔄 Starting fresh signup session for user:', userId);
     this.setCurrentUser(userId);
     
     // Clear all local logs and start fresh session automatically
-    console.log('🧹 Clearing all local data for fresh session...');
     await this.clearAllLocalData();
     
     // Small delay to ensure clearing is complete
     await new Promise(resolve => setTimeout(resolve, 100));
     
     this.markSessionStart(); // Mark session start when user signs up
-    console.log('✅ Fresh session started for user:', userId);
     
     await this.log(EventType.USER_SIGNUP, `User ${userId} has signed up.`);
   }
@@ -353,13 +340,11 @@ class LoggingService {
     await this.log(EventType.USER_SIGNOUT, `User ${this.getCurrentUserId()} has signed out.`);
     
     // Force sync all accumulated logs with the database before logout
-    console.log('🔄 Syncing accumulated logs before logout...');
     await this.forceSyncNow();
     
     // Clear session start time on sign out to ensure fresh session on next login
     this.sessionStartTime = null;
     localStorage.removeItem('sessionStartTime');
-    console.log('📅 Session cleared on user sign out');
   }
 
   // Session management
@@ -367,7 +352,6 @@ class LoggingService {
     this.sessionStartTime = Date.now();
     // Persist session start time to localStorage
     localStorage.setItem('sessionStartTime', this.sessionStartTime.toString());
-    console.log('📅 Session start time marked:', new Date(this.sessionStartTime).toLocaleString());
   }
 
   getSessionStartTime(): number | null {
@@ -422,7 +406,6 @@ class LoggingService {
   // Undo functionality
   async undoLog(logId: number): Promise<boolean> {
     try {
-      console.log(`🔄 Starting undo for log ${logId}`);
       
       // Call the backend undo API endpoint
       const response = await fetch(`http://localhost:3001/api/logs/${logId}/undo`, {
@@ -442,7 +425,6 @@ class LoggingService {
       const result = await response.json();
       
       if (result.success) {
-        console.log(`✅ Undo successful: ${result.message}`);
         
         // Create the undo log entry locally with proper formatting
         const undoMessage = result.message;
@@ -530,7 +512,6 @@ class LoggingService {
       await databaseService.clearAllLogs();
       this.sessionStartTime = null;
       localStorage.removeItem('sessionStartTime');
-      console.log('🧹 All local logs and session data cleared');
     } catch (error) {
       console.error('Failed to clear local data:', error);
     }
@@ -542,7 +523,6 @@ class LoggingService {
       await databaseService.deleteDatabase();
       this.sessionStartTime = null;
       localStorage.removeItem('sessionStartTime');
-      console.log('🗑️ All local database deleted completely');
     } catch (error) {
       console.error('Failed to delete local database:', error);
     }
@@ -561,7 +541,6 @@ class LoggingService {
     await databaseService.close();
     this.logSubscribers.clear();
     this.isInitialized = false;
-    console.log('🛑 Logging service destroyed');
   }
 }
 
@@ -580,10 +559,8 @@ if (import.meta.env.DEV) {
     const response = await fetch('http://localhost:3001/api/logs?limit=1');
     const logs = await response.json();
     if (Array.isArray(logs) && logs.length === 0) {
-      console.log('🧹 Backend database is empty, clearing local data...');
       await loggingService.clearAllLocalDataAndNotify();
     }
   } catch (error) {
-    console.log('Could not check backend logs:', error);
   }
 })();

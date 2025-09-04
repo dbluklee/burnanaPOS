@@ -78,7 +78,6 @@ export function useLogging(autoRefresh: boolean = true): UseLoggingReturn {
           });
         }
 
-        console.log('✅ useLogging hook initialized');
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to initialize logging';
         setError(errorMessage);

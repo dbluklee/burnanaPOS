@@ -41,11 +41,9 @@ class SyncService {
       const unsyncedLogs = await databaseService.getUnsyncedLogs();
       
       if (unsyncedLogs.length === 0) {
-        console.log('✅ No logs to sync');
         return { success: true, syncedCount: 0 };
       }
 
-      console.log(`🔄 Syncing ${unsyncedLogs.length} pending logs...`);
 
       // Convert local logs to server format
       const serverLogs: ServerLogEntry[] = unsyncedLogs.map(log => ({
@@ -85,7 +83,6 @@ class SyncService {
             
             // Log progress every 10 logs
             if (syncedCount % 10 === 0) {
-              console.log(`✅ Synced ${syncedCount}/${serverLogs.length} logs`);
             }
           } else {
             errors.push(`Server rejected log: ${JSON.stringify(log)}`);
@@ -148,10 +145,8 @@ class SyncService {
       if ((response.data.success || response.data.data) && log.id) {
         const serverId = response.data.data?.id;
         await databaseService.markLogAsSynced(log.id, serverId);
-        console.log('✅ Log sent immediately to server with ID:', serverId);
         return true;
       } else {
-        console.log('❌ Server rejected immediate log send');
         return false;
       }
     } catch (error) {
@@ -169,7 +164,6 @@ class SyncService {
       this.syncPendingLogs();
     }, intervalMinutes * 60 * 1000);
 
-    console.log(`🔄 Auto-sync started (every ${intervalMinutes} minutes)`);
   }
 
   stopAutoSync(): void {
