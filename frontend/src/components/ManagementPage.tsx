@@ -67,31 +67,32 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
   
   const [savedPlaces, setSavedPlaces] = React.useState<Place[]>([]);
   
+  // Load places from the server
+  const loadPlaces = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const placesData = await placeService.getAllPlaces();
+      const mappedPlaces = placesData.map((p: PlaceData) => ({
+        id: p.id!.toString(),
+        storeNumber: p.store_number,
+        name: p.name,
+        color: p.color,
+        tableCount: p.table_count,
+        userPin: p.user_pin,
+        createdAt: new Date(p.created_at!)
+      }));
+      setSavedPlaces(mappedPlaces);
+    } catch (error) {
+      console.error('Failed to load places:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
   // Load places from the server on component mount
   React.useEffect(() => {
-    const loadPlaces = async () => {
-      try {
-        setLoading(true);
-        const placesData = await placeService.getAllPlaces();
-        const mappedPlaces = placesData.map((p: PlaceData) => ({
-          id: p.id!.toString(),
-          storeNumber: p.store_number,
-          name: p.name,
-          color: p.color,
-          tableCount: p.table_count,
-          userPin: p.user_pin,
-          createdAt: new Date(p.created_at!)
-        }));
-        setSavedPlaces(mappedPlaces);
-      } catch (error) {
-        console.error('Failed to load places:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     loadPlaces();
-  }, []);
+  }, [loadPlaces]);
   
   // Function to get appropriate notification message based on selected tab
   const getNotiMessage = (tab: string) => {
@@ -127,13 +128,26 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
   // Convert database logs to the format expected by the Log component
   const logEntries = logs.map(log => ({
     id: log.id!,
+    serverId: log.serverId, // Add server ID for undo operations
     time: log.timeFormatted,
-    message: log.text
+    message: log.text,
+    type: log.eventId
   }));
 
   const handleLogUndo = async (logId: number) => {
-    console.log(`Undo action for log ${logId}`);
-    await undoLog(logId);
+    // Find the log entry to get the server ID
+    const logEntry = logEntries.find(entry => entry.id === logId);
+    const undoId = logEntry?.serverId || logId; // Use serverId if available, otherwise fallback to local ID
+    console.log(`Undo action for log ${logId}, using server ID: ${undoId}`);
+    
+    const success = await undoLog(undoId);
+    
+    if (success) {
+      // Refresh places data to reflect the undo changes
+      await loadPlaces();
+      await refreshPlacesData();
+      console.log('✅ Places refreshed after undo');
+    }
   };
   
   const handleAddButtonClick = () => {

@@ -10,9 +10,10 @@ interface LogCompProps {
   onUndo?: () => void;
   isActiveUndo?: boolean;
   onSlideStateChange?: (isInUndoMode: boolean) => void;
+  isUndoable?: boolean;
 }
 
-function LogComp({ time, text, itemLabel, property1: externalProperty1, onUndo, isActiveUndo, onSlideStateChange }: LogCompProps) {
+function LogComp({ time, text, itemLabel, property1: externalProperty1, onUndo, isActiveUndo, onSlideStateChange, isUndoable = true }: LogCompProps) {
   // Extract management items from text
   const extractManagementItems = (logText: string) => {
     const items: string[] = [];
@@ -81,12 +82,13 @@ function LogComp({ time, text, itemLabel, property1: externalProperty1, onUndo, 
   const property1 = isUndoMode ? "Undo" : (externalProperty1 || "Default");
   
   const handleStart = (clientX: number) => {
+    if (!isUndoable) return; // Don't start dragging if not undoable
     startX.current = clientX;
     isDragging.current = true;
   };
   
   const handleMove = (clientX: number) => {
-    if (!isDragging.current) return;
+    if (!isDragging.current || !isUndoable) return; // Don't move if not undoable
     const distance = clientX - startX.current;
     // Allow sliding right to reveal undo icon, clamp between 0 and the undo icon width (64px)
     const newDistance = Math.max(0, Math.min(distance, 64));
@@ -231,7 +233,7 @@ function LogComp({ time, text, itemLabel, property1: externalProperty1, onUndo, 
             </div>
           </div>
           <div className="flex-1 relative z-10 w-full FontStyleText" data-name="Text" data-node-id="256:2915" style={{ padding: '0 0.5rem', color: 'var(--light)', lineHeight: '1.2' }}>
-            <p className="leading-[1.2] break-words w-full" style={{ margin: 0 }}>
+            <div className="leading-[1.2] break-words w-full" style={{ margin: 0 }}>
               {displayItems.length > 0 && (
                 <>
                   {displayItems.map((item, index) => (
@@ -242,7 +244,7 @@ function LogComp({ time, text, itemLabel, property1: externalProperty1, onUndo, 
                 </>
               )}
               <span style={{ display: 'inline' }}>{cleanedText}</span>
-            </p>
+            </div>
           </div>
         </div>
       </div>
@@ -251,8 +253,8 @@ function LogComp({ time, text, itemLabel, property1: externalProperty1, onUndo, 
   
   return (
     <div className="relative w-full min-h-[60px] overflow-hidden" data-name="Property 1=Default" data-node-id="256:2907">
-      {/* Bottom layer: Static undo icon with grey background - only show when sliding */}
-      {isUndoMode && (
+      {/* Bottom layer: Static undo icon with grey background - only show when sliding and undoable */}
+      {isUndoMode && isUndoable && (
         <div 
           className="absolute left-0 top-0 flex items-center justify-center cursor-pointer shrink-0 min-h-[60px] rounded-l-[0.3rem] z-0" 
           data-name="Undo" 
@@ -316,7 +318,7 @@ function LogComp({ time, text, itemLabel, property1: externalProperty1, onUndo, 
           </div>
         </div>
         <div className="flex-1 relative z-10 w-full FontStyleText" data-name="Text" data-node-id="256:2680" style={{ padding: '0 0.5rem', color: 'var(--light)', lineHeight: '1.2' }}>
-          <p className="leading-[1.2] break-words w-full" style={{ margin: 0 }}>
+          <div className="leading-[1.2] break-words w-full" style={{ margin: 0 }}>
             {displayItems.length > 0 && (
               <>
                 {displayItems.map((item, index) => (
@@ -327,7 +329,7 @@ function LogComp({ time, text, itemLabel, property1: externalProperty1, onUndo, 
               </>
             )}
             <span style={{ display: 'inline' }}>{cleanedText}</span>
-          </p>
+          </div>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { openDB, type IDBPDatabase } from 'idb';
 
 export interface LogEntry {
   id?: number; // Auto-increment primary key
+  serverId?: number; // Server-side ID for undo operations
   eventId: string; // Unique identifier for the event type
   storeNumber: string; // Store's unique identifier
   userId: string; // Current user ID
@@ -99,7 +100,7 @@ class DatabaseService {
     return allLogs.filter(log => log.synced === false);
   }
 
-  async markLogAsSynced(logId: number): Promise<void> {
+  async markLogAsSynced(logId: number, serverId?: number): Promise<void> {
     if (!this.db) throw new Error('Database not initialized');
     
     const transaction = this.db.transaction(LOG_STORE, 'readwrite');
@@ -108,6 +109,9 @@ class DatabaseService {
     
     if (log) {
       log.synced = true;
+      if (serverId) {
+        log.serverId = serverId;
+      }
       await store.put(log);
     }
   }

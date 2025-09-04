@@ -5,6 +5,7 @@ interface LogEntry {
   id: number;
   time: string;
   message: string;
+  type: string;
 }
 
 interface LogsCompProps {
@@ -14,6 +15,13 @@ interface LogsCompProps {
 
 export default function LogsComp({ logEntries, onLogUndo }: LogsCompProps) {
   const [activeUndoLogId, setActiveUndoLogId] = useState<number | null>(null);
+
+  // Define which log types support undo functionality
+  const undoableLogTypes = ['place_created', 'place_modified', 'place_deleted', 'place_updated'];
+  
+  const isLogUndoable = (logType: string) => {
+    return undoableLogTypes.includes(logType);
+  };
 
   const handleLogSlide = (logId: number, isInUndoMode: boolean) => {
     // When a log enters undo mode, make it the active one and deactivate others
@@ -42,6 +50,7 @@ export default function LogsComp({ logEntries, onLogUndo }: LogsCompProps) {
           onUndo={() => handleLogUndo(log.id)}
           isActiveUndo={activeUndoLogId === log.id}
           onSlideStateChange={(isInUndoMode) => handleLogSlide(log.id, isInUndoMode)}
+          isUndoable={isLogUndoable(log.type)}
         />
       ))}
     </div>

@@ -109,4 +109,47 @@ export class Place {
       client.release();
     }
   }
+
+  static async findByName(name: string, storeNumber?: string): Promise<PlaceRecord | null> {
+    const client = await pool.connect();
+    try {
+      let sql = 'SELECT * FROM places WHERE name = $1';
+      const params = [name];
+      
+      if (storeNumber) {
+        sql += ' AND store_number = $2';
+        params.push(storeNumber);
+      }
+      
+      sql += ' LIMIT 1';
+      
+      const result = await client.query(sql, params);
+      
+      if (result.rows.length === 0) {
+        return null;
+      }
+      
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  }
+
+  static async deleteByName(name: string, storeNumber?: string): Promise<boolean> {
+    const client = await pool.connect();
+    try {
+      let sql = 'DELETE FROM places WHERE name = $1';
+      const params = [name];
+      
+      if (storeNumber) {
+        sql += ' AND store_number = $2';
+        params.push(storeNumber);
+      }
+      
+      const result = await client.query(sql, params);
+      return result.rowCount !== null && result.rowCount > 0;
+    } finally {
+      client.release();
+    }
+  }
 }

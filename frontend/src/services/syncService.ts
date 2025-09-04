@@ -78,8 +78,9 @@ class SyncService {
           );
 
           if (response.data.success || response.data.data || response.data.id) {
-            // Mark this log as synced in local database
-            await databaseService.markLogAsSynced(correspondingLocalLog.id!);
+            // Mark this log as synced in local database with server ID
+            const serverId = response.data.data?.id || response.data.id;
+            await databaseService.markLogAsSynced(correspondingLocalLog.id!, serverId);
             syncedCount++;
             
             // Log progress every 10 logs
@@ -145,8 +146,9 @@ class SyncService {
       );
 
       if ((response.data.success || response.data.data) && log.id) {
-        await databaseService.markLogAsSynced(log.id);
-        console.log('✅ Log sent immediately to server');
+        const serverId = response.data.data?.id;
+        await databaseService.markLogAsSynced(log.id, serverId);
+        console.log('✅ Log sent immediately to server with ID:', serverId);
         return true;
       } else {
         console.log('❌ Server rejected immediate log send');

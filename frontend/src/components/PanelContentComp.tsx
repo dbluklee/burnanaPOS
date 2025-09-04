@@ -6,6 +6,7 @@ interface LogEntry {
   id: number;
   time: string;
   message: string;
+  type: string;
 }
 
 interface Place {

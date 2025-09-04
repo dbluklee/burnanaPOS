@@ -58,9 +58,35 @@ interface LogContext {
 }
 
 class LoggingService {
-  private storeNumber: string = 'STORE001'; // This would come from app config
-  private currentUserId: string = 'user001'; // This would come from authentication
+  // Dynamic user information - retrieved from localStorage
   private isInitialized: boolean = false;
+  
+  // Helper methods to get current user information
+  private getCurrentUser() {
+    const currentUserStr = localStorage.getItem('currentUser');
+    if (!currentUserStr) return null;
+    try {
+      return JSON.parse(currentUserStr);
+    } catch (error) {
+      console.error('Failed to parse current user from localStorage:', error);
+      return null;
+    }
+  }
+  
+  private setCurrentUser(userId: string) {
+    // This is handled by the auth service, we just need this method to avoid errors
+    console.log('Setting current user:', userId);
+  }
+  
+  private getStoreNumber(): string {
+    const currentUser = this.getCurrentUser();
+    return currentUser?.storeNumber || 'UNKNOWN_STORE';
+  }
+  
+  private getCurrentUserId(): string {
+    const currentUser = this.getCurrentUser();
+    return currentUser?.userPin || 'UNKNOWN_USER';
+  }
   private logSubscribers: Set<(logs: LogEntry[]) => void> = new Set();
   private sessionStartTime: number | null = null;
   private places: PlaceData[] = []; // Cache of places from database
@@ -110,8 +136,8 @@ class LoggingService {
       const timestamp = Date.now();
       const logEntry: Omit<LogEntry, 'id' | 'createdAt' | 'synced'> = {
         eventId: eventType,
-        storeNumber: this.storeNumber,
-        userId: this.currentUserId,
+        storeNumber: this.getStoreNumber(),
+        userId: this.getCurrentUserId(),
         timestamp,
         timeFormatted: this.formatTime(timestamp),
         text: formattedMessage,
@@ -324,7 +350,7 @@ class LoggingService {
   }
 
   async logUserSignOut(): Promise<void> {
-    await this.log(EventType.USER_SIGNOUT, `User ${this.currentUserId} has signed out.`);
+    await this.log(EventType.USER_SIGNOUT, `User ${this.getCurrentUserId()} has signed out.`);
     
     // Force sync all accumulated logs with the database before logout
     console.log('🔄 Syncing accumulated logs before logout...');
@@ -396,28 +422,57 @@ class LoggingService {
   // Undo functionality
   async undoLog(logId: number): Promise<boolean> {
     try {
-      // In a real application, you might want to create a "reversal" log instead of deleting
-      // For now, we'll just mark it as deleted or create a reversal entry
-      const logs = await databaseService.getAllLogs();
-      const logToUndo = logs.find(log => log.id === logId);
+      console.log(`🔄 Starting undo for log ${logId}`);
       
-      if (!logToUndo) {
-        console.warn(`⚠️ Log ${logId} not found for undo`);
+      // Call the backend undo API endpoint
+      const response = await fetch(`http://localhost:3001/api/logs/${logId}/undo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error(`❌ Backend undo failed:`, errorData);
+        await this.logError(`Undo failed: ${errorData.error}`);
         return false;
       }
-
-      // Create an undo log entry
-      await this.log(EventType.SYSTEM_STARTUP, `Undid: ${logToUndo.text}`);
       
-      // Delete the original log
-      await databaseService.deleteLogEntry(logId);
+      const result = await response.json();
       
-      console.log(`↩️ Undid log ${logId}: ${logToUndo.text}`);
-      
-      // Notify subscribers about the change
-      this.notifySubscribers();
-      
-      return true;
+      if (result.success) {
+        console.log(`✅ Undo successful: ${result.message}`);
+        
+        // Create the undo log entry locally with proper formatting
+        const undoMessage = result.message;
+        if (undoMessage) {
+          // Extract the place name from the message using {{}} format
+          const placeNameMatch = undoMessage.match(/^(.+?)\s+has been/);
+          const placeName = placeNameMatch ? placeNameMatch[1] : '';
+          
+          // Format the message with {{placeName}}
+          const formattedMessage = undoMessage.replace(placeName, `{{${placeName}}}`);
+          
+          await this.log(
+            'undo' as EventType,
+            formattedMessage,
+            {
+              originalLogId: logId,
+              placeName: placeName
+            }
+          );
+        }
+        
+        // Notify subscribers about the change
+        this.notifySubscribers();
+        
+        return true;
+      } else {
+        console.error(`❌ Undo failed:`, result.message);
+        await this.logError(`Undo failed: ${result.message || 'Unknown error'}`);
+        return false;
+      }
     } catch (error) {
       console.error(`❌ Failed to undo log ${logId}:`, error);
       await this.logError(`Failed to undo log: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -440,14 +495,7 @@ class LoggingService {
     return await syncService.getConnectionStatus();
   }
 
-  // Configuration methods
-  setStoreNumber(storeNumber: string): void {
-    this.storeNumber = storeNumber;
-  }
-
-  setCurrentUser(userId: string): void {
-    this.currentUserId = userId;
-  }
+  // Configuration methods are no longer needed - user info is retrieved dynamically from localStorage
 
   // Place data management for ItemComp processing
   private async loadPlacesFromDB(): Promise<void> {
