@@ -6,6 +6,7 @@ import PanelContent from './PanelContentComp';
 import PanelHeaderComp from './PanelHeaderComp';
 import PlaceCard from './PlaceCardComp';
 import ResponsiveCardGrid from './ResponsiveCardGridComp';
+import ManagementItemsComp from './ManagementItemsComp';
 import { tableColors, getHexColor, getCSSVariable } from './ColorSelectorComp';
 import { useLogging } from '../hooks/useLogging';
 import SyncStatus from './SyncStatus';
@@ -444,39 +445,26 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
           <div className="flex flex-col items-center justify-start min-w-0 overflow-hidden relative w-full h-full">
             {/* Content Header */}
             <div className="box-border content-stretch flex items-center justify-between overflow-hidden px-[0.5rem] py-[0.5rem] relative shrink-0 w-full" style={{ height: 'clamp(3rem, 8vh, 4.5rem)' }} data-name="ContentHeader" data-node-id="184:4013">
-              {/* Items area - 80% width */}
-              <div className="content-stretch flex h-full items-center justify-evenly min-h-0 min-w-0 relative shrink-0" style={{ flex: '8' }} data-name="Items" data-node-id="184:4014">
-                {tabs.map((tab, index) => (
-                  <ButtonComp
-                    key={tab}
-                    label={tab}
-                    isSelected={selectedTab === tab}
-                    onClick={() => {
-                      if (selectedTab !== tab) {
-                        setTabTransitioning(true);
-                        
-                        // Fade out current content
-                        setTimeout(() => {
-                          setSelectedTab(tab);
-                          setIsAddMode(false); // Reset add mode when switching tabs
-                          
-                          // Fade in new content
-                          setTimeout(() => {
-                            setTabTransitioning(false);
-                          }, 25);
-                        }, 150);
-                      }
-                    }}
-                  />
-                ))}
-              </div>
-              
-              {/* Function area - 20% width */}
-              <div className="content-stretch flex h-full items-center justify-center min-h-0 min-w-0 relative shrink-0" style={{ flex: '2', paddingLeft: 'clamp(0.5rem, 1vw, 0.75rem)' }} data-name="Function" data-node-id="184:4026">
-                <div className="relative shrink-0" style={{ width: 'clamp(2rem, 4vw, 2.5rem)', height: 'clamp(2rem, 4vw, 2.5rem)' }} data-name="Vector" data-node-id="184:4027">
-                  <ButtonAddComp onClick={handleAddButtonClick} />
-                </div>
-              </div>
+              <ManagementItemsComp
+                tabs={tabs}
+                selectedTab={selectedTab}
+                onTabChange={(tab) => {
+                  setTabTransitioning(true);
+                  
+                  // Fade out current content
+                  setTimeout(() => {
+                    setSelectedTab(tab);
+                    setIsAddMode(false); // Reset add mode when switching tabs
+                    
+                    // Fade in new content
+                    setTimeout(() => {
+                      setTabTransitioning(false);
+                    }, 25);
+                  }, 150);
+                }}
+                onAddClick={handleAddButtonClick}
+                tabTransitioning={tabTransitioning}
+              />
             </div>
 
             {/* Content Body */}
