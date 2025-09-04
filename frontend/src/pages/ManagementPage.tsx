@@ -7,10 +7,12 @@ import PanelHeaderComp from '../components/PanelHeaderComp';
 import PlaceCard from '../components/PlaceCardComp';
 import ResponsiveCardGrid from '../components/ResponsiveCardGridComp';
 import ManagementItemsComp from '../components/ManagementItemsComp';
+import ManagementSubItemsComp from '../components/ManagementSubItemsComp';
 import { tableColors, getHexColor, getCSSVariable } from '../components/ColorSelectorComp';
 import { useLogging } from '../hooks/useLogging';
 import SyncStatus from '../components/SyncStatus';
 import { placeService, type PlaceData } from '../services/placeService';
+import { tableService, type TableData } from '../services/tableService';
 
 // Icon components as SVG strings (from Figma assets)
 const homeIconSvg = `data:image/svg+xml,<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 28L40 8L70 28V68C70 69.1046 69.1046 70 68 70H12C10.8954 70 10 69.1046 10 68V28Z" stroke="%23E0E0E0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M30 70V40H50V70" stroke="%23E0E0E0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -37,6 +39,18 @@ interface Place {
   createdAt: Date;
 }
 
+interface Table {
+  id: string;
+  placeId: string;
+  name: string;
+  color: string;
+  positionX: number;
+  positionY: number;
+  storeNumber: string;
+  userPin: string;
+  createdAt: Date;
+}
+
 export default function ManagementPage({ onBack, onSignOut, onHome }: ManagementPageProps) {
   const [selectedTab, setSelectedTab] = React.useState('Place');
   const [isAddMode, setIsAddMode] = React.useState(false);
@@ -48,6 +62,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
   // Card editing mode state
   const [isCardEditMode, setIsCardEditMode] = React.useState(false);
   const [editingPlace, setEditingPlace] = React.useState<Place | null>(null);
+  const [editingTable, setEditingTable] = React.useState<Table | null>(null);
   
   // Use the logging system
   const { 
@@ -67,6 +82,10 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
   } = useLogging();
   
   const [savedPlaces, setSavedPlaces] = React.useState<Place[]>([]);
+  const [savedTables, setSavedTables] = React.useState<Table[]>([]);
+  
+  // Table management specific states
+  const [selectedPlace, setSelectedPlace] = React.useState<Place | null>(null);
   
   // Load places from the server
   const loadPlaces = React.useCallback(async () => {
@@ -85,6 +104,54 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
       setSavedPlaces(mappedPlaces);
     } catch (error) {
       console.error('Failed to load places:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
+  // Load tables from the server
+  const loadTables = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const tablesData = await tableService.getAllTables();
+      const mappedTables = tablesData.map((t: TableData) => ({
+        id: t.id!.toString(),
+        placeId: t.place_id.toString(),
+        name: t.name,
+        color: t.color,
+        positionX: t.position_x,
+        positionY: t.position_y,
+        storeNumber: t.store_number,
+        userPin: t.user_pin,
+        createdAt: new Date(t.created_at!)
+      }));
+      setSavedTables(mappedTables);
+    } catch (error) {
+      console.error('Failed to load tables:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
+  // Load tables for a specific place
+  const loadTablesByPlace = React.useCallback(async (placeId: number) => {
+    try {
+      setLoading(true);
+      const tablesData = await tableService.getTablesByPlace(placeId);
+      const mappedTables = tablesData.map((t: TableData) => ({
+        id: t.id!.toString(),
+        placeId: t.place_id.toString(),
+        name: t.name,
+        color: t.color,
+        positionX: t.position_x,
+        positionY: t.position_y,
+        storeNumber: t.store_number,
+        userPin: t.user_pin,
+        createdAt: new Date(t.created_at!)
+      }));
+      setSavedTables(mappedTables);
+    } catch (error) {
+      console.error('Failed to load tables:', error);
     } finally {
       setLoading(false);
     }
@@ -153,7 +220,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
     setIsAddMode(true);
   };
 
-  const handleSave = async (name: string, selectedColor: string) => {
+  const handleSave = async (name: string, selectedColor: string, storeNumber?: string, userPin?: string, placeId?: string) => {
     // Get current user from localStorage
     const currentUserStr = localStorage.getItem('currentUser');
     if (!currentUserStr) {
@@ -162,10 +229,10 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
     }
     
     const currentUser = JSON.parse(currentUserStr);
-    const storeNumber = currentUser.storeNumber;
-    const userPin = currentUser.userPin;
+    const currentStoreNumber = storeNumber || currentUser.storeNumber;
+    const currentUserPin = userPin || currentUser.userPin;
     
-    console.log('Saving:', { name, selectedColor, storeNumber, userPin });
+    console.log('Saving:', { name, selectedColor, storeNumber: currentStoreNumber, userPin: currentUserPin });
     
     if (selectedTab === 'Place') {
       try {
@@ -173,11 +240,11 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
         
         // Create place on server
         const newPlaceData = await placeService.createPlace({
-          store_number: storeNumber,
+          store_number: currentStoreNumber,
           name,
           color: getHexColor(selectedColor), // Convert CSS variable to hex
           table_count: 0,
-          user_pin: userPin
+          user_pin: currentUserPin
         });
 
         // Convert to local Place interface
@@ -224,15 +291,110 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
         setLoading(false);
       }
     } else if (selectedTab === 'Table') {
-      setIsAddMode(false);
-      // For table creation, we need to know which place it belongs to
-      // For now, we'll just log it generically
-      await logTableCreated(name, 'Selected Place'); // This would be dynamic in a real app
+      if (!placeId) {
+        alert('Please select a place first to add a table.');
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        
+        // Create table on server
+        const newTableData = await tableService.createTable({
+          place_id: parseInt(placeId),
+          name,
+          color: selectedColor, // selectedColor is now the place's color (already hex)
+          position_x: 0,
+          position_y: 0,
+          store_number: currentStoreNumber,
+          user_pin: currentUserPin
+        });
+
+        // Convert to local Table interface
+        const newTable: Table = {
+          id: newTableData.id!.toString(),
+          placeId: newTableData.place_id.toString(),
+          name: newTableData.name,
+          color: newTableData.color,
+          positionX: newTableData.position_x,
+          positionY: newTableData.position_y,
+          storeNumber: newTableData.store_number,
+          userPin: newTableData.user_pin,
+          createdAt: new Date(newTableData.created_at!)
+        };
+
+        // Start fade animation
+        setCardsTransitioning(true);
+        setAnimatingCardId(newTable.id);
+        
+        // Fade out current cards
+        setTimeout(() => {
+          // Add the new table
+          setSavedTables(prev => [...prev, newTable]);
+          setIsAddMode(false);
+          
+          // Fade in with new card
+          setTimeout(() => {
+            setCardsTransitioning(false);
+            // Keep the animation ID for a bit longer to show the highlight
+            setTimeout(() => {
+              setAnimatingCardId(null);
+            }, 500);
+          }, 25);
+        }, 150);
+        
+        // Log the creation
+        const selectedPlace = savedPlaces.find(p => p.id === placeId);
+        await logTableCreated(name, selectedPlace?.name || 'Unknown Place');
+        
+      } catch (error) {
+        console.error('❌ Failed to create table:', error);
+        alert('Failed to create table. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   const handleCancel = () => {
     setIsAddMode(false);
+  };
+
+  const handleTableDelete = async (table: Table) => {
+    console.log('🗑️ handleTableDelete called for table:', table);
+    try {
+      setLoading(true);
+      
+      // Delete from server
+      console.log('🗑️ Calling API to delete table ID:', table.id);
+      await tableService.deleteTable(parseInt(table.id));
+      
+      // Start fade animation
+      setCardsTransitioning(true);
+      setAnimatingCardId(table.id);
+      
+      // Fade out current cards
+      setTimeout(() => {
+        // Remove from saved tables
+        setSavedTables(prev => prev.filter(t => t.id !== table.id));
+        
+        // Fade in remaining cards
+        setTimeout(() => {
+          setCardsTransitioning(false);
+          setAnimatingCardId(null);
+        }, 25);
+      }, 150);
+      
+      // Log the deletion
+      const place = savedPlaces.find(p => p.id === table.placeId);
+      await logTableDeleted(table.name, place?.name || 'Unknown Place');
+      
+    } catch (error) {
+      console.error('❌ Failed to delete table:', error);
+      alert('Failed to delete table. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePlaceDelete = async (place: Place) => {
@@ -291,7 +453,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
   };
 
   // Handle editing completion
-  const handleEditSave = async (name: string, selectedColor: string, storeNumber: string, userPin: string) => {
+  const handleEditSave = async (name: string, selectedColor: string, storeNumber?: string, userPin?: string, placeId?: string) => {
     if (editingPlace) {
       try {
         setLoading(true);
@@ -300,8 +462,8 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
         await placeService.updatePlace(parseInt(editingPlace.id), {
           name,
           color: getHexColor(selectedColor), // Convert CSS variable to hex
-          store_number: storeNumber,
-          user_pin: userPin
+          store_number: storeNumber || editingPlace.storeNumber,
+          user_pin: userPin || editingPlace.userPin
         });
         
         // Log the place update  
@@ -318,7 +480,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
           // Update the existing place
           setSavedPlaces(prev => prev.map(p => 
             p.id === editingPlace.id 
-              ? { ...p, name, color: selectedColor, storeNumber, userPin }
+              ? { ...p, name, color: selectedColor, storeNumber: storeNumber || p.storeNumber, userPin: userPin || p.userPin }
               : p
           ));
           
@@ -340,28 +502,84 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
       } finally {
         setLoading(false);
       }
+    } else if (editingTable) {
+      try {
+        setLoading(true);
+        
+        // Update table on server
+        await tableService.updateTable(parseInt(editingTable.id), {
+          name,
+          color: selectedColor, // selectedColor is now the place's color (already hex)
+          place_id: placeId ? parseInt(placeId) : parseInt(editingTable.placeId),
+          store_number: storeNumber || editingTable.storeNumber,
+          user_pin: userPin || editingTable.userPin
+        });
+        
+        // Start fade animation
+        setCardsTransitioning(true);
+        
+        // Fade out current cards
+        setTimeout(() => {
+          // Update the existing table
+          setSavedTables(prev => prev.map(t => 
+            t.id === editingTable.id 
+              ? { 
+                  ...t, 
+                  name, 
+                  color: selectedColor, 
+                  placeId: placeId || t.placeId,
+                  storeNumber: storeNumber || t.storeNumber, 
+                  userPin: userPin || t.userPin 
+                }
+              : t
+          ));
+          
+          // Exit edit mode
+          setIsCardEditMode(false);
+          setEditingTable(null);
+          setIsAddMode(false);
+          
+          // Fade in updated cards
+          setTimeout(() => {
+            setCardsTransitioning(false);
+          }, 25);
+        }, 150);
+        
+      } catch (error) {
+        console.error('❌ Failed to update table:', error);
+        alert('Failed to update table. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     } else {
       // Regular add mode
-      await handleSave(name, selectedColor, storeNumber, userPin);
+      await handleSave(name, selectedColor, storeNumber, userPin, placeId);
     }
   };
 
   const handleEditCancel = () => {
     setIsCardEditMode(false);
     setEditingPlace(null);
+    setEditingTable(null);
     setIsAddMode(false);
   };
 
   const handleEditDelete = async () => {
-    console.log('🗑️ handleEditDelete called', { editingPlace, isCardEditMode });
+    console.log('🗑️ handleEditDelete called', { editingPlace, editingTable, isCardEditMode });
     if (editingPlace) {
       console.log('🗑️ Deleting place:', editingPlace.name);
       await handlePlaceDelete(editingPlace);
       setIsCardEditMode(false);
       setEditingPlace(null);
       setIsAddMode(false);
+    } else if (editingTable) {
+      console.log('🗑️ Deleting table:', editingTable.name);
+      await handleTableDelete(editingTable);
+      setIsCardEditMode(false);
+      setEditingTable(null);
+      setIsAddMode(false);
     } else {
-      console.warn('🗑️ No editing place found - cannot delete');
+      console.warn('🗑️ No editing item found - cannot delete');
     }
   };
   
@@ -455,6 +673,12 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                   setTimeout(() => {
                     setSelectedTab(tab);
                     setIsAddMode(false); // Reset add mode when switching tabs
+                    setSelectedPlace(null); // Reset selected place when switching tabs
+                    
+                    // Load appropriate data based on tab
+                    if (tab === 'Table') {
+                      loadTables();
+                    }
                     
                     // Fade in new content
                     setTimeout(() => {
@@ -464,8 +688,28 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                 }}
                 onAddClick={handleAddButtonClick}
                 tabTransitioning={tabTransitioning}
+                hideAddButton={selectedTab === 'Table'} // Hide add button for Table tab
               />
             </div>
+
+            {/* Content Sub Header - Show only for Table tab */}
+            {selectedTab === 'Table' && (
+              <div className="box-border content-stretch flex items-center justify-between overflow-hidden px-[0.5rem] py-[0.5rem] relative shrink-0 w-full" style={{ height: 'clamp(3rem, 8vh, 4.5rem)' }} data-name="ContentSubHeader">
+                <ManagementSubItemsComp
+                  tabs={savedPlaces.map(place => place.name)}
+                  selectedTab={selectedPlace?.name || ''}
+                  onTabChange={(placeName) => {
+                    const place = savedPlaces.find(p => p.name === placeName);
+                    if (place) {
+                      setSelectedPlace(place);
+                      loadTablesByPlace(parseInt(place.id));
+                    }
+                  }}
+                  onAddClick={handleAddButtonClick} // Enable add for tables
+                  tabTransitioning={tabTransitioning}
+                />
+              </div>
+            )}
 
             {/* Content Body */}
             <div className="flex-1 flex items-start justify-start min-h-0 min-w-0 relative w-full p-[1vw] overflow-y-auto overflow-x-hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }} data-name="ContentBody" data-node-id="184:4043">
@@ -497,6 +741,36 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                     animatingCardId={animatingCardId}
                     isEditMode={isCardEditMode}
                   />
+                ) : selectedTab === 'Table' && selectedPlace && savedTables.length > 0 ? (
+                  <ResponsiveCardGrid 
+                    places={savedTables.map(table => ({
+                      id: table.id,
+                      name: table.name,
+                      color: table.color,
+                      tableCount: 0, // Not relevant for tables
+                      storeNumber: table.storeNumber,
+                      userPin: table.userPin,
+                      createdAt: table.createdAt
+                    }))}
+                    onCardClick={(table) => {
+                      console.log('Clicked table:', table.name);
+                    }}
+                    onCardLongPress={(table) => {
+                      // Handle table long press for editing
+                      console.log('Long-press on table:', table.name);
+                    }}
+                    onCardReorder={(reorderedTables) => {
+                      // Handle table reordering
+                      console.log('Tables reordered');
+                    }}
+                    onEditCancel={() => {
+                      console.log('Table edit cancelled');
+                    }}
+                    editingPlace={null}
+                    isTransitioning={cardsTransitioning}
+                    animatingCardId={animatingCardId}
+                    isEditMode={false}
+                  />
                 ) : (
                   <div 
                     className="content-stretch flex flex-col items-center justify-center overflow-hidden relative shrink-0 w-full h-full" 
@@ -525,7 +799,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
         <div className="h-full min-h-0 max-h-full relative rounded-[1.5rem] border border-[#363636]" style={{ flex: '3', minWidth: '0' }} data-name="Panel" data-node-id="184:4066">
           <div className="box-border flex flex-col h-full items-center justify-start min-w-0 overflow-hidden px-[0.5rem] py-0 relative w-full">
             <PanelHeaderComp 
-              title={isAddMode ? 'Place Settings' : 'POS Log'} 
+              title={isAddMode ? (selectedTab === 'Table' ? 'Table Settings' : 'Place Settings') : 'POS Log'} 
             />
             <div className="flex-1 box-border flex flex-col items-center justify-start min-h-0 min-w-0 px-[0.25rem] relative w-full overflow-hidden" style={{ paddingTop: '3vh', paddingBottom: '3vh' }} data-name="PanelBody" data-node-id="184:4071">
               <PanelContent
@@ -538,6 +812,8 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                 onDelete={isCardEditMode ? handleEditDelete : undefined}
                 isEditMode={isCardEditMode}
                 editingPlace={editingPlace}
+                editingTable={editingTable}
+                places={savedPlaces}
               />
             </div>
           </div>

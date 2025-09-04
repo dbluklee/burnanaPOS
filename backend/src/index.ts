@@ -9,6 +9,7 @@ import { initializeDatabase } from './models/database';
 import placesRouter from './routes/places';
 import logsRouter from './routes/logs';
 import usersRouter from './routes/users';
+import tablesRouter from './routes/tables';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
@@ -23,6 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/users', usersRouter);
 app.use('/api/places', placesRouter);
+app.use('/api/tables', tablesRouter);
 app.use('/api/logs', logsRouter);
 
 // Basic route

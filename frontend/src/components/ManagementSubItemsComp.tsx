@@ -2,23 +2,21 @@ import React from 'react';
 import ButtonComp from './ButtonComp';
 import ButtonAddComp from './ButtonAddComp';
 
-interface ManagementItemsCompProps {
+interface ManagementSubItemsCompProps {
   tabs: string[];
   selectedTab: string;
   onTabChange: (tab: string) => void;
   onAddClick: () => void;
   tabTransitioning?: boolean;
-  hideAddButton?: boolean;
 }
 
-export default function ManagementItemsComp({
+export default function ManagementSubItemsComp({
   tabs,
   selectedTab,
   onTabChange,
   onAddClick,
-  tabTransitioning = false,
-  hideAddButton = false
-}: ManagementItemsCompProps) {
+  tabTransitioning = false
+}: ManagementSubItemsCompProps) {
   return (
     <>
       {/* Items area - 80% width */}
@@ -49,16 +47,14 @@ export default function ManagementItemsComp({
         data-name="Function" 
         data-node-id="184:4026"
       >
-        {!hideAddButton && (
-          <div 
-            className="relative shrink-0" 
-            style={{ width: 'clamp(2rem, 4vw, 2.5rem)', height: 'clamp(2rem, 4vw, 2.5rem)' }} 
-            data-name="Vector" 
-            data-node-id="184:4027"
-          >
-            <ButtonAddComp onClick={onAddClick} />
-          </div>
-        )}
+        <div 
+          className="relative shrink-0" 
+          style={{ width: 'clamp(2rem, 4vw, 2.5rem)', height: 'clamp(2rem, 4vw, 2.5rem)' }} 
+          data-name="Vector" 
+          data-node-id="184:4027"
+        >
+          <ButtonAddComp onClick={onAddClick} />
+        </div>
       </div>
     </>
   );

@@ -60,6 +60,22 @@ export const initializeDatabase = async (): Promise<void> => {
         )
       `);
 
+      // Create Tables table
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS tables (
+          id SERIAL PRIMARY KEY,
+          place_id INTEGER NOT NULL REFERENCES places(id) ON DELETE CASCADE,
+          name VARCHAR(200) NOT NULL,
+          color VARCHAR(7) NOT NULL,
+          position_x INTEGER DEFAULT 0,
+          position_y INTEGER DEFAULT 0,
+          store_number VARCHAR(100) NOT NULL,
+          user_pin VARCHAR(20) NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
       // Create Logs table
       await client.query(`
         CREATE TABLE IF NOT EXISTS logs (
@@ -93,6 +109,14 @@ export const initializeDatabase = async (): Promise<void> => {
       await client.query(`
         CREATE INDEX IF NOT EXISTS idx_logs_type ON logs(type)
       `);
+      
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_tables_place_id ON tables(place_id)
+      `);
+      
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_tables_store_number ON tables(store_number)
+      `);
 
       console.log('✅ PostgreSQL database tables initialized successfully');
     } finally {
@@ -110,6 +134,19 @@ export interface PlaceRecord {
   name: string;
   color: string;
   table_count: number;
+  user_pin: string;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+export interface TableRecord {
+  id?: number;
+  place_id: number;
+  name: string;
+  color: string;
+  position_x: number;
+  position_y: number;
+  store_number: string;
   user_pin: string;
   created_at?: Date;
   updated_at?: Date;
