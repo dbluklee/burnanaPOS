@@ -7,6 +7,7 @@ export interface PlaceData {
   color: string;
   table_count: number;
   user_pin: string;
+  sort_order?: number;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -171,6 +172,22 @@ class PlaceService {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to delete log');
+    }
+  }
+
+  // Update place order
+  async updatePlaceOrder(placeOrders: { id: number; sort_order: number }[]): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/places/order`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ placeOrders }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update place order');
     }
   }
 }

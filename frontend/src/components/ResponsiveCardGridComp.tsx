@@ -7,6 +7,7 @@ interface Place {
   name: string;
   color: string;
   tableCount: number;
+  sortOrder?: number;
 }
 
 interface ResponsiveCardGridCompProps {

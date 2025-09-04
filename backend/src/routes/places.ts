@@ -95,6 +95,30 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// Update order of places
+router.put('/order', async (req, res) => {
+  try {
+    const { placeOrders } = req.body;
+    
+    if (!Array.isArray(placeOrders)) {
+      return res.status(400).json({ error: 'placeOrders must be an array' });
+    }
+    
+    // Validate that each item has id and sort_order
+    for (const item of placeOrders) {
+      if (!item.id || typeof item.sort_order !== 'number') {
+        return res.status(400).json({ error: 'Each item must have id and sort_order' });
+      }
+    }
+    
+    await Place.updateOrder(placeOrders);
+    res.json({ message: 'Place order updated successfully' });
+  } catch (error) {
+    console.error('Error updating place order:', error);
+    res.status(500).json({ error: 'Failed to update place order' });
+  }
+});
+
 // Delete place
 router.delete('/:id', async (req, res) => {
   try {

@@ -135,6 +135,7 @@ export interface PlaceRecord {
   color: string;
   table_count: number;
   user_pin: string;
+  sort_order?: number;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -148,6 +149,7 @@ export interface TableRecord {
   position_y: number;
   store_number: string;
   user_pin: string;
+  sort_order?: number;
   created_at?: Date;
   updated_at?: Date;
 }

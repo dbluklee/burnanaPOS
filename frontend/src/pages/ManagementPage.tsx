@@ -36,6 +36,7 @@ interface Place {
   color: string;
   tableCount: number;
   userPin: string;
+  sortOrder: number;
   createdAt: Date;
 }
 
@@ -99,6 +100,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
         color: p.color,
         tableCount: p.table_count,
         userPin: p.user_pin,
+        sortOrder: p.sort_order || 0,
         createdAt: new Date(p.created_at!)
       }));
       setSavedPlaces(mappedPlaces);
@@ -161,6 +163,15 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
   React.useEffect(() => {
     loadPlaces();
   }, [loadPlaces]);
+  
+  // Auto-select first place when places are loaded and we're on Table tab
+  React.useEffect(() => {
+    if (selectedTab === 'Table' && savedPlaces.length > 0 && !selectedPlace) {
+      const firstPlace = savedPlaces[0];
+      setSelectedPlace(firstPlace);
+      loadTablesByPlace(parseInt(firstPlace.id));
+    }
+  }, [savedPlaces, selectedTab]);
   
   // Function to get appropriate notification message based on selected tab
   const getNotiMessage = (tab: string) => {
@@ -255,6 +266,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
           color: newPlaceData.color,
           tableCount: newPlaceData.table_count,
           userPin: newPlaceData.user_pin,
+          sortOrder: newPlaceData.sort_order || 0,
           createdAt: new Date(newPlaceData.created_at!)
         };
 
@@ -447,9 +459,32 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
   };
 
   // Handle card reordering
-  const handleCardReorder = (reorderedPlaces: Place[]) => {
+  const handleCardReorder = async (reorderedPlaces: Place[]) => {
+    // Update local state immediately for responsive UI
     setSavedPlaces(reorderedPlaces);
-    console.log('Cards reordered:', reorderedPlaces.map(p => p.name));
+    
+    try {
+      // Create order updates with new sort_order values
+      const placeOrders = reorderedPlaces.map((place, index) => ({
+        id: parseInt(place.id),
+        sort_order: index + 1 // 1-based ordering
+      }));
+      
+      // Save to database
+      await placeService.updatePlaceOrder(placeOrders);
+      console.log('✅ Place order saved to database');
+      
+      // Update local places with new sort_order values
+      setSavedPlaces(prev => prev.map((place, index) => ({
+        ...place,
+        sortOrder: index + 1
+      })));
+      
+    } catch (error) {
+      console.error('❌ Failed to save place order:', error);
+      // Optionally: reload places from server to restore correct order
+      loadPlaces();
+    }
   };
 
   // Handle editing completion
@@ -673,11 +708,19 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                   setTimeout(() => {
                     setSelectedTab(tab);
                     setIsAddMode(false); // Reset add mode when switching tabs
-                    setSelectedPlace(null); // Reset selected place when switching tabs
                     
                     // Load appropriate data based on tab
                     if (tab === 'Table') {
-                      loadTables();
+                      // Auto-select first place if available
+                      if (savedPlaces.length > 0) {
+                        const firstPlace = savedPlaces[0];
+                        setSelectedPlace(firstPlace);
+                        loadTablesByPlace(parseInt(firstPlace.id));
+                      } else {
+                        setSelectedPlace(null);
+                      }
+                    } else {
+                      setSelectedPlace(null); // Reset selected place for other tabs
                     }
                     
                     // Fade in new content
@@ -725,7 +768,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
               >
                 {selectedTab === 'Place' && savedPlaces.length > 0 ? (
                   <ResponsiveCardGrid 
-                    places={[...savedPlaces, { id: 'add', name: '', color: '', tableCount: 0 }]}
+                    places={[...savedPlaces.map(p => ({ ...p, sortOrder: p.sortOrder })), { id: 'add', name: '', color: '', tableCount: 0 }]}
                     onCardClick={(place) => {
                       if (place.id === 'add') {
                         handleAddButtonClick();

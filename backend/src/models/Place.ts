@@ -4,11 +4,15 @@ export class Place {
   static async create(place: Omit<PlaceRecord, 'id' | 'created_at' | 'updated_at'>): Promise<PlaceRecord> {
     const client = await pool.connect();
     try {
+      // Get the next sort_order value (max + 1)
+      const orderResult = await client.query('SELECT COALESCE(MAX(sort_order), 0) + 1 as next_order FROM places WHERE store_number = $1', [place.store_number]);
+      const nextOrder = orderResult.rows[0].next_order;
+      
       const result = await client.query(
-        `INSERT INTO places (store_number, name, color, table_count, user_pin)
-         VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO places (store_number, name, color, table_count, user_pin, sort_order)
+         VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING *`,
-        [place.store_number, place.name, place.color, place.table_count, place.user_pin]
+        [place.store_number, place.name, place.color, place.table_count, place.user_pin, nextOrder]
       );
       
       return result.rows[0];
@@ -20,7 +24,7 @@ export class Place {
   static async findAll(): Promise<PlaceRecord[]> {
     const client = await pool.connect();
     try {
-      const result = await client.query('SELECT * FROM places ORDER BY created_at DESC');
+      const result = await client.query('SELECT * FROM places ORDER BY sort_order ASC, created_at DESC');
       return result.rows;
     } finally {
       client.release();
@@ -69,6 +73,10 @@ export class Place {
         fields.push(`user_pin = $${paramCount++}`);
         values.push(updates.user_pin);
       }
+      if (updates.sort_order !== undefined) {
+        fields.push(`sort_order = $${paramCount++}`);
+        values.push(updates.sort_order);
+      }
       
       fields.push(`updated_at = CURRENT_TIMESTAMP`);
       values.push(id);
@@ -101,7 +109,7 @@ export class Place {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        'SELECT * FROM places WHERE store_number = $1 ORDER BY created_at DESC',
+        'SELECT * FROM places WHERE store_number = $1 ORDER BY sort_order ASC, created_at DESC',
         [storeNumber]
       );
       return result.rows;
@@ -148,6 +156,27 @@ export class Place {
       
       const result = await client.query(sql, params);
       return result.rowCount !== null && result.rowCount > 0;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async updateOrder(placeOrders: { id: number; sort_order: number }[]): Promise<void> {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      for (const item of placeOrders) {
+        await client.query(
+          'UPDATE places SET sort_order = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+          [item.sort_order, item.id]
+        );
+      }
+      
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
     } finally {
       client.release();
     }
