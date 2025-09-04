@@ -17,7 +17,7 @@ export default function PanelHeaderComp({ title, className = "", style }: PanelH
       data-node-id="184:4067"
     >
       <div 
-        className="box-border content-stretch flex items-center justify-start overflow-hidden px-[0.25rem] py-[0.125rem] relative rounded-[1rem] shrink-0 h-full" 
+        className="box-border content-stretch flex items-center justify-start overflow-hidden px-[0.25rem] py-[0.25rem] relative rounded-[1rem] shrink-0 h-full" 
         data-name="PanelLabel" 
         data-node-id="184:4068"
       >

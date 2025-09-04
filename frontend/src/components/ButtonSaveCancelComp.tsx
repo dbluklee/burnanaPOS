@@ -30,7 +30,7 @@ export default function ButtonSaveCancelComp({
         label={cancelLabel}
         onClick={onCancel}
         className="h-[clamp(2.5rem,4vh,3.5rem)] min-w-[5rem]"
-        disabled={disabled || isLoading}
+        disabled={isLoading}
       />
       <ButtonComp 
         label={saveLabel}
