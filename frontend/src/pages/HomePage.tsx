@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import BlockComp from './BlockComp';
-import HighlightBlock from './BlockHighlightComp';
-import BlockPromotion from './BlockPromoComp';
-import BlockSignOut from './BlockSignOut';
-import BlockInfo from './BlockInfo';
-import BlockSetting from './BlockSetting';
-import BlockFAQ from './BlockFAQ';
-import BlockLanguage from './BlockLanguage';
-import BlockEmail from './BlockEmail';
+import BlockComp from '../components/BlockComp';
+import HighlightBlock from '../components/BlockHighlightComp';
+import BlockPromotion from '../components/BlockPromoComp';
+import BlockSignOut from '../components/BlockSignOut';
+import BlockInfo from '../components/BlockInfo';
+import BlockSetting from '../components/BlockSetting';
+import BlockFAQ from '../components/BlockFAQ';
+import BlockLanguage from '../components/BlockLanguage';
+import BlockEmail from '../components/BlockEmail';
 import type { UserProfile } from '../services/userService';
 
 // Image assets

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import WelcomePage from './components/WelcomePage';
-import SignUpPage from './components/SignUpPage';
-import SignInPage from './components/SignInPage';
-import HomePage from './components/HomePage';
-import ManagementPage from './components/ManagementPage';
-import ComponentShowcasePage from './components/ComponentShowcasePage';
+import WelcomePage from './pages/WelcomePage';
+import SignUpPage from './pages/SignUpPage';
+import SignInPage from './pages/SignInPage';
+import HomePage from './pages/HomePage';
+import ManagementPage from './pages/ManagementPage';
+import ComponentShowcasePage from './pages/ComponentShowcasePage';
 import type { PageType } from './types/navigation';
 import { enterFullscreen, exitFullscreen, isFullscreen } from './utils/fullscreen';
 

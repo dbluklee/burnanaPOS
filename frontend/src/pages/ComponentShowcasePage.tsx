@@ -1,15 +1,15 @@
 import React from 'react';
-import Block from './BlockComp';
-import HighlightBlock from './BlockHighlightComp';
-import BlockSmall from './BlockSmallComp';
-import BlockPromotion from './BlockPromoComp';
+import Block from '../components/BlockComp';
+import HighlightBlock from '../components/BlockHighlightComp';
+import BlockSmall from '../components/BlockSmallComp';
+import BlockPromotion from '../components/BlockPromoComp';
 
 // Image assets
 import promotionTopImage from '../assets/images/HomePage/promotion-top.jpg';
 import promotionMid1Image from '../assets/images/HomePage/promotion-mid1.jpg';
 import promotionMid2Image from '../assets/images/HomePage/promotion-mid2.jpg';
 import promotionBottomImage from '../assets/images/HomePage/promotion-bottom.jpg';
-import Log from './LogComp';
+import Log from '../components/LogComp';
 
 // Icon assets for small blocks
 import burnanaLogoImage from '../assets/Common/burnana-logo.svg';

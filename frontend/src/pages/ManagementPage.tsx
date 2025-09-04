@@ -1,15 +1,15 @@
 import React from 'react';
-import ButtonComp from './ButtonComp';
-import ButtonAddComp from './ButtonAddComp'; 
-import Noti from './NotiComp';
-import PanelContent from './PanelContentComp';
-import PanelHeaderComp from './PanelHeaderComp';
-import PlaceCard from './PlaceCardComp';
-import ResponsiveCardGrid from './ResponsiveCardGridComp';
-import ManagementItemsComp from './ManagementItemsComp';
-import { tableColors, getHexColor, getCSSVariable } from './ColorSelectorComp';
+import ButtonComp from '../components/ButtonComp';
+import ButtonAddComp from '../components/ButtonAddComp'; 
+import Noti from '../components/NotiComp';
+import PanelContent from '../components/PanelContentComp';
+import PanelHeaderComp from '../components/PanelHeaderComp';
+import PlaceCard from '../components/PlaceCardComp';
+import ResponsiveCardGrid from '../components/ResponsiveCardGridComp';
+import ManagementItemsComp from '../components/ManagementItemsComp';
+import { tableColors, getHexColor, getCSSVariable } from '../components/ColorSelectorComp';
 import { useLogging } from '../hooks/useLogging';
-import SyncStatus from './SyncStatus';
+import SyncStatus from '../components/SyncStatus';
 import { placeService, type PlaceData } from '../services/placeService';
 
 // Icon components as SVG strings (from Figma assets)

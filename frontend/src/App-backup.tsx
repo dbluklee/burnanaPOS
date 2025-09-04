@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import WelcomeNew from './components/WelcomeNew';
-import SignUpPage from './components/SignUpPage';
-import SignInPage from './components/SignInPage';
-import HomePage from './components/HomePage';
+import SignUpPage from './pages/SignUpPage';
+import SignInPage from './pages/SignInPage';
+import HomePage from './pages/HomePage';
 import type { PageType } from './types/navigation';
 
 function App() {

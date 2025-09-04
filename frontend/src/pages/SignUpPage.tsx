@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import SignUpImageComp from './SignUpImageComp';
-import SignUpComp from './SignUpComp';
+import SignUpImageComp from '../components/SignUpImageComp';
+import SignUpComp from '../components/SignUpComp';
 
 interface SignUpPageProps {
   onBack?: () => void;

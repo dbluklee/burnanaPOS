@@ -1,4 +1,4 @@
-import WelcomeBodyComp from './WelcomeBodyComp';
+import WelcomeBodyComp from '../components/WelcomeBodyComp';
 
 interface WelcomePageProps {
   onSignUp?: () => void;

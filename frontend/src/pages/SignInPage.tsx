@@ -1,5 +1,5 @@
 import { DESIGN_TOKENS } from '../types/design-tokens';
-import SignInComp from './SignInComp';
+import SignInComp from '../components/SignInComp';
 
 interface SignInPageProps {
   onBack?: () => void;
