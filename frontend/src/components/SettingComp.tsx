@@ -5,7 +5,7 @@ import InputDropdown from './InputDropdownComp';
 import ButtonsSetComp from './ButtonsSetComp';
 
 // Define input field types
-type InputFieldType = 'text' | 'color' | 'dropdown';
+type InputFieldType = 'text' | 'color' | 'dropdown' | 'formatted-number';
 
 interface DropdownOption {
   value: string;
@@ -81,7 +81,7 @@ export default function SettingComp({
     return fields.every(field => {
       if (!field.required) return true;
       const value = fieldValues[field.key];
-      if (field.type === 'text') {
+      if (field.type === 'text' || field.type === 'formatted-number') {
         return typeof value === 'string' && value.trim().length > 0;
       }
       if (field.type === 'dropdown') {
@@ -103,6 +103,20 @@ export default function SettingComp({
             placeholder={field.placeholder}
             description={field.description}
             className="w-full"
+          />
+        );
+
+      case 'formatted-number':
+        return (
+          <InputText
+            key={field.key}
+            name={field.name}
+            value={fieldValues[field.key] || ''}
+            onChange={(value) => updateFieldValue(field.key, value)}
+            placeholder={field.placeholder}
+            description={field.description}
+            className="w-full"
+            type="formatted-number"
           />
         );
 

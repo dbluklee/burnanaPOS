@@ -14,6 +14,7 @@ import SyncStatus from '../components/SyncStatus';
 import { placeService, type PlaceData } from '../services/placeService';
 import { tableService, type TableData } from '../services/tableService';
 import { categoryService, type CategoryData } from '../services/categoryService';
+import { menuService, type MenuData } from '../services/menuService';
 
 // Icon components as SVG strings (from Figma assets)
 const homeIconSvg = `data:image/svg+xml,<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 28L40 8L70 28V68C70 69.1046 69.1046 70 68 70H12C10.8954 70 10 69.1046 10 68V28Z" stroke="%23E0E0E0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M30 70V40H50V70" stroke="%23E0E0E0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -64,6 +65,18 @@ interface Category {
   createdAt: Date;
 }
 
+interface Menu {
+  id: string;
+  categoryId: string;
+  name: string;
+  description?: string;
+  price?: string;
+  storeNumber: string;
+  userPin: string;
+  sortOrder: number;
+  createdAt: Date;
+}
+
 export default function ManagementPage({ onBack, onSignOut, onHome }: ManagementPageProps) {
   const [selectedTab, setSelectedTab] = React.useState('Place');
   const [isAddMode, setIsAddMode] = React.useState(false);
@@ -77,6 +90,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
   const [editingPlace, setEditingPlace] = React.useState<Place | null>(null);
   const [editingTable, setEditingTable] = React.useState<Table | null>(null);
   const [editingCategory, setEditingCategory] = React.useState<Category | null>(null);
+  const [editingMenu, setEditingMenu] = React.useState<Menu | null>(null);
   
   // Use the logging system
   const { 
@@ -101,6 +115,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
   const [savedPlaces, setSavedPlaces] = React.useState<Place[]>([]);
   const [savedTables, setSavedTables] = React.useState<Table[]>([]);
   const [savedCategories, setSavedCategories] = React.useState<Category[]>([]);
+  const [savedMenus, setSavedMenus] = React.useState<Menu[]>([]);
   
   // Table management specific states
   const [selectedPlace, setSelectedPlace] = React.useState<Place | null>(null);
@@ -202,6 +217,30 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
     }
   }, []);
   
+  // Load menus for a specific category
+  const loadMenusByCategory = React.useCallback(async (categoryId: number) => {
+    try {
+      setLoading(true);
+      const menusData = await menuService.getMenusByCategory(categoryId);
+      const mappedMenus = menusData.map((m: MenuData) => ({
+        id: m.id!.toString(),
+        categoryId: m.category_id.toString(),
+        name: m.name,
+        description: m.description,
+        price: m.price.toString(),
+        storeNumber: m.store_number,
+        userPin: m.user_pin,
+        sortOrder: m.sort_order || 0,
+        createdAt: new Date(m.created_at!)
+      }));
+      setSavedMenus(mappedMenus);
+    } catch (error) {
+      console.error('Failed to load menus:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
   // Load places and categories from the server on component mount
   React.useEffect(() => {
     loadPlaces();
@@ -224,6 +263,13 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
       setSelectedCategory(firstCategory);
     }
   }, [savedCategories, selectedTab]);
+  
+  // Load menus when selectedCategory changes
+  React.useEffect(() => {
+    if (selectedCategory) {
+      loadMenusByCategory(parseInt(selectedCategory.id));
+    }
+  }, [selectedCategory, loadMenusByCategory]);
   
   // Function to get appropriate notification message based on selected tab
   const getNotiMessage = (tab: string) => {
@@ -283,7 +329,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
     setIsAddMode(true);
   };
 
-  const handleSave = async (name: string, selectedColor: string, storeNumber?: string, userPin?: string, placeId?: string) => {
+  const handleSave = async (name: string, selectedColor: string, storeNumber?: string, userPin?: string, placeId?: string, description?: string, price?: string) => {
     // Get current user from localStorage
     const currentUserStr = localStorage.getItem('currentUser');
     if (!currentUserStr) {
@@ -474,6 +520,52 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
       } catch (error) {
         console.error('❌ Failed to create category:', error);
         alert('Failed to create category. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    } else if (selectedTab === 'Menu') {
+      if (!selectedCategory) {
+        alert('Please select a category first to add a menu.');
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        
+        // Create menu on server
+        const newMenuData = await menuService.createMenu({
+          category_id: parseInt(selectedCategory.id),
+          store_number: currentStoreNumber,
+          name,
+          price: parseFloat(price || '0'),
+          description: description || '',
+          user_pin: currentUserPin
+        });
+        
+        // Convert to local Menu interface
+        const newMenu: Menu = {
+          id: newMenuData.id!.toString(),
+          categoryId: newMenuData.category_id.toString(),
+          name: newMenuData.name,
+          description: newMenuData.description,
+          price: newMenuData.price.toString(),
+          storeNumber: newMenuData.store_number,
+          userPin: newMenuData.user_pin,
+          sortOrder: newMenuData.sort_order || 0,
+          createdAt: new Date(newMenuData.created_at!)
+        };
+        
+        // Add the new menu
+        setSavedMenus(prev => [...prev, newMenu]);
+        setIsAddMode(false);
+        
+        // Log the menu creation
+        // Note: logMenuCreated would need to be added to useLogging hook if needed
+        console.log('✅ Menu created successfully:', newMenu);
+        
+      } catch (error) {
+        console.error('❌ Failed to create menu:', error);
+        alert('Failed to create menu. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -867,6 +959,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
     setEditingPlace(null);
     setEditingTable(null);
     setEditingCategory(null);
+    setEditingMenu(null);
     setIsAddMode(false);
   };
 
@@ -1008,6 +1101,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                       if (savedCategories.length > 0) {
                         const firstCategory = savedCategories[0];
                         setSelectedCategory(firstCategory);
+                        loadMenusByCategory(parseInt(firstCategory.id));
                       } else {
                         setSelectedCategory(null);
                       }
@@ -1070,6 +1164,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                       setEditingCategory(null);
                       
                       setSelectedCategory(category);
+                      loadMenusByCategory(parseInt(category.id));
                     }
                   }}
                   onAddClick={handleAddButtonClick} // Enable add for menus
@@ -1170,6 +1265,44 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                     animatingCardId={animatingCardId}
                     isEditMode={isCardEditMode}
                   />
+                ) : selectedTab === 'Menu' && selectedCategory && savedMenus.length > 0 ? (
+                  <ResponsiveCardGrid 
+                    places={savedMenus.map(menu => ({
+                      id: menu.id,
+                      name: menu.name,
+                      color: selectedCategory.color, // Use category color for menu cards
+                      tableCount: parseInt(menu.price || '0'), // Show price as tableCount (will be displayed)
+                      storeNumber: menu.storeNumber,
+                      userPin: menu.userPin,
+                      createdAt: menu.createdAt
+                    }))}
+                    onCardClick={(menu) => {
+                      console.log('Clicked menu:', menu.name);
+                    }}
+                    onCardLongPress={(menu) => {
+                      console.log('Long pressed menu:', menu.name);
+                      // Handle menu long press for editing
+                    }}
+                    onCardReorder={(reorderedMenus) => {
+                      // Handle menu reordering
+                      console.log('Menus reordered');
+                    }}
+                    onEditCancel={handleEditCancel}
+                    editingPlace={selectedCategory ? {
+                      id: selectedCategory.id,
+                      name: selectedCategory.name,
+                      color: selectedCategory.color,
+                      tableCount: selectedCategory.menuCount,
+                      storeNumber: selectedCategory.storeNumber,
+                      userPin: selectedCategory.userPin,
+                      sortOrder: selectedCategory.sortOrder,
+                      createdAt: selectedCategory.createdAt
+                    } : null}
+                    editingMenu={editingMenu}
+                    isTransitioning={cardsTransitioning}
+                    animatingCardId={animatingCardId}
+                    isEditMode={isCardEditMode}
+                  />
                 ) : (
                   <div 
                     className="content-stretch flex flex-col items-center justify-center overflow-hidden relative shrink-0 w-full h-full" 
@@ -1218,6 +1351,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                 editingPlace={editingPlace}
                 editingTable={editingTable}
                 editingCategory={editingCategory}
+                editingMenu={editingMenu}
                 places={savedPlaces}
                 categories={savedCategories}
                 selectedPlace={selectedPlace}

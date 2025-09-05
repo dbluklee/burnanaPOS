@@ -1,5 +1,18 @@
 import React from 'react';
 
+// Helper function to format number with commas
+const formatNumberWithCommas = (value: string): string => {
+  // Remove all non-digit characters
+  const numbers = value.replace(/\D/g, '');
+  // Add commas every 3 digits
+  return numbers.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};
+
+// Helper function to extract numbers only
+const extractNumbers = (value: string): string => {
+  return value.replace(/\D/g, '');
+};
+
 interface TextInputCompProps {
   name: string;
   value?: string;
@@ -7,7 +20,7 @@ interface TextInputCompProps {
   description?: string;
   onChange?: (value: string) => void;
   className?: string;
-  type?: 'text' | 'email' | 'password' | 'number';
+  type?: 'text' | 'email' | 'password' | 'number' | 'formatted-number';
 }
 
 export default function InputTextComp({ 
@@ -19,6 +32,28 @@ export default function InputTextComp({
   className = '',
   type = 'text'
 }: TextInputCompProps) {
+  const handleInputChange = (inputValue: string) => {
+    if (type === 'formatted-number') {
+      // For formatted numbers, extract only numbers and pass raw numbers to onChange
+      const numbersOnly = extractNumbers(inputValue);
+      onChange?.(numbersOnly);
+    } else {
+      onChange?.(inputValue);
+    }
+  };
+
+  const getDisplayValue = () => {
+    if (type === 'formatted-number' && value) {
+      return formatNumberWithCommas(value);
+    }
+    return value || '';
+  };
+
+  const getInputType = () => {
+    if (type === 'formatted-number') return 'text';
+    return type;
+  };
+
   return (
     <div 
       className={`box-border flex flex-col gap-[0.2rem] items-start ${className}`}
@@ -32,10 +67,10 @@ export default function InputTextComp({
       </label>
       <input
         id={name}
-        type={type}
-        value={value || ''}
+        type={getInputType()}
+        value={getDisplayValue()}
         placeholder={placeholder}
-        onChange={(e) => onChange?.(e.target.value)}
+        onChange={(e) => handleInputChange(e.target.value)}
         className="FontStyleText box-border flex items-center px-[1rem] py-[0.5rem] rounded-[0.375rem] bg-[var(--light)] placeholder-gray-500 focus:outline-none transition-colors"
         style={{ 
           minHeight: '30px',

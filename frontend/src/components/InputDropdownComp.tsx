@@ -41,7 +41,7 @@ export default function InputDropdownComp({
         onChange={(e) => onChange?.(e.target.value)}
         className="FontStyleText box-border flex items-center px-[1rem] py-[0.5rem] rounded-[0.375rem] bg-[var(--light)] focus:outline-none transition-colors cursor-pointer"
         style={{ 
-          minHeight: '40px',
+          minHeight: '30px',
           width: '95%',
           color: value ? 'var(--black)' : '#6b7280'
         }}

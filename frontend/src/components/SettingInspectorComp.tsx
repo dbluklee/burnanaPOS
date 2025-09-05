@@ -42,6 +42,8 @@ interface Menu {
   id: string;
   categoryId: string;
   name: string;
+  description?: string;
+  price?: string;
   storeNumber: string;
   userPin: string;
   createdAt: Date;
@@ -49,7 +51,7 @@ interface Menu {
 
 interface SettingInspectorCompProps {
   selectedTab: string;
-  onSave?: (name: string, selectedColor: string, storeNumber?: string, userPin?: string, placeId?: string) => void;
+  onSave?: (name: string, selectedColor: string, storeNumber?: string, userPin?: string, placeId?: string, description?: string, price?: string) => void;
   onCancel?: () => void;
   onDelete?: () => void;
   isEditMode?: boolean;
@@ -146,14 +148,16 @@ export default function SettingInspectorComp({
         return (
           <MenuSettings
             categories={categories}
-            onSave={(menuName: string, selectedCategoryId: string) => 
-              onSave?.(menuName, '', editingMenu?.storeNumber || '', editingMenu?.userPin || '', selectedCategoryId)
+            onSave={(menuName: string, selectedCategoryId: string, menuDescription: string, menuPrice: string) => 
+              onSave?.(menuName, '', editingMenu?.storeNumber || '', editingMenu?.userPin || '', selectedCategoryId, menuDescription, menuPrice)
             }
             onCancel={onCancel}
             onDelete={onDelete}
             isEditMode={isEditMode}
             initialName={editingMenu?.name || ''}
             initialCategoryId={editingMenu?.categoryId || selectedCategory?.id || ''}
+            initialDescription={editingMenu?.description || ''}
+            initialPrice={editingMenu?.price || ''}
           />
         );
       default:

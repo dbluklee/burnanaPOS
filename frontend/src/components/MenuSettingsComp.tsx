@@ -9,12 +9,14 @@ interface Category {
 
 interface MenuSettingsCompProps {
   categories: Category[];
-  onSave?: (menuName: string, selectedCategoryId: string) => void;
+  onSave?: (menuName: string, selectedCategoryId: string, menuDescription: string, menuPrice: string) => void;
   onCancel?: () => void;
   onDelete?: () => void;
   isEditMode?: boolean;
   initialName?: string;
   initialCategoryId?: string;
+  initialDescription?: string;
+  initialPrice?: string;
 }
 
 export default function MenuSettingsComp({ 
@@ -24,7 +26,9 @@ export default function MenuSettingsComp({
   onDelete, 
   isEditMode = false, 
   initialName = '', 
-  initialCategoryId = ''
+  initialCategoryId = '',
+  initialDescription = '',
+  initialPrice = ''
 }: MenuSettingsCompProps) {
   // Convert categories to dropdown options
   const categoryOptions = categories.map(category => ({
@@ -43,6 +47,24 @@ export default function MenuSettingsComp({
       required: true
     },
     {
+      key: 'description',
+      type: 'text' as const,
+      name: 'Menu Description',
+      placeholder: 'eg. Spicy fried rice with kimchi and vegetables',
+      description: 'Please write a description of the menu item.',
+      initialValue: initialDescription,
+      required: false
+    },
+    {
+      key: 'price',
+      type: 'formatted-number' as const,
+      name: 'Menu Price',
+      placeholder: 'eg. 12,000',
+      description: 'Please enter the price of the menu item (numbers only).',
+      initialValue: initialPrice,
+      required: false
+    },
+    {
       key: 'categoryId',
       type: 'dropdown' as const,
       name: 'Category',
@@ -55,7 +77,7 @@ export default function MenuSettingsComp({
   ];
 
   const handleSave = (values: Record<string, any>) => {
-    onSave?.(values.name, values.categoryId);
+    onSave?.(values.name, values.categoryId, values.description, values.price);
   };
 
   return (

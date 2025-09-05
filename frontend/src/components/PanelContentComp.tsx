@@ -46,6 +46,8 @@ interface Menu {
   id: string;
   categoryId: string;
   name: string;
+  description?: string;
+  price?: string;
   storeNumber: string;
   userPin: string;
   createdAt: Date;
@@ -56,7 +58,7 @@ interface PanelContentCompProps {
   selectedTab: string;
   logEntries: LogEntry[];
   onLogUndo: (logId: number) => void;
-  onSave?: (name: string, selectedColor: string, storeNumber?: string, userPin?: string, placeId?: string) => void;
+  onSave?: (name: string, selectedColor: string, storeNumber?: string, userPin?: string, placeId?: string, description?: string, price?: string) => void;
   onCancel?: () => void;
   onDelete?: () => void;
   isEditMode?: boolean;
