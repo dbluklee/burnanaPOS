@@ -1,6 +1,8 @@
 import express from 'express';
 import { Log } from '../models/Log';
 import { Place } from '../models/Place';
+import { Category } from '../models/Category';
+import { Menu } from '../models/Menu';
 
 const router = express.Router();
 
@@ -215,6 +217,156 @@ router.post('/:id/undo', async (req, res) => {
           });
           
           undoMessage = `${placeName} has been created by Undo`;
+          undoSuccess = true;
+        } else {
+          return res.status(400).json({ error: 'No preData found in metadata' });
+        }
+        break;
+      }
+      
+      case 'category_created': {
+        // Delete the category that was created
+        const categoryName = metadata.postData?.categoryName || metadata.postData?.name;
+        if (categoryName) {
+          const deleted = await Category.deleteByName(categoryName, log.store_number);
+          if (deleted) {
+            undoMessage = `${categoryName} has been deleted by Undo`;
+            undoSuccess = true;
+          } else {
+            return res.status(404).json({ error: `Category ${categoryName} not found` });
+          }
+        } else {
+          return res.status(400).json({ error: 'No category name found in metadata' });
+        }
+        break;
+      }
+      
+      case 'category_modified':
+      case 'category_updated': {
+        // Restore category to previous state using preData
+        const categoryName = metadata.postData?.categoryName || metadata.postData?.name;
+        const preData = metadata.preData;
+        
+        if (categoryName && preData) {
+          // Find the category to update
+          const category = await Category.findByName(categoryName, log.store_number);
+          if (category) {
+            // Update with preData
+            const updates = {
+              name: preData.categoryName || preData.name,
+              color: preData.color,
+              menu_count: preData.menu_count,
+              store_number: preData.store_number,
+              user_pin: preData.user_pin
+            };
+            
+            if (category.id) {
+              await Category.update(category.id, updates);
+            } else {
+              return res.status(500).json({ error: 'Category ID not found' });
+            }
+            undoMessage = `${categoryName} has been modified by Undo`;
+            undoSuccess = true;
+          } else {
+            return res.status(404).json({ error: `Category ${categoryName} not found` });
+          }
+        } else {
+          return res.status(400).json({ error: 'No category name or preData found in metadata' });
+        }
+        break;
+      }
+      
+      case 'category_deleted': {
+        // Recreate the category using preData
+        const preData = metadata.preData;
+        const categoryName = preData?.categoryName || preData?.name;
+        
+        if (preData && categoryName) {
+          const newCategory = await Category.create({
+            store_number: preData.store_number || log.store_number,
+            name: categoryName,
+            color: preData.color,
+            menu_count: preData.menu_count || 0,
+            user_pin: preData.user_pin || log.user_pin
+          });
+          
+          undoMessage = `${categoryName} has been created by Undo`;
+          undoSuccess = true;
+        } else {
+          return res.status(400).json({ error: 'No preData found in metadata' });
+        }
+        break;
+      }
+      
+      case 'menu_created': {
+        // Delete the menu that was created
+        const menuName = metadata.postData?.menuName || metadata.postData?.name;
+        if (menuName) {
+          const deleted = await Menu.deleteByName(menuName, log.store_number);
+          if (deleted) {
+            undoMessage = `${menuName} has been deleted by Undo`;
+            undoSuccess = true;
+          } else {
+            return res.status(404).json({ error: `Menu ${menuName} not found` });
+          }
+        } else {
+          return res.status(400).json({ error: 'No menu name found in metadata' });
+        }
+        break;
+      }
+      
+      case 'menu_modified':
+      case 'menu_updated': {
+        // Restore menu to previous state using preData
+        const menuName = metadata.postData?.menuName || metadata.postData?.name;
+        const preData = metadata.preData;
+        
+        if (menuName && preData) {
+          // Find the menu to update
+          const menu = await Menu.findByName(menuName, log.store_number);
+          if (menu) {
+            // Update with preData
+            const updates = {
+              name: preData.menuName || preData.name,
+              category_id: preData.category_id,
+              price: preData.price,
+              description: preData.description,
+              store_number: preData.store_number,
+              user_pin: preData.user_pin
+            };
+            
+            if (menu.id) {
+              await Menu.update(menu.id, updates);
+            } else {
+              return res.status(500).json({ error: 'Menu ID not found' });
+            }
+            undoMessage = `${menuName} has been modified by Undo`;
+            undoSuccess = true;
+          } else {
+            return res.status(404).json({ error: `Menu ${menuName} not found` });
+          }
+        } else {
+          return res.status(400).json({ error: 'No menu name or preData found in metadata' });
+        }
+        break;
+      }
+      
+      case 'menu_deleted': {
+        // Recreate the menu using preData
+        const preData = metadata.preData;
+        const menuName = preData?.menuName || preData?.name;
+        
+        if (preData && menuName) {
+          const newMenu = await Menu.create({
+            category_id: preData.category_id,
+            store_number: preData.store_number || log.store_number,
+            name: menuName,
+            price: preData.price || 0,
+            description: preData.description,
+            user_pin: preData.user_pin || log.user_pin
+          });
+          
+          undoMessage = `${menuName} has been created by Undo`;
           undoSuccess = true;
         } else {
           return res.status(400).json({ error: 'No preData found in metadata' });

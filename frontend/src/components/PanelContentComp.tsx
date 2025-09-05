@@ -67,6 +67,7 @@ interface PanelContentCompProps {
   places?: Place[];
   categories?: Category[];
   selectedPlace?: Place | null;
+  selectedCategory?: Category | null;
 }
 
 export default function PanelContentComp({ 
@@ -84,7 +85,8 @@ export default function PanelContentComp({
   editingMenu = null,
   places = [],
   categories = [],
-  selectedPlace = null
+  selectedPlace = null,
+  selectedCategory = null
 }: PanelContentCompProps) {
   return (
     <div className="flex flex-col flex-1 w-full h-full min-h-0 overflow-hidden" data-name="PanelContent">
@@ -102,6 +104,7 @@ export default function PanelContentComp({
           places={places}
           categories={categories}
           selectedPlace={selectedPlace}
+          selectedCategory={selectedCategory}
         />
       ) : (
         <Logs

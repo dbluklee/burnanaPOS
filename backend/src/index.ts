@@ -11,6 +11,7 @@ import logsRouter from './routes/logs';
 import usersRouter from './routes/users';
 import tablesRouter from './routes/tables';
 import categoriesRouter from './routes/categories';
+import menusRouter from './routes/menus';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
@@ -24,6 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/categories', categoriesRouter);
+app.use('/api/menus', menusRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/places', placesRouter);
 app.use('/api/tables', tablesRouter);

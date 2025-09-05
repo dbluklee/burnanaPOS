@@ -103,6 +103,22 @@ export const initializeDatabase = async (): Promise<void> => {
         )
       `);
 
+      // Create Menus table
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS menus (
+          id SERIAL PRIMARY KEY,
+          category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+          store_number VARCHAR(100) NOT NULL,
+          name VARCHAR(200) NOT NULL,
+          price DECIMAL(10,2) DEFAULT 0.00,
+          description TEXT,
+          user_pin VARCHAR(20) NOT NULL,
+          sort_order INTEGER DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
       // Create Logs table
       await client.query(`
         CREATE TABLE IF NOT EXISTS logs (
@@ -148,6 +164,14 @@ export const initializeDatabase = async (): Promise<void> => {
       await client.query(`
         CREATE INDEX IF NOT EXISTS idx_categories_store_number ON categories(store_number)
       `);
+      
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_menus_category_id ON menus(category_id)
+      `);
+      
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_menus_store_number ON menus(store_number)
+      `);
 
       console.log('✅ PostgreSQL database tables initialized successfully');
     } finally {
@@ -191,6 +215,19 @@ export interface CategoryRecord {
   name: string;
   color: string;
   menu_count: number;
+  user_pin: string;
+  sort_order?: number;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+export interface MenuRecord {
+  id?: number;
+  category_id: number;
+  store_number: string;
+  name: string;
+  price: number;
+  description?: string;
   user_pin: string;
   sort_order?: number;
   created_at?: Date;

@@ -268,22 +268,105 @@ class LoggingService {
     });
   }
 
-  // Future Menu logging methods
-  async logMenuCreated(menuName: string): Promise<void> {
-    await this.log(EventType.MENU_CREATED, `{{${menuName}}} has been created.`, { menu: menuName });
+  // Enhanced Category logging methods with metadata
+  async logCategoryCreated(categoryName: string, color: string, categoryData?: any): Promise<void> {
+    // Auto-initialize if not already initialized
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+    
+    const metadata = {
+      preData: { categoryName: "", color: "", menu_count: 0 },
+      postData: { categoryName, color, menu_count: categoryData?.menu_count || 0, ...categoryData }
+    };
+    await this.log(EventType.CATEGORY_CREATED, `{{${categoryName}}} has been created.`, { 
+      categoryName, 
+      additionalData: metadata 
+    });
   }
 
-  async logMenuDeleted(menuName: string): Promise<void> {
-    await this.log(EventType.MENU_DELETED, `{{${menuName}}} has been deleted.`, { menu: menuName });
+  async logCategoryDeleted(categoryName: string, color: string, categoryData?: any): Promise<void> {
+    // Auto-initialize if not already initialized
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+    
+    const metadata = {
+      preData: { categoryName, color, menu_count: categoryData?.menu_count || 0, ...categoryData },
+      postData: { categoryName: "", color: "", menu_count: 0 }
+    };
+    await this.log(EventType.CATEGORY_DELETED, `{{${categoryName}}} has been deleted.`, { 
+      categoryName, 
+      additionalData: metadata 
+    });
   }
 
-  // Future Category logging methods
-  async logCategoryCreated(categoryName: string): Promise<void> {
-    await this.log(EventType.CATEGORY_CREATED, `{{${categoryName}}} has been created.`, { category: categoryName });
+  async logCategoryUpdated(oldCategoryName: string, oldColor: string, newCategoryName: string, newColor: string, oldCategoryData?: any, newCategoryData?: any): Promise<void> {
+    // Auto-initialize if not already initialized
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+    
+    const metadata = {
+      preData: { categoryName: oldCategoryName, color: oldColor, ...oldCategoryData },
+      postData: { categoryName: newCategoryName, color: newColor, ...newCategoryData }
+    };
+    await this.log(EventType.CATEGORY_UPDATED, `{{${newCategoryName}}} has been modified.`, { 
+      categoryName: newCategoryName, 
+      additionalData: metadata 
+    });
   }
 
-  async logCategoryDeleted(categoryName: string): Promise<void> {
-    await this.log(EventType.CATEGORY_DELETED, `{{${categoryName}}} has been deleted.`, { category: categoryName });
+  // Enhanced Menu logging methods with metadata
+  async logMenuCreated(menuName: string, categoryName: string, menuData?: any): Promise<void> {
+    // Auto-initialize if not already initialized
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+    
+    const metadata = {
+      preData: { menuName: "", categoryName: categoryName, price: 0, description: "" },
+      postData: { menuName, categoryName, price: menuData?.price || 0, description: menuData?.description || "", ...menuData }
+    };
+    await this.log(EventType.MENU_CREATED, `{{${categoryName}}} {{${menuName}}} has been created.`, { 
+      menuName,
+      categoryName,
+      additionalData: metadata 
+    });
+  }
+
+  async logMenuDeleted(menuName: string, categoryName: string, menuData?: any): Promise<void> {
+    // Auto-initialize if not already initialized
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+    
+    const metadata = {
+      preData: { menuName, categoryName, price: menuData?.price || 0, description: menuData?.description || "", ...menuData },
+      postData: { menuName: "", categoryName: categoryName, price: 0, description: "" }
+    };
+    await this.log(EventType.MENU_DELETED, `{{${categoryName}}} {{${menuName}}} has been deleted.`, { 
+      menuName,
+      categoryName,
+      additionalData: metadata 
+    });
+  }
+
+  async logMenuUpdated(oldMenuName: string, oldCategoryName: string, newMenuName: string, newCategoryName: string, oldMenuData?: any, newMenuData?: any): Promise<void> {
+    // Auto-initialize if not already initialized
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+    
+    const metadata = {
+      preData: { menuName: oldMenuName, categoryName: oldCategoryName, ...oldMenuData },
+      postData: { menuName: newMenuName, categoryName: newCategoryName, ...newMenuData }
+    };
+    await this.log(EventType.MENU_UPDATED, `{{${newCategoryName}}} {{${newMenuName}}} has been modified.`, { 
+      menuName: newMenuName,
+      categoryName: newCategoryName,
+      additionalData: metadata 
+    });
   }
 
   async logError(errorMessage: string, additionalData?: Record<string, any>): Promise<void> {

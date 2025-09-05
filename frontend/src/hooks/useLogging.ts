@@ -21,10 +21,12 @@ interface UseLoggingReturn {
   logPlaceUpdated: (oldPlaceName: string, oldColor: string, newPlaceName: string, newColor: string) => Promise<void>;
   logTableCreated: (tableName: string, placeName: string, tableData?: any) => Promise<void>;
   logTableDeleted: (tableName: string, placeName: string, tableData?: any) => Promise<void>;
-  logMenuCreated: (menuName: string) => Promise<void>;
-  logMenuDeleted: (menuName: string) => Promise<void>;
-  logCategoryCreated: (categoryName: string) => Promise<void>;
-  logCategoryDeleted: (categoryName: string) => Promise<void>;
+  logMenuCreated: (menuName: string, categoryName: string, menuData?: any) => Promise<void>;
+  logMenuDeleted: (menuName: string, categoryName: string, menuData?: any) => Promise<void>;
+  logMenuUpdated: (oldMenuName: string, oldCategoryName: string, newMenuName: string, newCategoryName: string, oldMenuData?: any, newMenuData?: any) => Promise<void>;
+  logCategoryCreated: (categoryName: string, color: string, categoryData?: any) => Promise<void>;
+  logCategoryDeleted: (categoryName: string, color: string, categoryData?: any) => Promise<void>;
+  logCategoryUpdated: (oldCategoryName: string, oldColor: string, newCategoryName: string, newColor: string, oldCategoryData?: any, newCategoryData?: any) => Promise<void>;
   logCustomerArrival: (placeName: string, tableName: string, customerCount?: number) => Promise<void>;
   logError: (errorMessage: string, additionalData?: Record<string, any>) => Promise<void>;
   
@@ -170,20 +172,28 @@ export function useLogging(autoRefresh: boolean = true): UseLoggingReturn {
     await loggingService.logTableDeleted(tableName, placeName, tableData);
   }, []);
 
-  const logMenuCreated = useCallback(async (menuName: string) => {
-    await loggingService.logMenuCreated(menuName);
+  const logMenuCreated = useCallback(async (menuName: string, categoryName: string, menuData?: any) => {
+    await loggingService.logMenuCreated(menuName, categoryName, menuData);
   }, []);
 
-  const logMenuDeleted = useCallback(async (menuName: string) => {
-    await loggingService.logMenuDeleted(menuName);
+  const logMenuDeleted = useCallback(async (menuName: string, categoryName: string, menuData?: any) => {
+    await loggingService.logMenuDeleted(menuName, categoryName, menuData);
   }, []);
 
-  const logCategoryCreated = useCallback(async (categoryName: string) => {
-    await loggingService.logCategoryCreated(categoryName);
+  const logMenuUpdated = useCallback(async (oldMenuName: string, oldCategoryName: string, newMenuName: string, newCategoryName: string, oldMenuData?: any, newMenuData?: any) => {
+    await loggingService.logMenuUpdated(oldMenuName, oldCategoryName, newMenuName, newCategoryName, oldMenuData, newMenuData);
   }, []);
 
-  const logCategoryDeleted = useCallback(async (categoryName: string) => {
-    await loggingService.logCategoryDeleted(categoryName);
+  const logCategoryCreated = useCallback(async (categoryName: string, color: string, categoryData?: any) => {
+    await loggingService.logCategoryCreated(categoryName, color, categoryData);
+  }, []);
+
+  const logCategoryDeleted = useCallback(async (categoryName: string, color: string, categoryData?: any) => {
+    await loggingService.logCategoryDeleted(categoryName, color, categoryData);
+  }, []);
+
+  const logCategoryUpdated = useCallback(async (oldCategoryName: string, oldColor: string, newCategoryName: string, newColor: string, oldCategoryData?: any, newCategoryData?: any) => {
+    await loggingService.logCategoryUpdated(oldCategoryName, oldColor, newCategoryName, newColor, oldCategoryData, newCategoryData);
   }, []);
 
   const logCustomerArrival = useCallback(async (placeName: string, tableName: string, customerCount?: number) => {
@@ -283,8 +293,10 @@ export function useLogging(autoRefresh: boolean = true): UseLoggingReturn {
     logTableDeleted,
     logMenuCreated,
     logMenuDeleted,
+    logMenuUpdated,
     logCategoryCreated,
     logCategoryDeleted,
+    logCategoryUpdated,
     logCustomerArrival,
     logError,
     
@@ -330,8 +342,10 @@ export function useLogger() {
     logTableDeleted: loggingService.logTableDeleted.bind(loggingService),
     logMenuCreated: loggingService.logMenuCreated.bind(loggingService),
     logMenuDeleted: loggingService.logMenuDeleted.bind(loggingService),
+    logMenuUpdated: loggingService.logMenuUpdated.bind(loggingService),
     logCategoryCreated: loggingService.logCategoryCreated.bind(loggingService),
     logCategoryDeleted: loggingService.logCategoryDeleted.bind(loggingService),
+    logCategoryUpdated: loggingService.logCategoryUpdated.bind(loggingService),
     logCustomerArrival: loggingService.logCustomerArrival.bind(loggingService),
     logError: loggingService.logError.bind(loggingService),
     logUserSignIn: loggingService.logUserSignIn.bind(loggingService),

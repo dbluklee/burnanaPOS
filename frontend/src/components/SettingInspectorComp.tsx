@@ -3,7 +3,7 @@ import PlaceSettings from './PlaceSettingsComp';
 import TableSettings from './TableSettingsComp';
 import CategorySettings from './CategorySettingsComp';
 import MenuSettings from './MenuSettingsComp';
-import { tableColors, getCSSVariable } from './ColorSelectorComp';
+import { tableColors, getCSSVariable } from './InputColorComp';
 
 interface Place {
   id: string;
@@ -60,6 +60,7 @@ interface SettingInspectorCompProps {
   places?: Place[];
   categories?: Category[];
   selectedPlace?: Place | null;
+  selectedCategory?: Category | null;
 }
 
 export default function SettingInspectorComp({ 
@@ -74,7 +75,8 @@ export default function SettingInspectorComp({
   editingMenu = null,
   places = [],
   categories = [],
-  selectedPlace = null
+  selectedPlace = null,
+  selectedCategory = null
 }: SettingInspectorCompProps) {
   // Based on the selected tab, render the appropriate settings component
   // For now, we only have PlaceSettings, but this can be extended for Table, Category, Menu
@@ -151,7 +153,7 @@ export default function SettingInspectorComp({
             onDelete={onDelete}
             isEditMode={isEditMode}
             initialName={editingMenu?.name || ''}
-            initialCategoryId={editingMenu?.categoryId || ''}
+            initialCategoryId={editingMenu?.categoryId || selectedCategory?.id || ''}
           />
         );
       default:

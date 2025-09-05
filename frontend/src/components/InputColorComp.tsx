@@ -42,14 +42,14 @@ interface ColorSelectorCompProps {
   description?: string;
 }
 
-export default function ColorSelectorComp({ 
+export default function InputColorComp({ 
   selectedColorIndex, 
   onColorSelect,
   title = "Color",
   description = "On the table card, select a card color to easily distinguish places."
 }: ColorSelectorCompProps) {
   return (
-    <div className="box-border flex flex-col gap-[1rem] w-full items-start" data-name="ColorSelector">
+    <div className="box-border flex flex-col gap-[0.2rem] w-full items-start" data-name="ColorSelector">
       {/* Title */}
       <div className="FontStyleSubTitle text-white not-italic">
         {title}
@@ -59,9 +59,9 @@ export default function ColorSelectorComp({
       <div 
         className="flex items-center justify-center bg-transparent overflow-hidden" 
         style={{ 
-          minHeight: '60px',
+          minHeight: '100px',
           width: '80%',
-          padding: 'clamp(0.75rem, 2vw, 1.5rem)' 
+          padding: 'clamp(0.5rem, 1vw, 1.5rem)' 
         }} 
         data-name="ColorPalette"
       >

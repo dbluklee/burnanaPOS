@@ -10,7 +10,7 @@ interface TextInputCompProps {
   type?: 'text' | 'email' | 'password' | 'number';
 }
 
-export default function TextInputComp({ 
+export default function InputTextComp({ 
   name,
   value = '',
   placeholder = 'eg. 1st floor',
@@ -21,7 +21,7 @@ export default function TextInputComp({
 }: TextInputCompProps) {
   return (
     <div 
-      className={`box-border flex flex-col gap-[1rem] items-start ${className}`}
+      className={`box-border flex flex-col gap-[0.2rem] items-start ${className}`}
       data-name="TextInput"
     >
       <label 
@@ -38,7 +38,7 @@ export default function TextInputComp({
         onChange={(e) => onChange?.(e.target.value)}
         className="FontStyleText box-border flex items-center px-[1rem] py-[0.5rem] rounded-[0.375rem] bg-[var(--light)] placeholder-gray-500 focus:outline-none transition-colors"
         style={{ 
-          minHeight: '40px',
+          minHeight: '30px',
           width: '95%',
           color: 'var(--black)'
         }}

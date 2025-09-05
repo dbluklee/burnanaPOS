@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import ColorSelector, { tableColors } from './ColorSelectorComp';
-import TextInput from './TextInputComp';
-import DropdownInputComp from './DropdownInputComp';
+import InputColor, { tableColors } from './InputColorComp';
+import InputText from './InputTextComp';
+import InputDropdown from './InputDropdownComp';
 import ButtonsSetComp from './ButtonsSetComp';
 
 // Define input field types
@@ -95,7 +95,7 @@ export default function SettingComp({
     switch (field.type) {
       case 'text':
         return (
-          <TextInput
+          <InputText
             key={field.key}
             name={field.name}
             value={fieldValues[field.key] || ''}
@@ -108,7 +108,7 @@ export default function SettingComp({
 
       case 'color':
         return (
-          <ColorSelector
+          <InputColor
             key={field.key}
             selectedColorIndex={fieldValues[field.key] || 0}
             onColorSelect={(index) => updateFieldValue(field.key, index)}
@@ -119,7 +119,7 @@ export default function SettingComp({
 
       case 'dropdown':
         return (
-          <DropdownInputComp
+          <InputDropdown
             key={field.key}
             name={field.name}
             value={fieldValues[field.key] || ''}

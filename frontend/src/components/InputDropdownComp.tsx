@@ -15,7 +15,7 @@ interface DropdownInputCompProps {
   className?: string;
 }
 
-export default function DropdownInputComp({ 
+export default function InputDropdownComp({ 
   name,
   value = '',
   options = [],
@@ -26,7 +26,7 @@ export default function DropdownInputComp({
 }: DropdownInputCompProps) {
   return (
     <div 
-      className={`box-border flex flex-col gap-[1rem] items-start ${className}`}
+      className={`box-border flex flex-col gap-[0.2rem] items-start ${className}`}
       data-name="DropdownInput"
     >
       <label 

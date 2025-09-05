@@ -8,7 +8,7 @@ import PlaceCard from '../components/PlaceCardComp';
 import ResponsiveCardGrid from '../components/ResponsiveCardGridComp';
 import ManagementItemsComp from '../components/ManagementItemsComp';
 import ManagementSubItemsComp from '../components/ManagementSubItemsComp';
-import { tableColors, getHexColor, getCSSVariable } from '../components/ColorSelectorComp';
+import { tableColors, getHexColor, getCSSVariable } from '../components/InputColorComp';
 import { useLogging } from '../hooks/useLogging';
 import SyncStatus from '../components/SyncStatus';
 import { placeService, type PlaceData } from '../services/placeService';
@@ -88,6 +88,9 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
     logPlaceUpdated,
     logTableCreated,
     logTableDeleted,
+    logCategoryCreated,
+    logCategoryDeleted,
+    logCategoryUpdated,
     logCustomerArrival,
     logUserSignIn,
     forceSyncNow,
@@ -101,6 +104,9 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
   
   // Table management specific states
   const [selectedPlace, setSelectedPlace] = React.useState<Place | null>(null);
+  
+  // Menu management specific states  
+  const [selectedCategory, setSelectedCategory] = React.useState<Category | null>(null);
   
   // Load places from the server
   const loadPlaces = React.useCallback(async () => {
@@ -210,6 +216,14 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
       loadTablesByPlace(parseInt(firstPlace.id));
     }
   }, [savedPlaces, selectedTab]);
+  
+  // Auto-select first category when categories are loaded and we're on Menu tab
+  React.useEffect(() => {
+    if (selectedTab === 'Menu' && savedCategories.length > 0 && !selectedCategory) {
+      const firstCategory = savedCategories[0];
+      setSelectedCategory(firstCategory);
+    }
+  }, [savedCategories, selectedTab]);
   
   // Function to get appropriate notification message based on selected tab
   const getNotiMessage = (tab: string) => {
@@ -448,8 +462,14 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
           }, 25);
         }, 150);
         
-        // Log the creation (we can add category logging later)
-        // await logCategoryCreated(name, getHexColor(selectedColor));
+        // Log the creation
+        await logCategoryCreated(name, getHexColor(selectedColor), {
+          menu_count: 0,
+          store_number: currentStoreNumber,
+          user_pin: currentUserPin,
+          sort_order: newCategory.sortOrder,
+          id: newCategory.id
+        });
         
       } catch (error) {
         console.error('❌ Failed to create category:', error);
@@ -565,8 +585,14 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
         }, 25);
       }, 150);
       
-      // Log the deletion (we can add category logging later)
-      // await logCategoryDeleted(category.name, category.color);
+      // Log the deletion
+      await logCategoryDeleted(category.name, category.color, {
+        menu_count: category.menuCount,
+        store_number: category.storeNumber,
+        user_pin: category.userPin,
+        sort_order: category.sortOrder,
+        id: category.id
+      });
       
     } catch (error) {
       console.error('❌ Failed to delete category:', error);
@@ -593,6 +619,16 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
     console.log('Long-press detected on category:', category.name);
     setIsCardEditMode(true);
     setEditingCategory(category);
+    setIsAddMode(true); // Show the settings panel
+  };
+
+  // Table long-press handler to enter edit mode
+  const handleTableLongPress = (table: Table) => {
+    if (table.id === 'add') return;
+    
+    console.log('Long-press detected on table:', table.name);
+    setIsCardEditMode(true);
+    setEditingTable(table);
     setIsAddMode(true); // Show the settings panel
   };
 
@@ -794,6 +830,26 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
           }, 25);
         }, 150);
         
+        // Log the update
+        await logCategoryUpdated(
+          editingCategory.name, editingCategory.color, // old values
+          name, getHexColor(selectedColor), // new values
+          { // old data
+            menu_count: editingCategory.menuCount,
+            store_number: editingCategory.storeNumber,
+            user_pin: editingCategory.userPin,
+            sort_order: editingCategory.sortOrder,
+            id: editingCategory.id
+          },
+          { // new data
+            menu_count: editingCategory.menuCount,
+            store_number: storeNumber || editingCategory.storeNumber,
+            user_pin: userPin || editingCategory.userPin,
+            sort_order: editingCategory.sortOrder,
+            id: editingCategory.id
+          }
+        );
+        
       } catch (error) {
         console.error('❌ Failed to update category:', error);
         alert('Failed to update category. Please try again.');
@@ -930,6 +986,12 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                     setSelectedTab(tab);
                     setIsAddMode(false); // Reset add mode when switching tabs
                     
+                    // Exit edit mode when switching tabs
+                    setIsCardEditMode(false);
+                    setEditingPlace(null);
+                    setEditingTable(null);
+                    setEditingCategory(null);
+                    
                     // Load appropriate data based on tab
                     if (tab === 'Table') {
                       // Auto-select first place if available
@@ -940,8 +1002,19 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                       } else {
                         setSelectedPlace(null);
                       }
+                      setSelectedCategory(null); // Reset selected category for Table tab
+                    } else if (tab === 'Menu') {
+                      // Auto-select first category if available
+                      if (savedCategories.length > 0) {
+                        const firstCategory = savedCategories[0];
+                        setSelectedCategory(firstCategory);
+                      } else {
+                        setSelectedCategory(null);
+                      }
+                      setSelectedPlace(null); // Reset selected place for Menu tab
                     } else {
                       setSelectedPlace(null); // Reset selected place for other tabs
+                      setSelectedCategory(null); // Reset selected category for other tabs
                     }
                     
                     // Fade in new content
@@ -952,11 +1025,11 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                 }}
                 onAddClick={handleAddButtonClick}
                 tabTransitioning={tabTransitioning}
-                hideAddButton={selectedTab === 'Table'} // Hide add button for Table tab
+                hideAddButton={selectedTab === 'Table' || selectedTab === 'Menu'} // Hide add button for Table and Menu tabs
               />
             </div>
 
-            {/* Content Sub Header - Show only for Table tab */}
+            {/* Content Sub Header - Show for Table and Menu tabs */}
             {selectedTab === 'Table' && (
               <div className="box-border content-stretch flex items-center justify-between overflow-hidden px-[0.5rem] py-[0.5rem] relative shrink-0 w-full" style={{ height: 'clamp(3rem, 8vh, 4.5rem)' }} data-name="ContentSubHeader">
                 <ManagementSubItemsComp
@@ -965,11 +1038,41 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                   onTabChange={(placeName) => {
                     const place = savedPlaces.find(p => p.name === placeName);
                     if (place) {
+                      // Exit edit mode when switching place sub-tabs
+                      setIsCardEditMode(false);
+                      setEditingPlace(null);
+                      setEditingTable(null);
+                      setEditingCategory(null);
+                      
                       setSelectedPlace(place);
                       loadTablesByPlace(parseInt(place.id));
                     }
                   }}
                   onAddClick={handleAddButtonClick} // Enable add for tables
+                  tabTransitioning={tabTransitioning}
+                />
+              </div>
+            )}
+
+            {/* Content Sub Header - Show for Menu tab */}
+            {selectedTab === 'Menu' && (
+              <div className="box-border content-stretch flex items-center justify-between overflow-hidden px-[0.5rem] py-[0.5rem] relative shrink-0 w-full" style={{ height: 'clamp(3rem, 8vh, 4.5rem)' }} data-name="ContentSubHeader">
+                <ManagementSubItemsComp
+                  tabs={savedCategories.map(category => category.name)}
+                  selectedTab={selectedCategory?.name || ''}
+                  onTabChange={(categoryName) => {
+                    const category = savedCategories.find(c => c.name === categoryName);
+                    if (category) {
+                      // Exit edit mode when switching category sub-tabs
+                      setIsCardEditMode(false);
+                      setEditingPlace(null);
+                      setEditingTable(null);
+                      setEditingCategory(null);
+                      
+                      setSelectedCategory(category);
+                    }
+                  }}
+                  onAddClick={handleAddButtonClick} // Enable add for menus
                   tabTransitioning={tabTransitioning}
                 />
               </div>
@@ -1055,21 +1158,17 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                     onCardClick={(table) => {
                       console.log('Clicked table:', table.name);
                     }}
-                    onCardLongPress={(table) => {
-                      // Handle table long press for editing
-                      console.log('Long-press on table:', table.name);
-                    }}
+                    onCardLongPress={handleTableLongPress}
                     onCardReorder={(reorderedTables) => {
                       // Handle table reordering
                       console.log('Tables reordered');
                     }}
-                    onEditCancel={() => {
-                      console.log('Table edit cancelled');
-                    }}
-                    editingPlace={null}
+                    onEditCancel={handleEditCancel}
+                    editingPlace={selectedPlace}
+                    editingTable={editingTable}
                     isTransitioning={cardsTransitioning}
                     animatingCardId={animatingCardId}
-                    isEditMode={false}
+                    isEditMode={isCardEditMode}
                   />
                 ) : (
                   <div 
@@ -1122,6 +1221,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                 places={savedPlaces}
                 categories={savedCategories}
                 selectedPlace={selectedPlace}
+                selectedCategory={selectedCategory}
               />
             </div>
           </div>
