@@ -96,9 +96,6 @@ class LoggingService {
     try {
       await databaseService.initialize();
       
-      // Load places from database for ItemComp processing
-      await this.loadPlacesFromDB();
-      
       // Restore session start time from localStorage if available
       const savedSessionStartTime = localStorage.getItem('sessionStartTime');
       if (savedSessionStartTime) {
@@ -303,9 +300,6 @@ class LoggingService {
     // Clear all local logs and start fresh session automatically
     await this.clearAllLocalData();
     
-    // Reload places from database for ItemComp processing
-    await this.loadPlacesFromDB();
-    
     // Small delay to ensure clearing is complete
     await new Promise(resolve => setTimeout(resolve, 100));
     
@@ -479,7 +473,8 @@ class LoggingService {
 
   // Configuration methods are no longer needed - user info is retrieved dynamically from localStorage
 
-  // Place data management for ItemComp processing
+  // Place data management - deprecated methods kept for compatibility
+  // These are no longer used since TableSettingsComp loads places dynamically
   private async loadPlacesFromDB(): Promise<void> {
     try {
       this.places = await placeService.getAllPlaces();
@@ -491,6 +486,8 @@ class LoggingService {
   }
 
   async refreshPlacesData(): Promise<void> {
+    // This method is kept for compatibility with existing code
+    // but places are now loaded dynamically where needed
     await this.loadPlacesFromDB();
   }
 

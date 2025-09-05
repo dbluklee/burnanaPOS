@@ -1,8 +1,8 @@
 import React from 'react';
 import SettingComp from './SettingComp';
 
-interface PlaceSettingsCompProps {
-  onSave?: (placeName: string, selectedColor: string) => void;
+interface CategorySettingsCompProps {
+  onSave?: (categoryName: string, selectedColor: string) => void;
   onCancel?: () => void;
   onDelete?: () => void;
   isEditMode?: boolean;
@@ -10,21 +10,21 @@ interface PlaceSettingsCompProps {
   initialColorIndex?: number;
 }
 
-export default function PlaceSettingsComp({ 
+export default function CategorySettingsComp({ 
   onSave, 
   onCancel, 
   onDelete, 
   isEditMode = false, 
   initialName = '', 
   initialColorIndex = 0
-}: PlaceSettingsCompProps) {
+}: CategorySettingsCompProps) {
   const fields = [
     {
       key: 'name',
       type: 'text' as const,
       name: 'Name',
-      placeholder: 'eg. 1st floor',
-      description: 'Please write the name of the space where you want to install the tables.',
+      placeholder: 'eg. Main Dishes',
+      description: 'Please write the name of the category for menu items.',
       initialValue: initialName,
       required: true
     },
@@ -32,7 +32,7 @@ export default function PlaceSettingsComp({
       key: 'color',
       type: 'color' as const,
       name: 'Color',
-      description: 'On the table card, select a card color to easily distinguish places.',
+      description: 'On the category card, select a card color to easily distinguish categories.',
       initialValue: initialColorIndex,
       required: false
     }
@@ -49,7 +49,7 @@ export default function PlaceSettingsComp({
       onCancel={onCancel}
       onDelete={onDelete}
       isEditMode={isEditMode}
-      settingsName="Place"
+      settingsName="Category"
     />
   );
 }

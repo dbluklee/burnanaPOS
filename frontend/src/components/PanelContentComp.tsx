@@ -31,6 +31,26 @@ interface Table {
   createdAt: Date;
 }
 
+interface Category {
+  id: string;
+  storeNumber: string;
+  name: string;
+  color: string;
+  menuCount: number;
+  userPin: string;
+  sortOrder: number;
+  createdAt: Date;
+}
+
+interface Menu {
+  id: string;
+  categoryId: string;
+  name: string;
+  storeNumber: string;
+  userPin: string;
+  createdAt: Date;
+}
+
 interface PanelContentCompProps {
   isAddMode: boolean;
   selectedTab: string;
@@ -42,7 +62,11 @@ interface PanelContentCompProps {
   isEditMode?: boolean;
   editingPlace?: Place | null;
   editingTable?: Table | null;
+  editingCategory?: Category | null;
+  editingMenu?: Menu | null;
   places?: Place[];
+  categories?: Category[];
+  selectedPlace?: Place | null;
 }
 
 export default function PanelContentComp({ 
@@ -56,7 +80,11 @@ export default function PanelContentComp({
   isEditMode = false,
   editingPlace = null,
   editingTable = null,
-  places = []
+  editingCategory = null,
+  editingMenu = null,
+  places = [],
+  categories = [],
+  selectedPlace = null
 }: PanelContentCompProps) {
   return (
     <div className="flex flex-col flex-1 w-full h-full min-h-0 overflow-hidden" data-name="PanelContent">
@@ -69,7 +97,11 @@ export default function PanelContentComp({
           isEditMode={isEditMode}
           editingPlace={editingPlace}
           editingTable={editingTable}
+          editingCategory={editingCategory}
+          editingMenu={editingMenu}
           places={places}
+          categories={categories}
+          selectedPlace={selectedPlace}
         />
       ) : (
         <Logs

@@ -1,6 +1,8 @@
 import React from 'react';
 import PlaceSettings from './PlaceSettingsComp';
 import TableSettings from './TableSettingsComp';
+import CategorySettings from './CategorySettingsComp';
+import MenuSettings from './MenuSettingsComp';
 import { tableColors, getCSSVariable } from './ColorSelectorComp';
 
 interface Place {
@@ -25,6 +27,26 @@ interface Table {
   createdAt: Date;
 }
 
+interface Category {
+  id: string;
+  storeNumber: string;
+  name: string;
+  color: string;
+  menuCount: number;
+  userPin: string;
+  sortOrder: number;
+  createdAt: Date;
+}
+
+interface Menu {
+  id: string;
+  categoryId: string;
+  name: string;
+  storeNumber: string;
+  userPin: string;
+  createdAt: Date;
+}
+
 interface SettingInspectorCompProps {
   selectedTab: string;
   onSave?: (name: string, selectedColor: string, storeNumber?: string, userPin?: string, placeId?: string) => void;
@@ -33,7 +55,11 @@ interface SettingInspectorCompProps {
   isEditMode?: boolean;
   editingPlace?: Place | null;
   editingTable?: Table | null;
+  editingCategory?: Category | null;
+  editingMenu?: Menu | null;
   places?: Place[];
+  categories?: Category[];
+  selectedPlace?: Place | null;
 }
 
 export default function SettingInspectorComp({ 
@@ -44,7 +70,11 @@ export default function SettingInspectorComp({
   isEditMode = false, 
   editingPlace = null,
   editingTable = null,
-  places = []
+  editingCategory = null,
+  editingMenu = null,
+  places = [],
+  categories = [],
+  selectedPlace = null
 }: SettingInspectorCompProps) {
   // Based on the selected tab, render the appropriate settings component
   // For now, we only have PlaceSettings, but this can be extended for Table, Category, Menu
@@ -86,22 +116,43 @@ export default function SettingInspectorComp({
             onDelete={onDelete}
             isEditMode={isEditMode}
             initialName={editingTable?.name || ''}
-            initialPlaceId={editingTable?.placeId || ''}
+            initialPlaceId={editingTable?.placeId || selectedPlace?.id || ''}
           />
         );
       case 'category':
-        // Future: CategorySettings component
         return (
-          <div className="flex flex-col items-center justify-center h-full text-white">
-            <p>Category Settings coming soon...</p>
-          </div>
+          <CategorySettings
+            onSave={(categoryName: string, selectedColor: string) => 
+              onSave?.(categoryName, selectedColor, editingCategory?.storeNumber || '', editingCategory?.userPin || '')
+            }
+            onCancel={onCancel}
+            onDelete={onDelete}
+            isEditMode={isEditMode}
+            initialName={editingCategory?.name || ''}
+            initialColorIndex={editingCategory ? 
+              (() => {
+                // Convert hex color back to CSS variable, then find its index
+                const cssVariable = getCSSVariable(editingCategory.color);
+                const colorIndex = tableColors.indexOf(cssVariable);
+                return colorIndex >= 0 ? colorIndex : 0;
+              })()
+              : 0
+            }
+          />
         );
       case 'menu':
-        // Future: MenuSettings component
         return (
-          <div className="flex flex-col items-center justify-center h-full text-white">
-            <p>Menu Settings coming soon...</p>
-          </div>
+          <MenuSettings
+            categories={categories}
+            onSave={(menuName: string, selectedCategoryId: string) => 
+              onSave?.(menuName, '', editingMenu?.storeNumber || '', editingMenu?.userPin || '', selectedCategoryId)
+            }
+            onCancel={onCancel}
+            onDelete={onDelete}
+            isEditMode={isEditMode}
+            initialName={editingMenu?.name || ''}
+            initialCategoryId={editingMenu?.categoryId || ''}
+          />
         );
       default:
         return null;

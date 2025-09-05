@@ -55,9 +55,21 @@ export const initializeDatabase = async (): Promise<void> => {
           color VARCHAR(7) NOT NULL,
           table_count INTEGER DEFAULT 0,
           user_pin VARCHAR(20) NOT NULL,
+          sort_order INTEGER DEFAULT 0,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
+      `);
+      
+      // Add sort_order column to places table if it doesn't exist
+      await client.query(`
+        DO $$ 
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                        WHERE table_name='places' AND column_name='sort_order') THEN
+            ALTER TABLE places ADD COLUMN sort_order INTEGER DEFAULT 0;
+          END IF;
+        END $$
       `);
 
       // Create Tables table
@@ -71,6 +83,21 @@ export const initializeDatabase = async (): Promise<void> => {
           position_y INTEGER DEFAULT 0,
           store_number VARCHAR(100) NOT NULL,
           user_pin VARCHAR(20) NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      // Create Categories table
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS categories (
+          id SERIAL PRIMARY KEY,
+          store_number VARCHAR(100) NOT NULL,
+          name VARCHAR(200) NOT NULL,
+          color VARCHAR(7) NOT NULL,
+          menu_count INTEGER DEFAULT 0,
+          user_pin VARCHAR(20) NOT NULL,
+          sort_order INTEGER DEFAULT 0,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -117,6 +144,10 @@ export const initializeDatabase = async (): Promise<void> => {
       await client.query(`
         CREATE INDEX IF NOT EXISTS idx_tables_store_number ON tables(store_number)
       `);
+      
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_categories_store_number ON categories(store_number)
+      `);
 
       console.log('✅ PostgreSQL database tables initialized successfully');
     } finally {
@@ -148,6 +179,18 @@ export interface TableRecord {
   position_x: number;
   position_y: number;
   store_number: string;
+  user_pin: string;
+  sort_order?: number;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+export interface CategoryRecord {
+  id?: number;
+  store_number: string;
+  name: string;
+  color: string;
+  menu_count: number;
   user_pin: string;
   sort_order?: number;
   created_at?: Date;

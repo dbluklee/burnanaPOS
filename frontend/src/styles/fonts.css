@@ -16,49 +16,8 @@
  * limitations under the License.
  */
 
-@font-face {
-  font-family: Pretendard;
-  src: local(Pretendard-Regular),
-    url(/path/to/Pretendard-Regular.woff2) format("woff2"),
-    url(/path/to/Pretendard-Regular.woff) format("woff"),
-    url(/path/to/Pretendard-Regular.ttf) format("truetype");
-  font-weight: normal;
-  font-style: normal;
-  font-stretch: normal;
-}
-
-@font-face {
-  font-family: Pretendard;
-  src: local(Pretendard-Medium),
-    url(/path/to/Pretendard-Medium.woff2) format("woff2"),
-    url(/path/to/Pretendard-Medium.woff) format("woff"),
-    url(/path/to/Pretendard-Medium.ttf) format("truetype");
-  font-weight: 500;
-  font-style: normal;
-  font-stretch: normal;
-}
-
-@font-face {
-  font-family: Pretendard;
-  src: local(Pretendard-SemiBold),
-    url(/path/to/Pretendard-SemiBold.woff2) format("woff2"),
-    url(/path/to/Pretendard-SemiBold.woff) format("woff"),
-    url(/path/to/Pretendard-SemiBold.ttf) format("truetype");
-  font-weight: 600;
-  font-style: normal;
-  font-stretch: normal;
-}
-
-@font-face {
-  font-family: Pretendard;
-  src: local(Pretendard-ExtraBold),
-    url(/path/to/Pretendard-ExtraBold.woff2) format("woff2"),
-    url(/path/to/Pretendard-ExtraBold.woff) format("woff"),
-    url(/path/to/Pretendard-ExtraBold.ttf) format("truetype");
-  font-weight: 800;
-  font-style: normal;
-  font-stretch: normal;
-}
+/* Import Pretendard font from local files */
+@import url('../font/Pretendard/pretendard.css');
 
 .BlockHighlight {
   font-family: Pretendard;

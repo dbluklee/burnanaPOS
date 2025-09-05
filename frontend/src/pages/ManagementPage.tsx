@@ -13,6 +13,7 @@ import { useLogging } from '../hooks/useLogging';
 import SyncStatus from '../components/SyncStatus';
 import { placeService, type PlaceData } from '../services/placeService';
 import { tableService, type TableData } from '../services/tableService';
+import { categoryService, type CategoryData } from '../services/categoryService';
 
 // Icon components as SVG strings (from Figma assets)
 const homeIconSvg = `data:image/svg+xml,<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 28L40 8L70 28V68C70 69.1046 69.1046 70 68 70H12C10.8954 70 10 69.1046 10 68V28Z" stroke="%23E0E0E0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M30 70V40H50V70" stroke="%23E0E0E0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -52,6 +53,17 @@ interface Table {
   createdAt: Date;
 }
 
+interface Category {
+  id: string;
+  storeNumber: string;
+  name: string;
+  color: string;
+  menuCount: number;
+  userPin: string;
+  sortOrder: number;
+  createdAt: Date;
+}
+
 export default function ManagementPage({ onBack, onSignOut, onHome }: ManagementPageProps) {
   const [selectedTab, setSelectedTab] = React.useState('Place');
   const [isAddMode, setIsAddMode] = React.useState(false);
@@ -64,6 +76,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
   const [isCardEditMode, setIsCardEditMode] = React.useState(false);
   const [editingPlace, setEditingPlace] = React.useState<Place | null>(null);
   const [editingTable, setEditingTable] = React.useState<Table | null>(null);
+  const [editingCategory, setEditingCategory] = React.useState<Category | null>(null);
   
   // Use the logging system
   const { 
@@ -84,6 +97,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
   
   const [savedPlaces, setSavedPlaces] = React.useState<Place[]>([]);
   const [savedTables, setSavedTables] = React.useState<Table[]>([]);
+  const [savedCategories, setSavedCategories] = React.useState<Category[]>([]);
   
   // Table management specific states
   const [selectedPlace, setSelectedPlace] = React.useState<Place | null>(null);
@@ -159,10 +173,34 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
     }
   }, []);
   
-  // Load places from the server on component mount
+  // Load categories from the server
+  const loadCategories = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const categoriesData = await categoryService.getAllCategories();
+      const mappedCategories = categoriesData.map((c: CategoryData) => ({
+        id: c.id!.toString(),
+        storeNumber: c.store_number,
+        name: c.name,
+        color: c.color,
+        menuCount: c.menu_count,
+        userPin: c.user_pin,
+        sortOrder: c.sort_order || 0,
+        createdAt: new Date(c.created_at!)
+      }));
+      setSavedCategories(mappedCategories);
+    } catch (error) {
+      console.error('Failed to load categories:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
+  // Load places and categories from the server on component mount
   React.useEffect(() => {
     loadPlaces();
-  }, [loadPlaces]);
+    loadCategories();
+  }, [loadPlaces, loadCategories]);
   
   // Auto-select first place when places are loaded and we're on Table tab
   React.useEffect(() => {
@@ -365,6 +403,60 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
       } finally {
         setLoading(false);
       }
+    } else if (selectedTab === 'Category') {
+      try {
+        setLoading(true);
+        
+        // Create category on server
+        const newCategoryData = await categoryService.createCategory({
+          store_number: currentStoreNumber,
+          name,
+          color: getHexColor(selectedColor), // Convert CSS variable to hex
+          menu_count: 0,
+          user_pin: currentUserPin
+        });
+
+        // Convert to local Category interface
+        const newCategory: Category = {
+          id: newCategoryData.id!.toString(),
+          storeNumber: newCategoryData.store_number,
+          name: newCategoryData.name,
+          color: newCategoryData.color,
+          menuCount: newCategoryData.menu_count,
+          userPin: newCategoryData.user_pin,
+          sortOrder: newCategoryData.sort_order || 0,
+          createdAt: new Date(newCategoryData.created_at!)
+        };
+
+        // Start fade animation
+        setCardsTransitioning(true);
+        setAnimatingCardId(newCategory.id);
+        
+        // Fade out current cards
+        setTimeout(() => {
+          // Add the new category
+          setSavedCategories(prev => [...prev, newCategory]);
+          setIsAddMode(false);
+          
+          // Fade in with new card
+          setTimeout(() => {
+            setCardsTransitioning(false);
+            // Keep the animation ID for a bit longer to show the highlight
+            setTimeout(() => {
+              setAnimatingCardId(null);
+            }, 500);
+          }, 25);
+        }, 150);
+        
+        // Log the creation (we can add category logging later)
+        // await logCategoryCreated(name, getHexColor(selectedColor));
+        
+      } catch (error) {
+        console.error('❌ Failed to create category:', error);
+        alert('Failed to create category. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -448,6 +540,42 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
     }
   };
 
+  const handleCategoryDelete = async (category: Category) => {
+    console.log('🗑️ handleCategoryDelete called for category:', category);
+    try {
+      setLoading(true);
+      
+      // Delete from server
+      console.log('🗑️ Calling API to delete category ID:', category.id);
+      await categoryService.deleteCategory(parseInt(category.id));
+      
+      // Start fade animation
+      setCardsTransitioning(true);
+      setAnimatingCardId(category.id);
+      
+      // Fade out current cards
+      setTimeout(() => {
+        // Remove from saved categories
+        setSavedCategories(prev => prev.filter(c => c.id !== category.id));
+        
+        // Fade in remaining cards
+        setTimeout(() => {
+          setCardsTransitioning(false);
+          setAnimatingCardId(null);
+        }, 25);
+      }, 150);
+      
+      // Log the deletion (we can add category logging later)
+      // await logCategoryDeleted(category.name, category.color);
+      
+    } catch (error) {
+      console.error('❌ Failed to delete category:', error);
+      alert('Failed to delete category. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Long-press handler to enter edit mode
   const handleCardLongPress = (place: Place) => {
     if (place.id === 'add') return;
@@ -455,6 +583,16 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
     console.log('Long-press detected on:', place.name);
     setIsCardEditMode(true);
     setEditingPlace(place);
+    setIsAddMode(true); // Show the settings panel
+  };
+
+  // Category long-press handler to enter edit mode
+  const handleCategoryLongPress = (category: Category) => {
+    if (category.id === 'add') return;
+    
+    console.log('Long-press detected on category:', category.name);
+    setIsCardEditMode(true);
+    setEditingCategory(category);
     setIsAddMode(true); // Show the settings panel
   };
 
@@ -484,6 +622,35 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
       console.error('❌ Failed to save place order:', error);
       // Optionally: reload places from server to restore correct order
       loadPlaces();
+    }
+  };
+
+  // Handle category reordering
+  const handleCategoryReorder = async (reorderedCategories: Category[]) => {
+    // Update local state immediately for responsive UI
+    setSavedCategories(reorderedCategories);
+    
+    try {
+      // Create order updates with new sort_order values
+      const categoryOrders = reorderedCategories.map((category, index) => ({
+        id: parseInt(category.id),
+        sort_order: index + 1 // 1-based ordering
+      }));
+      
+      // Save to database
+      await categoryService.updateCategoryOrder(categoryOrders);
+      console.log('✅ Category order saved to database');
+      
+      // Update local categories with new sort_order values
+      setSavedCategories(prev => prev.map((category, index) => ({
+        ...category,
+        sortOrder: index + 1
+      })));
+      
+    } catch (error) {
+      console.error('❌ Failed to save category order:', error);
+      // Optionally: reload categories from server to restore correct order
+      loadCategories();
     }
   };
 
@@ -586,6 +753,53 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
       } finally {
         setLoading(false);
       }
+    } else if (editingCategory) {
+      try {
+        setLoading(true);
+        
+        // Update category on server
+        await categoryService.updateCategory(parseInt(editingCategory.id), {
+          name,
+          color: getHexColor(selectedColor), // Convert CSS variable to hex
+          store_number: storeNumber || editingCategory.storeNumber,
+          user_pin: userPin || editingCategory.userPin
+        });
+        
+        // Start fade animation
+        setCardsTransitioning(true);
+        
+        // Fade out current cards
+        setTimeout(() => {
+          // Update the existing category
+          setSavedCategories(prev => prev.map(c => 
+            c.id === editingCategory.id 
+              ? { 
+                  ...c, 
+                  name, 
+                  color: getHexColor(selectedColor), 
+                  storeNumber: storeNumber || c.storeNumber, 
+                  userPin: userPin || c.userPin 
+                }
+              : c
+          ));
+          
+          // Exit edit mode
+          setIsCardEditMode(false);
+          setEditingCategory(null);
+          setIsAddMode(false);
+          
+          // Fade in updated cards
+          setTimeout(() => {
+            setCardsTransitioning(false);
+          }, 25);
+        }, 150);
+        
+      } catch (error) {
+        console.error('❌ Failed to update category:', error);
+        alert('Failed to update category. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     } else {
       // Regular add mode
       await handleSave(name, selectedColor, storeNumber, userPin, placeId);
@@ -596,11 +810,12 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
     setIsCardEditMode(false);
     setEditingPlace(null);
     setEditingTable(null);
+    setEditingCategory(null);
     setIsAddMode(false);
   };
 
   const handleEditDelete = async () => {
-    console.log('🗑️ handleEditDelete called', { editingPlace, editingTable, isCardEditMode });
+    console.log('🗑️ handleEditDelete called', { editingPlace, editingTable, editingCategory, isCardEditMode });
     if (editingPlace) {
       console.log('🗑️ Deleting place:', editingPlace.name);
       await handlePlaceDelete(editingPlace);
@@ -612,6 +827,12 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
       await handleTableDelete(editingTable);
       setIsCardEditMode(false);
       setEditingTable(null);
+      setIsAddMode(false);
+    } else if (editingCategory) {
+      console.log('🗑️ Deleting category:', editingCategory.name);
+      await handleCategoryDelete(editingCategory);
+      setIsCardEditMode(false);
+      setEditingCategory(null);
       setIsAddMode(false);
     } else {
       console.warn('🗑️ No editing item found - cannot delete');
@@ -766,7 +987,43 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                   tabTransitioning || cardsTransitioning ? 'opacity-0' : 'opacity-100'
                 }`}
               >
-                {selectedTab === 'Place' && savedPlaces.length > 0 ? (
+                {selectedTab === 'Category' && savedCategories.length > 0 ? (
+                  <ResponsiveCardGrid 
+                    places={[...savedCategories.map(c => ({ 
+                      id: c.id, 
+                      name: c.name, 
+                      color: c.color, 
+                      tableCount: c.menuCount, // Show menu count instead of table count
+                      storeNumber: c.storeNumber,
+                      userPin: c.userPin,
+                      sortOrder: c.sortOrder,
+                      createdAt: c.createdAt
+                    })), { id: 'add', name: '', color: '', tableCount: 0 }]}
+                    onCardClick={(category) => {
+                      if (category.id === 'add') {
+                        handleAddButtonClick();
+                      } else {
+                        console.log('Clicked category:', category.name);
+                      }
+                    }}
+                    onCardLongPress={handleCategoryLongPress}
+                    onCardReorder={handleCategoryReorder}
+                    onEditCancel={handleEditCancel}
+                    editingPlace={editingCategory ? {
+                      id: editingCategory.id,
+                      name: editingCategory.name,
+                      color: editingCategory.color,
+                      tableCount: editingCategory.menuCount,
+                      storeNumber: editingCategory.storeNumber,
+                      userPin: editingCategory.userPin,
+                      sortOrder: editingCategory.sortOrder,
+                      createdAt: editingCategory.createdAt
+                    } : null}
+                    isTransitioning={cardsTransitioning}
+                    animatingCardId={animatingCardId}
+                    isEditMode={isCardEditMode}
+                  />
+                ) : selectedTab === 'Place' && savedPlaces.length > 0 ? (
                   <ResponsiveCardGrid 
                     places={[...savedPlaces.map(p => ({ ...p, sortOrder: p.sortOrder })), { id: 'add', name: '', color: '', tableCount: 0 }]}
                     onCardClick={(place) => {
@@ -842,7 +1099,12 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
         <div className="h-full min-h-0 max-h-full relative rounded-[1.5rem] border border-[#363636]" style={{ flex: '3', minWidth: '0' }} data-name="Panel" data-node-id="184:4066">
           <div className="box-border flex flex-col h-full items-center justify-start min-w-0 overflow-hidden px-[0.5rem] py-0 relative w-full">
             <PanelHeaderComp 
-              title={isAddMode ? (selectedTab === 'Table' ? 'Table Settings' : 'Place Settings') : 'POS Log'} 
+              title={isAddMode ? (
+                selectedTab === 'Table' ? 'Table Settings' : 
+                selectedTab === 'Category' ? 'Category Settings' : 
+                selectedTab === 'Menu' ? 'Menu Settings' :
+                'Place Settings'
+              ) : 'POS Log'} 
             />
             <div className="flex-1 box-border flex flex-col items-center justify-start min-h-0 min-w-0 px-[0.25rem] relative w-full overflow-hidden" style={{ paddingTop: '3vh', paddingBottom: '3vh' }} data-name="PanelBody" data-node-id="184:4071">
               <PanelContent
@@ -856,7 +1118,10 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                 isEditMode={isCardEditMode}
                 editingPlace={editingPlace}
                 editingTable={editingTable}
+                editingCategory={editingCategory}
                 places={savedPlaces}
+                categories={savedCategories}
+                selectedPlace={selectedPlace}
               />
             </div>
           </div>
