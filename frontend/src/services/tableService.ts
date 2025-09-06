@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3002/api';
 
 export interface TableData {
   id?: number;
@@ -7,6 +7,7 @@ export interface TableData {
   color: string;
   position_x: number;
   position_y: number;
+  dining_capacity: number;
   store_number: string;
   user_pin: string;
   created_at?: Date;

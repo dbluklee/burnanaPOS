@@ -485,7 +485,8 @@ class LoggingService {
     try {
       
       // Call the backend undo API endpoint
-      const response = await fetch(`http://localhost:3001/api/logs/${logId}/undo`, {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3002/api';
+      const response = await fetch(`${baseUrl}/logs/${logId}/undo`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -636,7 +637,8 @@ if (import.meta.env.DEV) {
 // Auto-clear local data on initialization if backend is empty
 (async () => {
   try {
-    const response = await fetch('http://localhost:3001/api/logs?limit=1');
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3002/api';
+    const response = await fetch(`${baseUrl}/logs?limit=1`);
     const logs = await response.json();
     if (Array.isArray(logs) && logs.length === 0) {
       await loggingService.clearAllLocalDataAndNotify();

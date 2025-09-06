@@ -81,6 +81,7 @@ export const initializeDatabase = async (): Promise<void> => {
           color VARCHAR(7) NOT NULL,
           position_x INTEGER DEFAULT 0,
           position_y INTEGER DEFAULT 0,
+          dining_capacity INTEGER DEFAULT 4,
           store_number VARCHAR(100) NOT NULL,
           user_pin VARCHAR(20) NOT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -173,6 +174,11 @@ export const initializeDatabase = async (): Promise<void> => {
         CREATE INDEX IF NOT EXISTS idx_menus_store_number ON menus(store_number)
       `);
 
+      // Migration: Add dining_capacity column to existing tables
+      await client.query(`
+        ALTER TABLE tables ADD COLUMN IF NOT EXISTS dining_capacity INTEGER DEFAULT 4
+      `);
+
       console.log('✅ PostgreSQL database tables initialized successfully');
     } finally {
       client.release();
@@ -202,6 +208,7 @@ export interface TableRecord {
   color: string;
   position_x: number;
   position_y: number;
+  dining_capacity: number;
   store_number: string;
   user_pin: string;
   sort_order?: number;

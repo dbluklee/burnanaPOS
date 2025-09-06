@@ -5,10 +5,10 @@ export class Table {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        `INSERT INTO tables (place_id, name, color, position_x, position_y, store_number, user_pin)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO tables (place_id, name, color, position_x, position_y, dining_capacity, store_number, user_pin)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING *`,
-        [table.place_id, table.name, table.color, table.position_x, table.position_y, table.store_number, table.user_pin]
+        [table.place_id, table.name, table.color, table.position_x, table.position_y, table.dining_capacity, table.store_number, table.user_pin]
       );
       
       return result.rows[0];
@@ -94,6 +94,10 @@ export class Table {
       if (updates.position_y !== undefined) {
         fields.push(`position_y = $${paramCount++}`);
         values.push(updates.position_y);
+      }
+      if (updates.dining_capacity !== undefined) {
+        fields.push(`dining_capacity = $${paramCount++}`);
+        values.push(updates.dining_capacity);
       }
       if (updates.store_number !== undefined) {
         fields.push(`store_number = $${paramCount++}`);

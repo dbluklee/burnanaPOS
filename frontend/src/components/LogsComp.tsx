@@ -17,7 +17,12 @@ export default function LogsComp({ logEntries, onLogUndo }: LogsCompProps) {
   const [activeUndoLogId, setActiveUndoLogId] = useState<number | null>(null);
 
   // Define which log types support undo functionality
-  const undoableLogTypes = ['place_created', 'place_modified', 'place_deleted', 'place_updated'];
+  const undoableLogTypes = [
+    'place_created', 'place_modified', 'place_deleted', 'place_updated',
+    'table_created', 'table_deleted',
+    'category_created', 'category_deleted', 'category_updated',
+    'menu_created', 'menu_deleted', 'menu_updated'
+  ];
   
   const isLogUndoable = (logType: string) => {
     return undoableLogTypes.includes(logType);

@@ -505,7 +505,13 @@ export default function CardGridComp({
               <CardComp
                 type={type}
                 title={item.name}
-                subtitle={type === 'Menu' ? item.description : item.tableCount.toString()}
+                subtitle={
+                  type === 'Menu' 
+                    ? item.description 
+                    : type === 'Table' 
+                      ? `${item.tableCount} person` 
+                      : item.tableCount.toString()
+                }
                 subtitle2={type === 'Menu' ? undefined : undefined}
                 subtitle3={type === 'Menu' ? `₩${item.tableCount % 1 === 0 ? Math.floor(item.tableCount).toLocaleString() : item.tableCount.toLocaleString()}` : undefined}
                 color={getCSSVariable(item.color)} // Convert hex color back to CSS variable

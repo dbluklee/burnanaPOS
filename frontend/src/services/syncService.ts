@@ -26,7 +26,7 @@ class SyncService {
   constructor() {
     // In development, we'll use a mock API endpoint
     // In production, this would be your actual server endpoint
-    this.baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+    this.baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3002/api';
   }
 
 

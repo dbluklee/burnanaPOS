@@ -22,6 +22,7 @@ interface Table {
   color: string;
   positionX: number;
   positionY: number;
+  diningCapacity: number;
   storeNumber: string;
   userPin: string;
   createdAt: Date;
@@ -110,17 +111,18 @@ export default function SettingInspectorComp({
         return (
           <TableSettings
             places={places}
-            onSave={(tableName: string, selectedPlaceId: string) => {
+            onSave={(tableName: string, selectedPlaceId: string, diningCapacity: number) => {
               // Get the selected place's color to use for the table
               const selectedPlace = places.find(p => p.id === selectedPlaceId);
               const placeColor = selectedPlace?.color || '#FF6B6B'; // fallback color
-              onSave?.(tableName, placeColor, editingTable?.storeNumber || '', editingTable?.userPin || '', selectedPlaceId);
+              onSave?.(tableName, placeColor, editingTable?.storeNumber || '', editingTable?.userPin || '', selectedPlaceId, undefined, undefined, diningCapacity);
             }}
             onCancel={onCancel}
             onDelete={onDelete}
             isEditMode={isEditMode}
             initialName={editingTable?.name || ''}
             initialPlaceId={editingTable?.placeId || selectedPlace?.id || ''}
+            initialDiningCapacity={editingTable?.diningCapacity || 4}
           />
         );
       case 'category':

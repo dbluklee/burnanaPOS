@@ -17,11 +17,11 @@ COPY . .
 RUN npm run build
 
 # Expose the port that the app runs on
-EXPOSE 3001
+EXPOSE 3002
 
 # Define the command to run the application
 CMD ["npm", "start"]
 
 # Health check to ensure the service is running
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3001/api/health || exit 1
+  CMD curl -f http://localhost:3002/api/health || exit 1

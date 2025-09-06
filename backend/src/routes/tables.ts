@@ -66,7 +66,7 @@ router.get('/:id', async (req, res) => {
 // Create a new table
 router.post('/', async (req, res) => {
   try {
-    const { place_id, name, color, position_x = 0, position_y = 0, store_number, user_pin } = req.body;
+    const { place_id, name, color, position_x = 0, position_y = 0, dining_capacity = 4, store_number, user_pin } = req.body;
     
     if (!place_id || !name || !color || !store_number || !user_pin) {
       return res.status(400).json({ 
@@ -93,6 +93,7 @@ router.post('/', async (req, res) => {
       color,
       position_x: parseInt(position_x) || 0,
       position_y: parseInt(position_y) || 0,
+      dining_capacity: parseInt(dining_capacity) || 4,
       store_number,
       user_pin
     });

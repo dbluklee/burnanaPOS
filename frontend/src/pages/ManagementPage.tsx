@@ -48,6 +48,7 @@ interface Table {
   color: string;
   positionX: number;
   positionY: number;
+  diningCapacity: number;
   storeNumber: string;
   userPin: string;
   createdAt: Date;
@@ -104,6 +105,9 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
     logCategoryCreated,
     logCategoryDeleted,
     logCategoryUpdated,
+    logMenuCreated,
+    logMenuDeleted,
+    logMenuUpdated,
     logCustomerArrival,
     logUserSignIn,
     forceSyncNow,
@@ -318,9 +322,14 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
     const success = await undoLog(undoId);
     
     if (success) {
-      // Refresh places data to reflect the undo changes
+      // Refresh data to reflect the undo changes
       await loadPlaces();
       await refreshPlacesData();
+      await loadCategories();
+      // Refresh menus if a category is selected
+      if (selectedCategory) {
+        await loadMenusByCategory(parseInt(selectedCategory.id));
+      }
     }
   };
   
@@ -328,7 +337,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
     setIsAddMode(true);
   };
 
-  const handleSave = async (name: string, selectedColor: string, storeNumber?: string, userPin?: string, placeId?: string, description?: string, price?: string) => {
+  const handleSave = async (name: string, selectedColor: string, storeNumber?: string, userPin?: string, placeId?: string, description?: string, price?: string, diningCapacity?: number) => {
     // Get current user from localStorage
     const currentUserStr = localStorage.getItem('currentUser');
     if (!currentUserStr) {
@@ -415,6 +424,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
           color: selectedColor, // selectedColor is now the place's color (already hex)
           position_x: 0,
           position_y: 0,
+          dining_capacity: diningCapacity || 4, // Default to 4 if not provided
           store_number: currentStoreNumber,
           user_pin: currentUserPin
         });
@@ -427,6 +437,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
           color: newTableData.color,
           positionX: newTableData.position_x,
           positionY: newTableData.position_y,
+          diningCapacity: newTableData.dining_capacity,
           storeNumber: newTableData.store_number,
           userPin: newTableData.user_pin,
           createdAt: new Date(newTableData.created_at!)
@@ -559,8 +570,11 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
         setIsAddMode(false);
         
         // Log the menu creation
-        // Note: logMenuCreated would need to be added to useLogging hook if needed
-        console.log('✅ Menu created successfully:', newMenu);
+        await logMenuCreated(newMenu.name, selectedCategory.name, {
+          category_id: parseInt(selectedCategory.id),
+          price: newMenu.price,
+          description: newMenu.description
+        });
         
       } catch (error) {
         console.error('❌ Failed to create menu:', error);
@@ -596,8 +610,16 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
         }, 25);
       }, 150);
       
-      // Log the deletion if logging system supports menu deletion
-      console.log('✅ Menu deleted successfully:', menu.name);
+      // Find category name for logging
+      const category = savedCategories.find(c => c.id === menu.categoryId);
+      const categoryName = category ? category.name : 'Unknown Category';
+      
+      // Log the deletion
+      await logMenuDeleted(menu.name, categoryName, {
+        category_id: parseInt(menu.categoryId),
+        price: menu.price,
+        description: menu.description
+      });
       
     } catch (error) {
       console.error('❌ Failed to delete menu:', error);
@@ -1051,7 +1073,19 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
           }, 25);
         }, 150);
         
-        console.log('✅ Menu updated successfully:', updatedMenu);
+        // Find old and new category names for logging
+        const oldCategory = savedCategories.find(c => c.id === editingMenu.categoryId);
+        const newCategory = savedCategories.find(c => c.id === updatedMenu.categoryId);
+        const oldCategoryName = oldCategory ? oldCategory.name : 'Unknown Category';
+        const newCategoryName = newCategory ? newCategory.name : 'Unknown Category';
+        
+        // Log the menu update
+        await logMenuUpdated(
+          editingMenu.name, oldCategoryName, 
+          updatedMenu.name, newCategoryName,
+          { category_id: parseInt(editingMenu.categoryId), price: editingMenu.price, description: editingMenu.description },
+          { category_id: parseInt(updatedMenu.categoryId), price: updatedMenu.price, description: updatedMenu.description }
+        );
         
       } catch (error) {
         console.error('❌ Failed to update menu:', error);
@@ -1356,7 +1390,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                       id: table.id,
                       name: table.name,
                       color: table.color,
-                      tableCount: 0, // Not relevant for tables
+                      tableCount: table.diningCapacity, // Pass dining capacity as tableCount
                       storeNumber: table.storeNumber,
                       userPin: table.userPin,
                       createdAt: table.createdAt

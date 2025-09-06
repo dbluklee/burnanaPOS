@@ -10,12 +10,13 @@ interface Place {
 
 interface TableSettingsCompProps {
   places: Place[];
-  onSave?: (tableName: string, selectedPlaceId: string) => void;
+  onSave?: (tableName: string, selectedPlaceId: string, diningCapacity: number) => void;
   onCancel?: () => void;
   onDelete?: () => void;
   isEditMode?: boolean;
   initialName?: string;
   initialPlaceId?: string;
+  initialDiningCapacity?: number;
 }
 
 export default function TableSettingsComp({ 
@@ -25,7 +26,8 @@ export default function TableSettingsComp({
   onDelete, 
   isEditMode = false, 
   initialName = '', 
-  initialPlaceId = ''
+  initialPlaceId = '',
+  initialDiningCapacity = 4
 }: TableSettingsCompProps) {
   const [dynamicPlaces, setDynamicPlaces] = React.useState<Place[]>(places);
   const [loading, setLoading] = React.useState(false);
@@ -71,6 +73,15 @@ export default function TableSettingsComp({
       required: true
     },
     {
+      key: 'diningCapacity',
+      type: 'text' as const,
+      name: 'Dining Capacity',
+      placeholder: 'eg. 4',
+      description: 'Number of people this table can accommodate.',
+      initialValue: initialDiningCapacity.toString(),
+      required: true
+    },
+    {
       key: 'placeId',
       type: 'dropdown' as const,
       name: 'Place',
@@ -83,7 +94,8 @@ export default function TableSettingsComp({
   ];
 
   const handleSave = (values: Record<string, any>) => {
-    onSave?.(values.name, values.placeId);
+    const diningCapacity = parseInt(values.diningCapacity) || 4;
+    onSave?.(values.name, values.placeId, diningCapacity);
   };
 
   return (
