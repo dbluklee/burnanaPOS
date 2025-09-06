@@ -3,23 +3,25 @@ import CardComp from './CardComp';
 import type { CardType } from './CardComp';
 import { getCSSVariable } from './InputColorComp';
 
-interface Place {
+interface CardItem {
   id: string;
   name: string;
   color: string;
-  tableCount: number;
+  tableCount: number; // Used for different purposes: Place=tableCount, Table=0, Menu=price, Category=menuCount
   sortOrder?: number;
+  // Additional properties for specific card types
+  category?: string; // For Menu cards
+  description?: string; // For Menu cards
 }
 
 interface CardGridCompProps {
-  type?: CardType; // Add type prop to specify card type
-  places: Place[];
-  onCardClick: (place: Place) => void;
-  onCardLongPress?: (place: Place) => void;
-  onCardReorder?: (reorderedPlaces: Place[]) => void;
+  type?: CardType;
+  items: CardItem[]; // Renamed from 'items' to be more generic
+  onCardClick: (item: CardItem) => void;
+  onCardLongPress?: (item: CardItem) => void;
+  onCardReorder?: (reorderedItems: CardItem[]) => void;
   onEditCancel?: () => void;
-  editingPlace?: Place | null;
-  editingTable?: Place | null; // Using Place interface for tables since tables are mapped to Place format
+  editingItemId?: string | null; // Single editing ID instead of multiple editing objects
   isTransitioning?: boolean;
   animatingCardId?: string | null;
   isEditMode?: boolean;
@@ -27,13 +29,12 @@ interface CardGridCompProps {
 
 export default function CardGridComp({ 
   type = "Place", // Default to Place type
-  places, 
+  items, 
   onCardClick, 
   onCardLongPress, 
   onCardReorder,
   onEditCancel,
-  editingPlace = null,
-  editingTable = null,
+  editingItemId = null,
   isTransitioning = false, 
   animatingCardId = null, 
   isEditMode = false 
@@ -43,9 +44,9 @@ export default function CardGridComp({
   const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
   
   // Long-press detection state
-  const longPressRef = useRef<{ timeoutId: number | null; place: Place | null }>({ 
+  const longPressRef = useRef<{ timeoutId: number | null; item: CardItem | null }>({ 
     timeoutId: null, 
-    place: null 
+    item: null 
   });
   
   // Long-press visual feedback state
@@ -56,7 +57,7 @@ export default function CardGridComp({
   // Drag and drop state
   const [dragState, setDragState] = useState<{
     isDragging: boolean;
-    draggedPlace: Place | null;
+    draggedItem: CardItem | null;
     draggedIndex: number;
     targetIndex: number;
     draggedElement: HTMLElement | null;
@@ -64,7 +65,7 @@ export default function CardGridComp({
     currentPosition: { x: number; y: number };
   }>({
     isDragging: false,
-    draggedPlace: null,
+    draggedItem: null,
     draggedIndex: -1,
     targetIndex: -1,
     draggedElement: null,
@@ -87,7 +88,7 @@ export default function CardGridComp({
     
     const gapVw = 1; // 1vw gap
     const gapPx = vwToPx(gapVw);
-    const totalCards = places.length;
+    const totalCards = items.length;
     
     // Try different card sizes from max (20vw) to min (10vw)
     for (let testCardVw = 20; testCardVw >= 10; testCardVw -= 0.5) {
@@ -138,20 +139,20 @@ export default function CardGridComp({
       window.removeEventListener('resize', handleResize);
       resizeObserver.disconnect();
     };
-  }, [places.length]);
+  }, [items.length]);
   
   // Calculate grid layout
   const gapVw = 1;
   const cardSizeVw = Math.max(10, Math.min(20, cardSize)); // Clamp between 10-20vw
   
   // Drag and drop handlers
-  const startDrag = (place: Place, index: number, element: HTMLElement, clientX: number, clientY: number) => {
-    if (!isEditMode || place.id === 'add') return;
+  const startDrag = (item: CardItem, index: number, element: HTMLElement, clientX: number, clientY: number) => {
+    if (!isEditMode || item.id === 'add') return;
     
     const rect = element.getBoundingClientRect();
     setDragState({
       isDragging: true,
-      draggedPlace: place,
+      draggedItem: item,
       draggedIndex: index,
       targetIndex: index,
       draggedElement: element,
@@ -187,7 +188,7 @@ export default function CardGridComp({
     if (cardsPerRow > 0) {
       const row = Math.floor((clientY - containerRef.current!.getBoundingClientRect().top) / (cardPx + gapPx));
       const col = Math.floor((clientX - containerRef.current!.getBoundingClientRect().left) / (cardPx + gapPx));
-      const targetIndex = Math.min(Math.max(0, row * cardsPerRow + col), places.length - 2); // -2 to exclude add button
+      const targetIndex = Math.min(Math.max(0, row * cardsPerRow + col), items.length - 2); // -2 to exclude add button
       
       setDragState(prev => ({
         ...prev,
@@ -206,15 +207,15 @@ export default function CardGridComp({
     
     // Reorder if target index is different
     if (dragState.targetIndex !== dragState.draggedIndex && dragState.targetIndex >= 0) {
-      const reorderedPlaces = [...places.filter(p => p.id !== 'add')]; // Remove add button
-      const [draggedPlace] = reorderedPlaces.splice(dragState.draggedIndex, 1);
-      reorderedPlaces.splice(dragState.targetIndex, 0, draggedPlace);
-      onCardReorder?.(reorderedPlaces);
+      const reorderedItems = [...items.filter(p => p.id !== 'add')]; // Remove add button
+      const [draggedItem] = reorderedItems.splice(dragState.draggedIndex, 1);
+      reorderedItems.splice(dragState.targetIndex, 0, draggedItem);
+      onCardReorder?.(reorderedItems);
     }
     
     setDragState({
       isDragging: false,
-      draggedPlace: null,
+      draggedItem: null,
       draggedIndex: -1,
       targetIndex: -1,
       draggedElement: null,
@@ -224,17 +225,17 @@ export default function CardGridComp({
   };
   
   // Long-press handlers
-  const startLongPress = (place: Place) => {
-    if (place.id === 'add') return; // Don't allow long-press on add button
+  const startLongPress = (item: CardItem) => {
+    if (item.id === 'add') return; // Don't allow long-press on add button
     
-    longPressRef.current.place = place;
-    setLongPressAnimatingCardId(place.id); // Start the scale animation
+    longPressRef.current.item = item;
+    setLongPressAnimatingCardId(item.id); // Start the scale animation
     
     longPressRef.current.timeoutId = window.setTimeout(() => {
       // Clear the animation and trigger long press
       setLongPressAnimatingCardId(null);
-      setLongPressedCardId(place.id); // This will trigger edit mode visual
-      onCardLongPress?.(place);
+      setLongPressedCardId(item.id); // This will trigger edit mode visual
+      onCardLongPress?.(item);
       
       // Clear the long-pressed state after edit mode is established
       setTimeout(() => {
@@ -247,24 +248,24 @@ export default function CardGridComp({
     if (longPressRef.current.timeoutId) {
       clearTimeout(longPressRef.current.timeoutId);
       longPressRef.current.timeoutId = null;
-      longPressRef.current.place = null;
+      longPressRef.current.item = null;
     }
     // Clear visual feedback when canceling
     setLongPressedCardId(null);
     setLongPressAnimatingCardId(null);
   };
 
-  const handleCardTouchStart = (place: Place, index: number) => (e: React.TouchEvent) => {
+  const handleCardTouchStart = (item: CardItem, index: number) => (e: React.TouchEvent) => {
     const touch = e.touches[0];
-    startLongPress(place);
+    startLongPress(item);
     
     // In edit mode, prepare for potential drag
-    if (isEditMode && place.id !== 'add') {
+    if (isEditMode && item.id !== 'add') {
       const element = e.currentTarget as HTMLElement;
       setTimeout(() => {
         // Only start drag if long-press didn't trigger edit mode
         if (longPressRef.current.timeoutId) {
-          startDrag(place, index, element, touch.clientX, touch.clientY);
+          startDrag(item, index, element, touch.clientX, touch.clientY);
           cancelLongPress();
         }
       }, 1050); // Slightly after long-press timeout
@@ -283,7 +284,7 @@ export default function CardGridComp({
     }
   };
 
-  const handleCardTouchEnd = (place: Place) => (e: React.TouchEvent) => {
+  const handleCardTouchEnd = (item: CardItem) => (e: React.TouchEvent) => {
     if (dragState.isDragging) {
       endDrag();
     } else if (longPressRef.current.timeoutId) {
@@ -291,30 +292,27 @@ export default function CardGridComp({
       cancelLongPress();
       
       // If in edit mode and touching a different card (not the one being edited), cancel edit mode
-      if (isEditMode && (editingPlace || editingTable) && 
-          ((editingPlace && place.id !== editingPlace.id) || 
-           (editingTable && place.id !== editingTable.id)) && 
-          place.id !== 'add') {
+      if (isEditMode && editingItemId && editingItemId !== item.id && item.id !== 'add') {
         onEditCancel?.();
       } else {
         // Trigger click effect
-        setClickedCardId(place.id);
+        setClickedCardId(item.id);
         setTimeout(() => setClickedCardId(null), 200);
-        onCardClick(place);
+        onCardClick(item);
       }
     }
   };
 
-  const handleCardMouseDown = (place: Place, index: number) => (e: React.MouseEvent) => {
-    startLongPress(place);
+  const handleCardMouseDown = (item: CardItem, index: number) => (e: React.MouseEvent) => {
+    startLongPress(item);
     
     // In edit mode, prepare for potential drag
-    if (isEditMode && place.id !== 'add') {
+    if (isEditMode && item.id !== 'add') {
       const element = e.currentTarget as HTMLElement;
       setTimeout(() => {
         // Only start drag if long-press didn't trigger edit mode
         if (longPressRef.current.timeoutId) {
-          startDrag(place, index, element, e.clientX, e.clientY);
+          startDrag(item, index, element, e.clientX, e.clientY);
           cancelLongPress();
         }
       }, 1050); // Slightly after long-press timeout
@@ -328,23 +326,20 @@ export default function CardGridComp({
     }
   };
 
-  const handleCardMouseUp = (place: Place) => (e: React.MouseEvent) => {
+  const handleCardMouseUp = (item: CardItem) => (e: React.MouseEvent) => {
     if (dragState.isDragging) {
       endDrag();
     } else if (longPressRef.current.timeoutId) {
       cancelLongPress();
       
       // If in edit mode and clicking a different card (not the one being edited), cancel edit mode
-      if (isEditMode && (editingPlace || editingTable) && 
-          ((editingPlace && place.id !== editingPlace.id) || 
-           (editingTable && place.id !== editingTable.id)) && 
-          place.id !== 'add') {
+      if (isEditMode && editingItemId && editingItemId !== item.id && item.id !== 'add') {
         onEditCancel?.();
       } else {
         // Trigger click effect
-        setClickedCardId(place.id);
+        setClickedCardId(item.id);
         setTimeout(() => setClickedCardId(null), 200);
-        onCardClick(place);
+        onCardClick(item);
       }
     }
   };
@@ -468,21 +463,21 @@ export default function CardGridComp({
         }`}
         style={{ gap: `${gapVw}vw` }}
       >
-        {places.map((place, index) => {
-          const isNewCard = animatingCardId === place.id && !isTransitioning;
+        {items.map((item, index) => {
+          const isNewCard = animatingCardId === item.id && !isTransitioning;
           const isDragTarget = isEditMode && dragState.isDragging && dragState.targetIndex === index;
-          const isDraggedCard = dragState.isDragging && dragState.draggedPlace?.id === place.id;
-          const isLongPressed = longPressedCardId === place.id;
-          const isLongPressAnimating = longPressAnimatingCardId === place.id;
-          const isBeingEdited = (editingPlace && place.id === editingPlace.id) || (editingTable && place.id === editingTable.id);
-          const isClicked = clickedCardId === place.id;
+          const isDraggedCard = dragState.isDragging && dragState.draggedItem?.id === item.id;
+          const isLongPressed = longPressedCardId === item.id;
+          const isLongPressAnimating = longPressAnimatingCardId === item.id;
+          const isBeingEdited = editingItemId === item.id;
+          const isClicked = clickedCardId === item.id;
           
           return (
             <div
-              key={place.id}
+              key={item.id}
               className={`relative flex-shrink-0 transition-all duration-300 ease-out ${
                 isNewCard ? 'animate-pulse' : ''
-              } ${isEditMode && place.id !== 'add' ? 'cursor-move' : 'cursor-pointer'} ${
+              } ${isEditMode && item.id !== 'add' ? 'cursor-move' : 'cursor-pointer'} ${
                 isDragTarget ? 'ring-2 ring-white/50' : ''
               } ${isDraggedCard ? 'pointer-events-none' : ''
               }`}
@@ -492,27 +487,29 @@ export default function CardGridComp({
                 transform: isNewCard ? 'scale(1.02)' : isDraggedCard ? 'scale(1.05)' : 'scale(1)',
                 animation: isNewCard ? 'slideInUp 0.4s ease-out' : isLongPressAnimating ? 'longPressScale 1s ease-in-out' : isClicked ? 'clickEffect 0.2s ease-out' : 'none',
                 filter: 'none',
-                opacity: isDraggedCard ? '0.9' : (isEditMode && !isBeingEdited && place.id !== 'add') ? '0.5' : '1',
+                opacity: isDraggedCard ? '0.9' : (isEditMode && !isBeingEdited && item.id !== 'add') ? '0.5' : '1',
                 outline: 'none',
                 border: 'none',
                 borderRadius: '15%',
                 overflow: 'hidden',
               }}
-              onTouchStart={handleCardTouchStart(place, index)}
-              onTouchEnd={handleCardTouchEnd(place)}
+              onTouchStart={handleCardTouchStart(item, index)}
+              onTouchEnd={handleCardTouchEnd(item)}
               onTouchMove={handleCardTouchMove}
-              onMouseDown={handleCardMouseDown(place, index)}
+              onMouseDown={handleCardMouseDown(item, index)}
               onMouseMove={handleCardMouseMove}
-              onMouseUp={handleCardMouseUp(place)}
+              onMouseUp={handleCardMouseUp(item)}
               onMouseLeave={handleCardMouseLeave}
               data-card="true"
             >
               <CardComp
                 type={type}
-                title={place.name}
-                subtitle={place.tableCount.toString()}
-                color={getCSSVariable(place.color)} // Convert hex color back to CSS variable
-                property={place.id === 'add' ? 'Empty' : 'Default'}
+                title={item.name}
+                subtitle={type === 'Menu' ? item.description : item.tableCount.toString()}
+                subtitle2={type === 'Menu' ? undefined : undefined}
+                subtitle3={type === 'Menu' ? `₩${item.tableCount % 1 === 0 ? Math.floor(item.tableCount).toLocaleString() : item.tableCount.toLocaleString()}` : undefined}
+                color={getCSSVariable(item.color)} // Convert hex color back to CSS variable
+                property={item.id === 'add' ? 'Empty' : 'Default'}
                 onClick={() => {}} // Disable CardComp's own click handler
                 dataName={`${type}Card`}
               />

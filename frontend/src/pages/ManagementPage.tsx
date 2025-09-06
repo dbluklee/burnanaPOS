@@ -536,7 +536,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
           category_id: parseInt(selectedCategory.id),
           store_number: currentStoreNumber,
           name,
-          price: parseFloat(price || '0'),
+          price: parseInt(price || '0'),
           description: description || '',
           user_pin: currentUserPin
         });
@@ -568,6 +568,42 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
       } finally {
         setLoading(false);
       }
+    }
+  };
+
+  const handleMenuDelete = async (menu: Menu) => {
+    console.log('🗑️ handleMenuDelete called for menu:', menu);
+    try {
+      setLoading(true);
+      
+      // Delete from server
+      console.log('🗑️ Calling API to delete menu ID:', menu.id);
+      await menuService.deleteMenu(parseInt(menu.id));
+      
+      // Start fade animation
+      setCardsTransitioning(true);
+      setAnimatingCardId(menu.id);
+      
+      // Fade out the card
+      setTimeout(() => {
+        // Remove from local state
+        setSavedMenus(prev => prev.filter(m => m.id !== menu.id));
+        
+        // Fade in remaining cards
+        setTimeout(() => {
+          setCardsTransitioning(false);
+          setAnimatingCardId(null);
+        }, 25);
+      }, 150);
+      
+      // Log the deletion if logging system supports menu deletion
+      console.log('✅ Menu deleted successfully:', menu.name);
+      
+    } catch (error) {
+      console.error('❌ Failed to delete menu:', error);
+      alert('Failed to delete menu. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -714,12 +750,30 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
   };
 
   // Table long-press handler to enter edit mode
-  const handleTableLongPress = (table: Table) => {
-    if (table.id === 'add') return;
+  const handleTableLongPress = (place: Place) => {
+    if (place.id === 'add') return;
     
-    console.log('Long-press detected on table:', table.name);
+    // Find the actual table from the savedTables array
+    const actualTable = savedTables.find(table => table.id === place.id);
+    if (!actualTable) return;
+    
+    console.log('Long-press detected on table:', actualTable.name);
     setIsCardEditMode(true);
-    setEditingTable(table);
+    setEditingTable(actualTable);
+    setIsAddMode(true); // Show the settings panel
+  };
+
+  // Menu long-press handler to enter edit mode
+  const handleMenuLongPress = (place: Place) => {
+    if (place.id === 'add') return;
+    
+    // Find the actual menu from the savedMenus array
+    const actualMenu = savedMenus.find(menu => menu.id === place.id);
+    if (!actualMenu) return;
+    
+    console.log('Long-press detected on menu:', actualMenu.name);
+    setIsCardEditMode(true);
+    setEditingMenu(actualMenu);
     setIsAddMode(true); // Show the settings panel
   };
 
@@ -782,7 +836,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
   };
 
   // Handle editing completion
-  const handleEditSave = async (name: string, selectedColor: string, storeNumber?: string, userPin?: string, placeId?: string) => {
+  const handleEditSave = async (name: string, selectedColor: string, storeNumber?: string, userPin?: string, placeId?: string, description?: string, price?: string) => {
     if (editingPlace) {
       try {
         setLoading(true);
@@ -947,9 +1001,67 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
       } finally {
         setLoading(false);
       }
+    } else if (editingMenu) {
+      try {
+        setLoading(true);
+        
+        // Update menu on server
+        const updatedMenuData = await menuService.updateMenu(parseInt(editingMenu.id), {
+          name,
+          category_id: parseInt(placeId || editingMenu.categoryId), // placeId is used for categoryId in menu context
+          description,
+          price: parseInt(price || '0'),
+          store_number: storeNumber || editingMenu.storeNumber,
+          user_pin: userPin || editingMenu.userPin
+        });
+        
+        // Convert to local Menu interface
+        const updatedMenu: Menu = {
+          id: updatedMenuData.id!.toString(),
+          categoryId: updatedMenuData.category_id.toString(),
+          name: updatedMenuData.name,
+          description: updatedMenuData.description,
+          price: updatedMenuData.price.toString(),
+          storeNumber: updatedMenuData.store_number,
+          userPin: updatedMenuData.user_pin,
+          sortOrder: updatedMenuData.sort_order || 0,
+          createdAt: new Date(updatedMenuData.created_at!)
+        };
+        
+        // Start fade animation
+        setCardsTransitioning(true);
+        
+        // Fade out current cards
+        setTimeout(() => {
+          // Update the existing menu
+          setSavedMenus(prev => prev.map(m => 
+            m.id === editingMenu.id 
+              ? updatedMenu
+              : m
+          ));
+          
+          // Exit edit mode
+          setIsCardEditMode(false);
+          setEditingMenu(null);
+          setIsAddMode(false);
+          
+          // Fade in updated cards
+          setTimeout(() => {
+            setCardsTransitioning(false);
+          }, 25);
+        }, 150);
+        
+        console.log('✅ Menu updated successfully:', updatedMenu);
+        
+      } catch (error) {
+        console.error('❌ Failed to update menu:', error);
+        alert('Failed to update menu. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     } else {
       // Regular add mode
-      await handleSave(name, selectedColor, storeNumber, userPin, placeId);
+      await handleSave(name, selectedColor, storeNumber, userPin, placeId, description, price);
     }
   };
 
@@ -981,6 +1093,12 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
       await handleCategoryDelete(editingCategory);
       setIsCardEditMode(false);
       setEditingCategory(null);
+      setIsAddMode(false);
+    } else if (editingMenu) {
+      console.log('🗑️ Deleting menu:', editingMenu.name);
+      await handleMenuDelete(editingMenu);
+      setIsCardEditMode(false);
+      setEditingMenu(null);
       setIsAddMode(false);
     } else {
       console.warn('🗑️ No editing item found - cannot delete');
@@ -1187,7 +1305,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                 {selectedTab === 'Category' && savedCategories.length > 0 ? (
                   <CardGrid 
                     type="Category"
-                    places={[...savedCategories.map(c => ({ 
+                    items={[...savedCategories.map(c => ({ 
                       id: c.id, 
                       name: c.name, 
                       color: c.color, 
@@ -1207,16 +1325,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                     onCardLongPress={handleCategoryLongPress}
                     onCardReorder={handleCategoryReorder}
                     onEditCancel={handleEditCancel}
-                    editingPlace={editingCategory ? {
-                      id: editingCategory.id,
-                      name: editingCategory.name,
-                      color: editingCategory.color,
-                      tableCount: editingCategory.menuCount,
-                      storeNumber: editingCategory.storeNumber,
-                      userPin: editingCategory.userPin,
-                      sortOrder: editingCategory.sortOrder,
-                      createdAt: editingCategory.createdAt
-                    } : null}
+                    editingItemId={editingCategory?.id || null}
                     isTransitioning={cardsTransitioning}
                     animatingCardId={animatingCardId}
                     isEditMode={isCardEditMode}
@@ -1224,7 +1333,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                 ) : selectedTab === 'Place' && savedPlaces.length > 0 ? (
                   <CardGrid 
                     type="Place"
-                    places={[...savedPlaces.map(p => ({ ...p, sortOrder: p.sortOrder })), { id: 'add', name: '', color: '', tableCount: 0 }]}
+                    items={[...savedPlaces.map(p => ({ ...p, sortOrder: p.sortOrder })), { id: 'add', name: '', color: '', tableCount: 0 }]}
                     onCardClick={(place) => {
                       if (place.id === 'add') {
                         handleAddButtonClick();
@@ -1235,7 +1344,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                     onCardLongPress={handleCardLongPress}
                     onCardReorder={handleCardReorder}
                     onEditCancel={handleEditCancel}
-                    editingPlace={editingPlace}
+                    editingItemId={editingPlace?.id || null}
                     isTransitioning={cardsTransitioning}
                     animatingCardId={animatingCardId}
                     isEditMode={isCardEditMode}
@@ -1243,7 +1352,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                 ) : selectedTab === 'Table' && selectedPlace && savedTables.length > 0 ? (
                   <CardGrid 
                     type="Table"
-                    places={savedTables.map(table => ({
+                    items={savedTables.map(table => ({
                       id: table.id,
                       name: table.name,
                       color: table.color,
@@ -1261,8 +1370,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                       console.log('Tables reordered');
                     }}
                     onEditCancel={handleEditCancel}
-                    editingPlace={selectedPlace}
-                    editingTable={editingTable}
+                    editingItemId={editingTable?.id || null}
                     isTransitioning={cardsTransitioning}
                     animatingCardId={animatingCardId}
                     isEditMode={isCardEditMode}
@@ -1270,38 +1378,28 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                 ) : selectedTab === 'Menu' && selectedCategory && savedMenus.length > 0 ? (
                   <CardGrid 
                     type="Menu"
-                    places={savedMenus.map(menu => ({
+                    items={savedMenus.map(menu => ({
                       id: menu.id,
                       name: menu.name,
                       color: selectedCategory.color, // Use category color for menu cards
-                      tableCount: parseInt(menu.price || '0'), // Show price as tableCount (will be displayed)
+                      tableCount: parseInt(menu.price || '0'), // Show price as tableCount (will be displayed as ₩X)
                       storeNumber: menu.storeNumber,
                       userPin: menu.userPin,
-                      createdAt: menu.createdAt
-                    }))}
+                      createdAt: menu.createdAt,
+                      // Additional Menu-specific properties
+                      category: selectedCategory.name, // Category name
+                      description: menu.description || '', // Menu description
+                    } as any))}
                     onCardClick={(menu) => {
                       console.log('Clicked menu:', menu.name);
                     }}
-                    onCardLongPress={(menu) => {
-                      console.log('Long pressed menu:', menu.name);
-                      // Handle menu long press for editing
-                    }}
+                    onCardLongPress={handleMenuLongPress}
                     onCardReorder={(reorderedMenus) => {
                       // Handle menu reordering
                       console.log('Menus reordered');
                     }}
                     onEditCancel={handleEditCancel}
-                    editingPlace={selectedCategory ? {
-                      id: selectedCategory.id,
-                      name: selectedCategory.name,
-                      color: selectedCategory.color,
-                      tableCount: selectedCategory.menuCount,
-                      storeNumber: selectedCategory.storeNumber,
-                      userPin: selectedCategory.userPin,
-                      sortOrder: selectedCategory.sortOrder,
-                      createdAt: selectedCategory.createdAt
-                    } : null}
-                    editingMenu={editingMenu}
+                    editingItemId={editingMenu?.id || null}
                     isTransitioning={cardsTransitioning}
                     animatingCardId={animatingCardId}
                     isEditMode={isCardEditMode}

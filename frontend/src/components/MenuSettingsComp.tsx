@@ -59,7 +59,7 @@ export default function MenuSettingsComp({
       key: 'price',
       type: 'formatted-number' as const,
       name: 'Menu Price',
-      placeholder: 'eg. 12,000',
+      placeholder: 'eg. 15,000',
       description: 'Please enter the price of the menu item (numbers only).',
       initialValue: initialPrice,
       required: false

@@ -2,10 +2,17 @@ import React from 'react';
 
 // Helper function to format number with commas
 const formatNumberWithCommas = (value: string): string => {
-  // Remove all non-digit characters
-  const numbers = value.replace(/\D/g, '');
-  // Add commas every 3 digits
-  return numbers.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  // First, try to parse as a number to handle decimal values correctly
+  const numericValue = parseFloat(value);
+  if (isNaN(numericValue)) {
+    return '';
+  }
+  
+  // For Korean won, we want to display whole numbers only
+  const integerValue = Math.floor(numericValue);
+  
+  // Convert to string and add commas every 3 digits
+  return integerValue.toLocaleString();
 };
 
 // Helper function to extract numbers only

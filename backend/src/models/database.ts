@@ -110,7 +110,7 @@ export const initializeDatabase = async (): Promise<void> => {
           category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
           store_number VARCHAR(100) NOT NULL,
           name VARCHAR(200) NOT NULL,
-          price DECIMAL(10,2) DEFAULT 0.00,
+          price INTEGER DEFAULT 0,
           description TEXT,
           user_pin VARCHAR(20) NOT NULL,
           sort_order INTEGER DEFAULT 0,

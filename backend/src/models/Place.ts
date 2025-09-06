@@ -24,7 +24,14 @@ export class Place {
   static async findAll(): Promise<PlaceRecord[]> {
     const client = await pool.connect();
     try {
-      const result = await client.query('SELECT * FROM places ORDER BY sort_order ASC, created_at DESC');
+      const result = await client.query(`
+        SELECT p.*, 
+               COALESCE(COUNT(t.id), 0) as table_count
+        FROM places p
+        LEFT JOIN tables t ON p.id = t.place_id
+        GROUP BY p.id
+        ORDER BY p.sort_order ASC, p.created_at DESC
+      `);
       return result.rows;
     } finally {
       client.release();
@@ -34,7 +41,15 @@ export class Place {
   static async findById(id: number): Promise<PlaceRecord> {
     const client = await pool.connect();
     try {
-      const result = await client.query('SELECT * FROM places WHERE id = $1', [id]);
+      const result = await client.query(
+        `SELECT p.*, 
+                COALESCE(COUNT(t.id), 0) as table_count
+         FROM places p
+         LEFT JOIN tables t ON p.id = t.place_id
+         WHERE p.id = $1
+         GROUP BY p.id`,
+        [id]
+      );
       
       if (result.rows.length === 0) {
         throw new Error('Place not found');
@@ -109,7 +124,13 @@ export class Place {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        'SELECT * FROM places WHERE store_number = $1 ORDER BY sort_order ASC, created_at DESC',
+        `SELECT p.*, 
+                COALESCE(COUNT(t.id), 0) as table_count
+         FROM places p
+         LEFT JOIN tables t ON p.id = t.place_id
+         WHERE p.store_number = $1
+         GROUP BY p.id
+         ORDER BY p.sort_order ASC, p.created_at DESC`,
         [storeNumber]
       );
       return result.rows;

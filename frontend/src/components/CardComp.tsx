@@ -40,16 +40,8 @@ export default function CardComp({
     }
   };
   
-  // Format price for Menu cards
-  const getFormattedPrice = () => {
-    if (type === "Menu" && subtitle2) {
-      return `₩${subtitle2}`;
-    }
-    return subtitle2;
-  };
-  
   const formattedSubtitle = getFormattedSubtitle();
-  const formattedSubtitle2 = getFormattedPrice();
+  const formattedSubtitle2 = subtitle2;
   
   // Empty state - dashed border
   if (property === "Empty") {
