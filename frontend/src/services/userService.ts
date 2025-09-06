@@ -8,6 +8,7 @@ export interface SignUpData {
   email: string;
   storeAddress: string;
   naverStoreLink?: string;
+  preWork?: boolean;
 }
 
 export interface UserProfile {
@@ -19,6 +20,7 @@ export interface UserProfile {
   userPin?: string;
   storeAddress?: string;
   naverStoreLink?: string;
+  preWork?: boolean;
   createdAt?: Date;
 }
 

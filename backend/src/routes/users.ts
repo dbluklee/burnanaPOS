@@ -16,7 +16,8 @@ router.post('/register', async (req, res) => {
       phoneNumber,
       email,
       storeAddress,
-      naverStoreLink
+      naverStoreLink,
+      preWork
     } = req.body;
 
     // Validation
@@ -39,7 +40,8 @@ router.post('/register', async (req, res) => {
       phone_number: phoneNumber,
       email,
       store_address: storeAddress,
-      naver_store_link: naverStoreLink
+      naver_store_link: naverStoreLink,
+      pre_work: preWork
     });
 
     // Log the registration
@@ -59,6 +61,7 @@ router.post('/register', async (req, res) => {
       email: newUser.email,
       storeNumber: newUser.store_number,
       userPin: newUser.user_pin,
+      preWork: newUser.pre_work,
       createdAt: newUser.created_at
     };
 
@@ -98,7 +101,8 @@ router.post('/signin', async (req, res) => {
       ownerName: user.owner_name,
       email: user.email,
       storeNumber: user.store_number,
-      userPin: user.user_pin
+      userPin: user.user_pin,
+      preWork: user.pre_work
     };
 
     res.json(responseData);
@@ -126,7 +130,8 @@ router.get('/:storeNumber', async (req, res) => {
       email: user.email,
       storeNumber: user.store_number,
       storeAddress: user.store_address,
-      naverStoreLink: user.naver_store_link
+      naverStoreLink: user.naver_store_link,
+      preWork: user.pre_work
     };
 
     res.json(responseData);

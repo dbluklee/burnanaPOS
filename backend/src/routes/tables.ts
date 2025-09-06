@@ -66,7 +66,7 @@ router.get('/:id', async (req, res) => {
 // Create a new table
 router.post('/', async (req, res) => {
   try {
-    const { place_id, name, color, position_x = 0, position_y = 0, dining_capacity = 4, store_number, user_pin } = req.body;
+    const { place_id, name, color, dining_capacity = 4, store_number, user_pin } = req.body;
     
     if (!place_id || !name || !color || !store_number || !user_pin) {
       return res.status(400).json({ 
@@ -91,8 +91,6 @@ router.post('/', async (req, res) => {
       place_id: parseInt(place_id),
       name,
       color,
-      position_x: parseInt(position_x) || 0,
-      position_y: parseInt(position_y) || 0,
       dining_capacity: parseInt(dining_capacity) || 4,
       store_number,
       user_pin
@@ -113,7 +111,7 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({ error: 'Invalid table ID' });
     }
 
-    const { place_id, name, color, position_x, position_y, store_number, user_pin } = req.body;
+    const { place_id, name, color, store_number, user_pin } = req.body;
 
     // If place_id is being updated, verify the place exists
     if (place_id) {
@@ -136,8 +134,6 @@ router.put('/:id', async (req, res) => {
     if (place_id !== undefined) updates.place_id = parseInt(place_id);
     if (name !== undefined) updates.name = name;
     if (color !== undefined) updates.color = color;
-    if (position_x !== undefined) updates.position_x = parseInt(position_x);
-    if (position_y !== undefined) updates.position_y = parseInt(position_y);
     if (store_number !== undefined) updates.store_number = store_number;
     if (user_pin !== undefined) updates.user_pin = user_pin;
 

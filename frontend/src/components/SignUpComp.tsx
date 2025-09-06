@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { DESIGN_TOKENS } from '../types/design-tokens';
 import { userService, type SignUpData, type UserProfile } from '../services/userService';
+import { useLogger } from '../hooks/useLogging';
 import ButtonComp from './ButtonComp';
 
 interface SignUpCompProps {
@@ -21,6 +22,7 @@ interface SignUpForm {
 export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps) {
   const { colors, fonts } = DESIGN_TOKENS;
   const containerRef = useRef<HTMLDivElement>(null);
+  const { logUserSignIn } = useLogger();
   
   const [containerSize, setContainerSize] = useState({
     width: 0,
@@ -309,7 +311,23 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
             
             <ButtonComp 
               label="Continue to Dashboard"
-              onClick={onSignUpComplete}
+              onClick={async () => {
+                // Save user data to localStorage like signin does
+                if (registeredUser) {
+                  localStorage.setItem('currentUser', JSON.stringify(registeredUser));
+                  
+                  // Initialize logging session with user sign in after successful registration
+                  if (registeredUser.userPin) {
+                    await logUserSignIn(registeredUser.userPin);
+                  }
+                  
+                  // Log server connection status like signin does
+                  const connectionStatus = await userService.checkServerConnection();
+                  const { loggingService } = await import('../services/loggingService');
+                  await loggingService.logServerConnection(connectionStatus.connected, connectionStatus.message);
+                }
+                onSignUpComplete?.();
+              }}
               isSelected={true}
               className="w-full"
               style={{ height: 'clamp(40px, 6vh, 56px)' }}

@@ -5,8 +5,6 @@ export interface TableData {
   place_id: number;
   name: string;
   color: string;
-  position_x: number;
-  position_y: number;
   dining_capacity: number;
   store_number: string;
   user_pin: string;

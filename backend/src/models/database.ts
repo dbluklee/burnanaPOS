@@ -41,6 +41,7 @@ export const initializeDatabase = async (): Promise<void> => {
           naver_store_link TEXT,
           store_number VARCHAR(20) NOT NULL UNIQUE,
           user_pin VARCHAR(4) NOT NULL,
+          pre_work BOOLEAN DEFAULT FALSE,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -79,8 +80,6 @@ export const initializeDatabase = async (): Promise<void> => {
           place_id INTEGER NOT NULL REFERENCES places(id) ON DELETE CASCADE,
           name VARCHAR(200) NOT NULL,
           color VARCHAR(7) NOT NULL,
-          position_x INTEGER DEFAULT 0,
-          position_y INTEGER DEFAULT 0,
           dining_capacity INTEGER DEFAULT 4,
           store_number VARCHAR(100) NOT NULL,
           user_pin VARCHAR(20) NOT NULL,
@@ -179,7 +178,20 @@ export const initializeDatabase = async (): Promise<void> => {
         ALTER TABLE tables ADD COLUMN IF NOT EXISTS dining_capacity INTEGER DEFAULT 4
       `);
 
+      // Migration: Add pre_work column to existing users
+      await client.query(`
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS pre_work BOOLEAN DEFAULT FALSE
+      `);
+
       console.log('✅ PostgreSQL database tables initialized successfully');
+      
+      // Check if pre_work schema was created
+      const schemaCheck = await client.query(`SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'pre_work'`);
+      if (schemaCheck.rows.length > 0) {
+        console.log('✅ pre_work schema verified successfully');
+      } else {
+        console.log('❌ pre_work schema not found');
+      }
     } finally {
       client.release();
     }
@@ -206,8 +218,6 @@ export interface TableRecord {
   place_id: number;
   name: string;
   color: string;
-  position_x: number;
-  position_y: number;
   dining_capacity: number;
   store_number: string;
   user_pin: string;

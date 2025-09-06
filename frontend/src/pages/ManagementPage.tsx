@@ -159,8 +159,6 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
         placeId: t.place_id.toString(),
         name: t.name,
         color: t.color,
-        positionX: t.position_x,
-        positionY: t.position_y,
         storeNumber: t.store_number,
         userPin: t.user_pin,
         createdAt: new Date(t.created_at!)
@@ -183,8 +181,6 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
         placeId: t.place_id.toString(),
         name: t.name,
         color: t.color,
-        positionX: t.position_x,
-        positionY: t.position_y,
         storeNumber: t.store_number,
         userPin: t.user_pin,
         createdAt: new Date(t.created_at!)
@@ -422,8 +418,6 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
           place_id: parseInt(placeId),
           name,
           color: selectedColor, // selectedColor is now the place's color (already hex)
-          position_x: 0,
-          position_y: 0,
           dining_capacity: diningCapacity || 4, // Default to 4 if not provided
           store_number: currentStoreNumber,
           user_pin: currentUserPin
@@ -435,8 +429,6 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
           placeId: newTableData.place_id.toString(),
           name: newTableData.name,
           color: newTableData.color,
-          positionX: newTableData.position_x,
-          positionY: newTableData.position_y,
           diningCapacity: newTableData.dining_capacity,
           storeNumber: newTableData.store_number,
           userPin: newTableData.user_pin,

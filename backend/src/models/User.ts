@@ -11,6 +11,7 @@ export interface UserRecord {
   naver_store_link?: string;
   store_number: string;
   user_pin: string;
+  pre_work?: boolean;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -33,8 +34,8 @@ export class User {
       const userPin = this.generateUserPin();
 
       const result = await client.query(
-        `INSERT INTO users (business_registration_number, store_name, owner_name, phone_number, email, store_address, naver_store_link, store_number, user_pin)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `INSERT INTO users (business_registration_number, store_name, owner_name, phone_number, email, store_address, naver_store_link, store_number, user_pin, pre_work)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          RETURNING *`,
         [
           userData.business_registration_number,
@@ -45,7 +46,8 @@ export class User {
           userData.store_address,
           userData.naver_store_link || null,
           storeNumber,
-          userPin
+          userPin,
+          userData.pre_work || false
         ]
       );
       
