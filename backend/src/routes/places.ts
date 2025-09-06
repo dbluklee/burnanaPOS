@@ -14,11 +14,15 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get places by store number
-router.get('/store/:storeNumber', async (req, res) => {
+// Get places by store ID
+router.get('/store/:storeId', async (req, res) => {
   try {
-    const { storeNumber } = req.params;
-    const places = await Place.findByStoreNumber(storeNumber);
+    const storeId = parseInt(req.params.storeId);
+    if (isNaN(storeId)) {
+      return res.status(400).json({ error: 'Invalid store ID' });
+    }
+    
+    const places = await Place.findByStoreId(storeId);
     res.json(places);
   } catch (error) {
     console.error('Error fetching places by store:', error);
@@ -49,21 +53,20 @@ router.get('/:id', async (req, res) => {
 // Create new place
 router.post('/', async (req, res) => {
   try {
-    const { store_number, name, color, table_count, user_pin } = req.body;
+    const { store_id, name, color, table_count } = req.body;
     
     // Validation
-    if (!store_number || !name || !color || !user_pin) {
+    if (!store_id || !name || !color) {
       return res.status(400).json({ 
-        error: 'Missing required fields: store_number, name, color, user_pin' 
+        error: 'Missing required fields: store_id, name, color' 
       });
     }
     
     const newPlace = await Place.create({
-      store_number,
+      store_id,
       name,
       color,
-      table_count: table_count || 0,
-      user_pin
+      table_count: table_count || 0
     });
     
     res.status(201).json(newPlace);

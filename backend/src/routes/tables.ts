@@ -15,11 +15,11 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get tables by store number
-router.get('/store/:storeNumber', async (req, res) => {
+// Get tables by store ID
+router.get('/store/:storeId', async (req, res) => {
   try {
-    const { storeNumber } = req.params;
-    const tables = await Table.findByStoreNumber(storeNumber);
+    const storeId = parseInt(req.params.storeId);
+    const tables = await Table.findByStoreId(storeId);
     res.json(tables);
   } catch (error) {
     console.error('Error fetching tables by store number:', error);
@@ -66,11 +66,11 @@ router.get('/:id', async (req, res) => {
 // Create a new table
 router.post('/', async (req, res) => {
   try {
-    const { place_id, name, color, dining_capacity = 4, store_number, user_pin } = req.body;
+    const { place_id, name, color, dining_capacity = 4, store_id } = req.body;
     
-    if (!place_id || !name || !color || !store_number || !user_pin) {
+    if (!place_id || !name || !color || !store_id) {
       return res.status(400).json({ 
-        error: 'Missing required fields: place_id, name, color, store_number, user_pin' 
+        error: 'Missing required fields: place_id, name, color, store_id' 
       });
     }
 
@@ -88,12 +88,11 @@ router.post('/', async (req, res) => {
     }
 
     const newTable = await Table.create({
+      store_id: parseInt(store_id),
       place_id: parseInt(place_id),
       name,
       color,
-      dining_capacity: parseInt(dining_capacity) || 4,
-      store_number,
-      user_pin
+      dining_capacity: parseInt(dining_capacity) || 4
     });
 
     res.status(201).json(newTable);

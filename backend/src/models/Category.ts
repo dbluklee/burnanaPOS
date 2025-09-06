@@ -5,14 +5,14 @@ export class Category {
     const client = await pool.connect();
     try {
       // Get the next sort_order value (max + 1)
-      const orderResult = await client.query('SELECT COALESCE(MAX(sort_order), 0) + 1 as next_order FROM categories WHERE store_number = $1', [category.store_number]);
+      const orderResult = await client.query('SELECT COALESCE(MAX(sort_order), 0) + 1 as next_order FROM categories WHERE store_id = $1', [category.store_id]);
       const nextOrder = orderResult.rows[0].next_order;
       
       const result = await client.query(
-        `INSERT INTO categories (store_number, name, color, menu_count, user_pin, sort_order)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO categories (store_id, name, color, menu_count, sort_order)
+         VALUES ($1, $2, $3, $4, $5)
          RETURNING *`,
-        [category.store_number, category.name, category.color, category.menu_count, category.user_pin, nextOrder]
+        [category.store_id, category.name, category.color, category.menu_count, nextOrder]
       );
       
       return result.rows[0];
@@ -68,9 +68,9 @@ export class Category {
       const values = [];
       let paramCount = 1;
       
-      if (updates.store_number !== undefined) {
-        fields.push(`store_number = $${paramCount++}`);
-        values.push(updates.store_number);
+      if (updates.store_id !== undefined) {
+        fields.push(`store_id = $${paramCount++}`);
+        values.push(updates.store_id);
       }
       if (updates.name !== undefined) {
         fields.push(`name = $${paramCount++}`);
@@ -83,10 +83,6 @@ export class Category {
       if (updates.menu_count !== undefined) {
         fields.push(`menu_count = $${paramCount++}`);
         values.push(updates.menu_count);
-      }
-      if (updates.user_pin !== undefined) {
-        fields.push(`user_pin = $${paramCount++}`);
-        values.push(updates.user_pin);
       }
       if (updates.sort_order !== undefined) {
         fields.push(`sort_order = $${paramCount++}`);
@@ -120,7 +116,7 @@ export class Category {
     }
   }
 
-  static async findByStoreNumber(storeNumber: string): Promise<CategoryRecord[]> {
+  static async findByStoreId(storeId: number): Promise<CategoryRecord[]> {
     const client = await pool.connect();
     try {
       const result = await client.query(
@@ -128,10 +124,10 @@ export class Category {
                 COALESCE(COUNT(m.id), 0) as menu_count
          FROM categories c
          LEFT JOIN menus m ON c.id = m.category_id
-         WHERE c.store_number = $1
+         WHERE c.store_id = $1
          GROUP BY c.id
          ORDER BY c.sort_order ASC, c.created_at DESC`,
-        [storeNumber]
+        [storeId]
       );
       return result.rows;
     } finally {
@@ -139,15 +135,15 @@ export class Category {
     }
   }
 
-  static async findByName(name: string, storeNumber?: string): Promise<CategoryRecord | null> {
+  static async findByName(name: string, storeId?: number): Promise<CategoryRecord | null> {
     const client = await pool.connect();
     try {
       let sql = 'SELECT * FROM categories WHERE name = $1';
-      const params = [name];
+      const params: any[] = [name];
       
-      if (storeNumber) {
-        sql += ' AND store_number = $2';
-        params.push(storeNumber);
+      if (storeId) {
+        sql += ' AND store_id = $2';
+        params.push(storeId);
       }
       
       sql += ' LIMIT 1';
@@ -164,15 +160,15 @@ export class Category {
     }
   }
 
-  static async deleteByName(name: string, storeNumber?: string): Promise<boolean> {
+  static async deleteByName(name: string, storeId?: number): Promise<boolean> {
     const client = await pool.connect();
     try {
       let sql = 'DELETE FROM categories WHERE name = $1';
-      const params = [name];
+      const params: any[] = [name];
       
-      if (storeNumber) {
-        sql += ' AND store_number = $2';
-        params.push(storeNumber);
+      if (storeId) {
+        sql += ' AND store_id = $2';
+        params.push(storeId);
       }
       
       const result = await client.query(sql, params);

@@ -5,10 +5,10 @@ export class Table {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        `INSERT INTO tables (place_id, name, color, dining_capacity, store_number, user_pin)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO tables (store_id, place_id, name, color, dining_capacity)
+         VALUES ($1, $2, $3, $4, $5)
          RETURNING *`,
-[table.place_id, table.name, table.color, table.dining_capacity, table.store_number, table.user_pin]
+        [table.store_id, table.place_id, table.name, table.color, table.dining_capacity]
       );
       
       return result.rows[0];
@@ -55,12 +55,12 @@ export class Table {
     }
   }
 
-  static async findByStoreNumber(storeNumber: string): Promise<TableRecord[]> {
+  static async findByStoreId(storeId: number): Promise<TableRecord[]> {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        'SELECT * FROM tables WHERE store_number = $1 ORDER BY created_at DESC',
-        [storeNumber]
+        'SELECT * FROM tables WHERE store_id = $1 ORDER BY created_at DESC',
+        [storeId]
       );
       return result.rows;
     } finally {
@@ -75,6 +75,10 @@ export class Table {
       const values = [];
       let paramCount = 1;
       
+      if (updates.store_id !== undefined) {
+        fields.push(`store_id = $${paramCount++}`);
+        values.push(updates.store_id);
+      }
       if (updates.place_id !== undefined) {
         fields.push(`place_id = $${paramCount++}`);
         values.push(updates.place_id);
@@ -90,14 +94,6 @@ export class Table {
       if (updates.dining_capacity !== undefined) {
         fields.push(`dining_capacity = $${paramCount++}`);
         values.push(updates.dining_capacity);
-      }
-      if (updates.store_number !== undefined) {
-        fields.push(`store_number = $${paramCount++}`);
-        values.push(updates.store_number);
-      }
-      if (updates.user_pin !== undefined) {
-        fields.push(`user_pin = $${paramCount++}`);
-        values.push(updates.user_pin);
       }
       
       fields.push(`updated_at = CURRENT_TIMESTAMP`);
@@ -131,11 +127,11 @@ export class Table {
     const client = await pool.connect();
     try {
       let sql = 'SELECT * FROM tables WHERE name = $1';
-      const params = [name];
+      const params: any[] = [name];
       
       if (placeId) {
         sql += ' AND place_id = $2';
-        params.push(placeId.toString());
+        params.push(placeId);
       }
       
       sql += ' LIMIT 1';
@@ -156,11 +152,11 @@ export class Table {
     const client = await pool.connect();
     try {
       let sql = 'DELETE FROM tables WHERE name = $1';
-      const params = [name];
+      const params: any[] = [name];
       
       if (placeId) {
         sql += ' AND place_id = $2';
-        params.push(placeId.toString());
+        params.push(placeId);
       }
       
       const result = await client.query(sql, params);

@@ -6,9 +6,11 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { initializeDatabase } from './models/database';
+import { storeContextMiddleware, injectStoreId } from './middleware/storeContext';
 import placesRouter from './routes/places';
 import logsRouter from './routes/logs';
 import usersRouter from './routes/users';
+import storesRouter from './routes/stores';
 import tablesRouter from './routes/tables';
 import categoriesRouter from './routes/categories';
 import menusRouter from './routes/menus';
@@ -23,10 +25,15 @@ app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Store context middleware (temporarily disabled for testing)
+// app.use('/api', storeContextMiddleware);
+// app.use('/api', injectStoreId);
+
 // Routes
 app.use('/api/categories', categoriesRouter);
 app.use('/api/menus', menusRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/stores', storesRouter);
 app.use('/api/places', placesRouter);
 app.use('/api/tables', tablesRouter);
 app.use('/api/logs', logsRouter);

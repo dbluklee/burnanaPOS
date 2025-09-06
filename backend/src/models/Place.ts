@@ -5,14 +5,14 @@ export class Place {
     const client = await pool.connect();
     try {
       // Get the next sort_order value (max + 1)
-      const orderResult = await client.query('SELECT COALESCE(MAX(sort_order), 0) + 1 as next_order FROM places WHERE store_number = $1', [place.store_number]);
+      const orderResult = await client.query('SELECT COALESCE(MAX(sort_order), 0) + 1 as next_order FROM places WHERE store_id = $1', [place.store_id]);
       const nextOrder = orderResult.rows[0].next_order;
       
       const result = await client.query(
-        `INSERT INTO places (store_number, name, color, table_count, user_pin, sort_order)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO places (store_id, name, color, table_count, sort_order)
+         VALUES ($1, $2, $3, $4, $5)
          RETURNING *`,
-        [place.store_number, place.name, place.color, place.table_count, place.user_pin, nextOrder]
+        [place.store_id, place.name, place.color, place.table_count, nextOrder]
       );
       
       return result.rows[0];
@@ -68,9 +68,9 @@ export class Place {
       const values = [];
       let paramCount = 1;
       
-      if (updates.store_number !== undefined) {
-        fields.push(`store_number = $${paramCount++}`);
-        values.push(updates.store_number);
+      if (updates.store_id !== undefined) {
+        fields.push(`store_id = $${paramCount++}`);
+        values.push(updates.store_id);
       }
       if (updates.name !== undefined) {
         fields.push(`name = $${paramCount++}`);
@@ -83,10 +83,6 @@ export class Place {
       if (updates.table_count !== undefined) {
         fields.push(`table_count = $${paramCount++}`);
         values.push(updates.table_count);
-      }
-      if (updates.user_pin !== undefined) {
-        fields.push(`user_pin = $${paramCount++}`);
-        values.push(updates.user_pin);
       }
       if (updates.sort_order !== undefined) {
         fields.push(`sort_order = $${paramCount++}`);
@@ -120,7 +116,7 @@ export class Place {
     }
   }
 
-  static async findByStoreNumber(storeNumber: string): Promise<PlaceRecord[]> {
+  static async findByStoreId(storeId: number): Promise<PlaceRecord[]> {
     const client = await pool.connect();
     try {
       const result = await client.query(
@@ -128,10 +124,10 @@ export class Place {
                 COALESCE(COUNT(t.id), 0) as table_count
          FROM places p
          LEFT JOIN tables t ON p.id = t.place_id
-         WHERE p.store_number = $1
+         WHERE p.store_id = $1
          GROUP BY p.id
          ORDER BY p.sort_order ASC, p.created_at DESC`,
-        [storeNumber]
+        [storeId]
       );
       return result.rows;
     } finally {
@@ -139,15 +135,15 @@ export class Place {
     }
   }
 
-  static async findByName(name: string, storeNumber?: string): Promise<PlaceRecord | null> {
+  static async findByName(name: string, storeId?: number): Promise<PlaceRecord | null> {
     const client = await pool.connect();
     try {
       let sql = 'SELECT * FROM places WHERE name = $1';
-      const params = [name];
+      const params: any[] = [name];
       
-      if (storeNumber) {
-        sql += ' AND store_number = $2';
-        params.push(storeNumber);
+      if (storeId) {
+        sql += ' AND store_id = $2';
+        params.push(storeId as any);
       }
       
       sql += ' LIMIT 1';
@@ -164,15 +160,15 @@ export class Place {
     }
   }
 
-  static async deleteByName(name: string, storeNumber?: string): Promise<boolean> {
+  static async deleteByName(name: string, storeId?: number): Promise<boolean> {
     const client = await pool.connect();
     try {
       let sql = 'DELETE FROM places WHERE name = $1';
-      const params = [name];
+      const params: any[] = [name];
       
-      if (storeNumber) {
-        sql += ' AND store_number = $2';
-        params.push(storeNumber);
+      if (storeId) {
+        sql += ' AND store_id = $2';
+        params.push(storeId as any);
       }
       
       const result = await client.query(sql, params);

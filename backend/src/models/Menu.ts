@@ -9,10 +9,10 @@ export class Menu {
       const nextOrder = orderResult.rows[0].next_order;
       
       const result = await client.query(
-        `INSERT INTO menus (category_id, store_number, name, price, description, user_pin, sort_order)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO menus (store_id, category_id, name, price, description, sort_order)
+         VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING *`,
-        [menu.category_id, menu.store_number, menu.name, menu.price, menu.description, menu.user_pin, nextOrder]
+        [menu.store_id, menu.category_id, menu.name, menu.price, menu.description, nextOrder]
       );
       
       return result.rows[0];
@@ -53,13 +53,13 @@ export class Menu {
       const values = [];
       let paramCount = 1;
       
+      if (updates.store_id !== undefined) {
+        fields.push(`store_id = $${paramCount++}`);
+        values.push(updates.store_id);
+      }
       if (updates.category_id !== undefined) {
         fields.push(`category_id = $${paramCount++}`);
         values.push(updates.category_id);
-      }
-      if (updates.store_number !== undefined) {
-        fields.push(`store_number = $${paramCount++}`);
-        values.push(updates.store_number);
       }
       if (updates.name !== undefined) {
         fields.push(`name = $${paramCount++}`);
@@ -72,10 +72,6 @@ export class Menu {
       if (updates.description !== undefined) {
         fields.push(`description = $${paramCount++}`);
         values.push(updates.description);
-      }
-      if (updates.user_pin !== undefined) {
-        fields.push(`user_pin = $${paramCount++}`);
-        values.push(updates.user_pin);
       }
       if (updates.sort_order !== undefined) {
         fields.push(`sort_order = $${paramCount++}`);
@@ -109,12 +105,12 @@ export class Menu {
     }
   }
 
-  static async findByStoreNumber(storeNumber: string): Promise<MenuRecord[]> {
+  static async findByStoreId(storeId: number): Promise<MenuRecord[]> {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        'SELECT * FROM menus WHERE store_number = $1 ORDER BY sort_order ASC, created_at DESC',
-        [storeNumber]
+        'SELECT * FROM menus WHERE store_id = $1 ORDER BY sort_order ASC, created_at DESC',
+        [storeId]
       );
       return result.rows;
     } finally {
@@ -135,15 +131,15 @@ export class Menu {
     }
   }
 
-  static async findByName(name: string, storeNumber?: string): Promise<MenuRecord | null> {
+  static async findByName(name: string, storeId?: number): Promise<MenuRecord | null> {
     const client = await pool.connect();
     try {
       let sql = 'SELECT * FROM menus WHERE name = $1';
-      const params = [name];
+      const params: any[] = [name];
       
-      if (storeNumber) {
-        sql += ' AND store_number = $2';
-        params.push(storeNumber);
+      if (storeId) {
+        sql += ' AND store_id = $2';
+        params.push(storeId);
       }
       
       sql += ' LIMIT 1';
@@ -160,15 +156,15 @@ export class Menu {
     }
   }
 
-  static async deleteByName(name: string, storeNumber?: string): Promise<boolean> {
+  static async deleteByName(name: string, storeId?: number): Promise<boolean> {
     const client = await pool.connect();
     try {
       let sql = 'DELETE FROM menus WHERE name = $1';
-      const params = [name];
+      const params: any[] = [name];
       
-      if (storeNumber) {
-        sql += ' AND store_number = $2';
-        params.push(storeNumber);
+      if (storeId) {
+        sql += ' AND store_id = $2';
+        params.push(storeId);
       }
       
       const result = await client.query(sql, params);

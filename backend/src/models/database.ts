@@ -28,15 +28,26 @@ export const initializeDatabase = async (): Promise<void> => {
     const client = await pool.connect();
     
     try {
-      // Create Users table
+      // Create Users table (for authentication and user management)
       await client.query(`
         CREATE TABLE IF NOT EXISTS users (
           id SERIAL PRIMARY KEY,
+          phone VARCHAR(20) NOT NULL UNIQUE,
+          name VARCHAR(100) NOT NULL,
+          email VARCHAR(200) UNIQUE,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      // Create Stores table (business/store information)
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS stores (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
           business_registration_number VARCHAR(50) NOT NULL,
           store_name VARCHAR(200) NOT NULL,
           owner_name VARCHAR(100) NOT NULL,
-          phone_number VARCHAR(20) NOT NULL,
-          email VARCHAR(200) NOT NULL UNIQUE,
           store_address TEXT NOT NULL,
           naver_store_link TEXT,
           store_number VARCHAR(20) NOT NULL UNIQUE,
@@ -51,11 +62,10 @@ export const initializeDatabase = async (): Promise<void> => {
       await client.query(`
         CREATE TABLE IF NOT EXISTS places (
           id SERIAL PRIMARY KEY,
-          store_number VARCHAR(100) NOT NULL,
+          store_id INTEGER NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
           name VARCHAR(200) NOT NULL,
           color VARCHAR(7) NOT NULL,
           table_count INTEGER DEFAULT 0,
-          user_pin VARCHAR(20) NOT NULL,
           sort_order INTEGER DEFAULT 0,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -77,12 +87,11 @@ export const initializeDatabase = async (): Promise<void> => {
       await client.query(`
         CREATE TABLE IF NOT EXISTS tables (
           id SERIAL PRIMARY KEY,
+          store_id INTEGER NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
           place_id INTEGER NOT NULL REFERENCES places(id) ON DELETE CASCADE,
           name VARCHAR(200) NOT NULL,
           color VARCHAR(7) NOT NULL,
           dining_capacity INTEGER DEFAULT 4,
-          store_number VARCHAR(100) NOT NULL,
-          user_pin VARCHAR(20) NOT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -92,11 +101,10 @@ export const initializeDatabase = async (): Promise<void> => {
       await client.query(`
         CREATE TABLE IF NOT EXISTS categories (
           id SERIAL PRIMARY KEY,
-          store_number VARCHAR(100) NOT NULL,
+          store_id INTEGER NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
           name VARCHAR(200) NOT NULL,
           color VARCHAR(7) NOT NULL,
           menu_count INTEGER DEFAULT 0,
-          user_pin VARCHAR(20) NOT NULL,
           sort_order INTEGER DEFAULT 0,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -107,12 +115,11 @@ export const initializeDatabase = async (): Promise<void> => {
       await client.query(`
         CREATE TABLE IF NOT EXISTS menus (
           id SERIAL PRIMARY KEY,
+          store_id INTEGER NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
           category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
-          store_number VARCHAR(100) NOT NULL,
           name VARCHAR(200) NOT NULL,
           price INTEGER DEFAULT 0,
           description TEXT,
-          user_pin VARCHAR(20) NOT NULL,
           sort_order INTEGER DEFAULT 0,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -123,10 +130,9 @@ export const initializeDatabase = async (): Promise<void> => {
       await client.query(`
         CREATE TABLE IF NOT EXISTS logs (
           id SERIAL PRIMARY KEY,
+          store_id INTEGER NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
           type VARCHAR(50) NOT NULL,
           message TEXT NOT NULL,
-          user_pin VARCHAR(20),
-          store_number VARCHAR(100),
           metadata TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -134,23 +140,27 @@ export const initializeDatabase = async (): Promise<void> => {
 
       // Create indexes for better performance
       await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone)
+      `);
+      
+      await client.query(`
         CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)
       `);
       
       await client.query(`
-        CREATE INDEX IF NOT EXISTS idx_users_store_number ON users(store_number)
+        CREATE INDEX IF NOT EXISTS idx_stores_user_id ON stores(user_id)
       `);
       
       await client.query(`
-        CREATE INDEX IF NOT EXISTS idx_places_store_number ON places(store_number)
+        CREATE INDEX IF NOT EXISTS idx_stores_store_number ON stores(store_number)
       `);
       
       await client.query(`
-        CREATE INDEX IF NOT EXISTS idx_logs_store_number ON logs(store_number)
+        CREATE INDEX IF NOT EXISTS idx_places_store_id ON places(store_id)
       `);
       
       await client.query(`
-        CREATE INDEX IF NOT EXISTS idx_logs_type ON logs(type)
+        CREATE INDEX IF NOT EXISTS idx_tables_store_id ON tables(store_id)
       `);
       
       await client.query(`
@@ -158,11 +168,11 @@ export const initializeDatabase = async (): Promise<void> => {
       `);
       
       await client.query(`
-        CREATE INDEX IF NOT EXISTS idx_tables_store_number ON tables(store_number)
+        CREATE INDEX IF NOT EXISTS idx_categories_store_id ON categories(store_id)
       `);
       
       await client.query(`
-        CREATE INDEX IF NOT EXISTS idx_categories_store_number ON categories(store_number)
+        CREATE INDEX IF NOT EXISTS idx_menus_store_id ON menus(store_id)
       `);
       
       await client.query(`
@@ -170,17 +180,63 @@ export const initializeDatabase = async (): Promise<void> => {
       `);
       
       await client.query(`
-        CREATE INDEX IF NOT EXISTS idx_menus_store_number ON menus(store_number)
+        CREATE INDEX IF NOT EXISTS idx_logs_store_id ON logs(store_id)
+      `);
+      
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_logs_type ON logs(type)
       `);
 
-      // Migration: Add dining_capacity column to existing tables
+      // Migrations for multi-tenant structure
+      // Add store_id to existing tables that don't have it
       await client.query(`
-        ALTER TABLE tables ADD COLUMN IF NOT EXISTS dining_capacity INTEGER DEFAULT 4
+        DO $$ 
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                        WHERE table_name='places' AND column_name='store_id') THEN
+            ALTER TABLE places ADD COLUMN store_id INTEGER REFERENCES stores(id) ON DELETE CASCADE;
+          END IF;
+        END $$
       `);
-
-      // Migration: Add pre_work column to existing users
+      
       await client.query(`
-        ALTER TABLE users ADD COLUMN IF NOT EXISTS pre_work BOOLEAN DEFAULT FALSE
+        DO $$ 
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                        WHERE table_name='tables' AND column_name='store_id') THEN
+            ALTER TABLE tables ADD COLUMN store_id INTEGER REFERENCES stores(id) ON DELETE CASCADE;
+          END IF;
+        END $$
+      `);
+      
+      await client.query(`
+        DO $$ 
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                        WHERE table_name='categories' AND column_name='store_id') THEN
+            ALTER TABLE categories ADD COLUMN store_id INTEGER REFERENCES stores(id) ON DELETE CASCADE;
+          END IF;
+        END $$
+      `);
+      
+      await client.query(`
+        DO $$ 
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                        WHERE table_name='menus' AND column_name='store_id') THEN
+            ALTER TABLE menus ADD COLUMN store_id INTEGER REFERENCES stores(id) ON DELETE CASCADE;
+          END IF;
+        END $$
+      `);
+      
+      await client.query(`
+        DO $$ 
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                        WHERE table_name='logs' AND column_name='store_id') THEN
+            ALTER TABLE logs ADD COLUMN store_id INTEGER REFERENCES stores(id) ON DELETE CASCADE;
+          END IF;
+        END $$
       `);
 
       console.log('✅ PostgreSQL database tables initialized successfully');
@@ -201,13 +257,36 @@ export const initializeDatabase = async (): Promise<void> => {
   }
 };
 
+export interface UserRecord {
+  id?: number;
+  phone: string;
+  name: string;
+  email?: string;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+export interface StoreRecord {
+  id?: number;
+  user_id: number;
+  business_registration_number: string;
+  store_name: string;
+  owner_name: string;
+  store_address: string;
+  naver_store_link?: string;
+  store_number: string;
+  user_pin: string;
+  pre_work: boolean;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
 export interface PlaceRecord {
   id?: number;
-  store_number: string;
+  store_id: number;
   name: string;
   color: string;
   table_count: number;
-  user_pin: string;
   sort_order?: number;
   created_at?: Date;
   updated_at?: Date;
@@ -215,24 +294,21 @@ export interface PlaceRecord {
 
 export interface TableRecord {
   id?: number;
+  store_id: number;
   place_id: number;
   name: string;
   color: string;
   dining_capacity: number;
-  store_number: string;
-  user_pin: string;
-  sort_order?: number;
   created_at?: Date;
   updated_at?: Date;
 }
 
 export interface CategoryRecord {
   id?: number;
-  store_number: string;
+  store_id: number;
   name: string;
   color: string;
   menu_count: number;
-  user_pin: string;
   sort_order?: number;
   created_at?: Date;
   updated_at?: Date;
@@ -240,12 +316,11 @@ export interface CategoryRecord {
 
 export interface MenuRecord {
   id?: number;
+  store_id: number;
   category_id: number;
-  store_number: string;
   name: string;
   price: number;
   description?: string;
-  user_pin: string;
   sort_order?: number;
   created_at?: Date;
   updated_at?: Date;
@@ -253,10 +328,9 @@ export interface MenuRecord {
 
 export interface LogRecord {
   id?: number;
+  store_id: number;
   type: string;
   message: string;
-  user_pin?: string;
-  store_number?: string;
   metadata?: string;
   created_at?: Date;
 }

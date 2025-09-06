@@ -14,11 +14,15 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get menus by store number
-router.get('/store/:storeNumber', async (req, res) => {
+// Get menus by store ID
+router.get('/store/:storeId', async (req, res) => {
   try {
-    const { storeNumber } = req.params;
-    const menus = await Menu.findByStoreNumber(storeNumber);
+    const storeId = parseInt(req.params.storeId);
+    if (isNaN(storeId)) {
+      return res.status(400).json({ error: 'Invalid store ID' });
+    }
+    
+    const menus = await Menu.findByStoreId(storeId);
     res.json(menus);
   } catch (error) {
     console.error('Error fetching menus by store:', error);
@@ -65,22 +69,21 @@ router.get('/:id', async (req, res) => {
 // Create new menu
 router.post('/', async (req, res) => {
   try {
-    const { category_id, store_number, name, price, description, user_pin } = req.body;
+    const { category_id, store_id, name, price, description } = req.body;
     
     // Validation
-    if (!category_id || !store_number || !name || !user_pin) {
+    if (!category_id || !store_id || !name) {
       return res.status(400).json({ 
-        error: 'Missing required fields: category_id, store_number, name, user_pin' 
+        error: 'Missing required fields: category_id, store_id, name' 
       });
     }
     
     const newMenu = await Menu.create({
+      store_id: parseInt(store_id),
       category_id: parseInt(category_id),
-      store_number,
       name,
       price: parseFloat(price) || 0.00,
-      description,
-      user_pin
+      description
     });
     
     res.status(201).json(newMenu);

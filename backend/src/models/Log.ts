@@ -5,10 +5,10 @@ export class Log {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        `INSERT INTO logs (type, message, user_pin, store_number, metadata)
-         VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO logs (store_id, type, message, metadata)
+         VALUES ($1, $2, $3, $4)
          RETURNING *`,
-        [log.type, log.message, log.user_pin || null, log.store_number || null, log.metadata || null]
+        [log.store_id, log.type, log.message, log.metadata || null]
       );
       
       return result.rows[0];
@@ -50,11 +50,11 @@ export class Log {
     }
   }
 
-  static async findByStoreNumber(storeNumber: string, limit?: number): Promise<LogRecord[]> {
+  static async findByStoreId(storeId: number, limit?: number): Promise<LogRecord[]> {
     const client = await pool.connect();
     try {
-      let sql = 'SELECT * FROM logs WHERE store_number = $1 ORDER BY created_at DESC';
-      const params: any[] = [storeNumber];
+      let sql = 'SELECT * FROM logs WHERE store_id = $1 ORDER BY created_at DESC';
+      const params: any[] = [storeId];
       
       if (limit) {
         sql += ' LIMIT $2';

@@ -1,12 +1,12 @@
 import express from 'express';
-import { User } from '../models/User';
+import { User, Store } from '../models/User';
 import { Log } from '../models/Log';
 
 // Updated to use new column names: store_name, owner_name, phone_number
 
 const router = express.Router();
 
-// Register new user/store
+// Register new user and store
 router.post('/register', async (req, res) => {
   try {
     const {
@@ -21,48 +21,58 @@ router.post('/register', async (req, res) => {
     } = req.body;
 
     // Validation
-    if (!businessRegistrationNumber || !storeName || !ownerName || !phoneNumber || !email || !storeAddress) {
+    if (!businessRegistrationNumber || !storeName || !ownerName || !phoneNumber || !storeAddress) {
       return res.status(400).json({ 
-        error: 'Missing required fields: businessRegistrationNumber, storeName, ownerName, phoneNumber, email, storeAddress' 
+        error: 'Missing required fields: businessRegistrationNumber, storeName, ownerName, phoneNumber, storeAddress' 
       });
     }
 
-    // Check if email already exists
-    const existingUser = await User.findByEmail(email);
-    if (existingUser) {
-      return res.status(409).json({ error: 'Email already registered' });
+    // Check if user already exists
+    let user = await User.findByPhone(phoneNumber);
+    
+    // If user doesn't exist, create them
+    if (!user) {
+      user = await User.create({
+        phone: phoneNumber,
+        name: ownerName,
+        email: email
+      });
     }
 
-    const newUser = await User.create({
+    // Create the store for this user
+    const newStore = await Store.create({
+      user_id: user.id!,
       business_registration_number: businessRegistrationNumber,
       store_name: storeName,
       owner_name: ownerName,
-      phone_number: phoneNumber,
-      email,
       store_address: storeAddress,
       naver_store_link: naverStoreLink,
-      pre_work: preWork
+      pre_work: preWork || false
     });
 
     // Log the registration
     await Log.create({
       type: 'USER_REGISTERED',
-      message: `New user registered: ${storeName}`,
-      user_pin: newUser.user_pin,
-      store_number: newUser.store_number,
-      metadata: JSON.stringify({ email, owner_name: ownerName })
+      message: `New store registered: ${storeName}`,
+      store_id: newStore.id!,
+      metadata: JSON.stringify({ 
+        email, 
+        owner_name: ownerName, 
+        user_id: user.id,
+        store_number: newStore.store_number 
+      })
     });
 
-    // Return user data without sensitive info
+    // Return store data without sensitive info
     const responseData = {
-      id: newUser.id,
-      storeName: newUser.store_name,
-      ownerName: newUser.owner_name,
-      email: newUser.email,
-      storeNumber: newUser.store_number,
-      userPin: newUser.user_pin,
-      preWork: newUser.pre_work,
-      createdAt: newUser.created_at
+      userId: user.id,
+      storeId: newStore.id,
+      storeName: newStore.store_name,
+      ownerName: newStore.owner_name,
+      storeNumber: newStore.store_number,
+      userPin: newStore.user_pin,
+      preWork: newStore.pre_work,
+      createdAt: newStore.created_at
     };
 
     res.status(201).json(responseData);
@@ -72,7 +82,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Sign in / authenticate user
+// Sign in / authenticate store
 router.post('/signin', async (req, res) => {
   try {
     const { storeNumber, userPin } = req.body;
@@ -81,63 +91,87 @@ router.post('/signin', async (req, res) => {
       return res.status(400).json({ error: 'Store number and user PIN are required' });
     }
 
-    const user = await User.authenticate(storeNumber, userPin);
-    if (!user) {
+    const store = await Store.authenticate(storeNumber, userPin);
+    if (!store) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Log the sign in
     await Log.create({
       type: 'USER_SIGNIN',
-      message: `User signed in: ${user.store_name}`,
-      user_pin: user.user_pin,
-      store_number: user.store_number
+      message: `Store signed in: ${store.store_name}`,
+      store_id: store.id!,
+      metadata: JSON.stringify({ store_number: store.store_number })
     });
 
-    // Return user data without sensitive info
+    // Return store data without sensitive info
     const responseData = {
-      id: user.id,
-      storeName: user.store_name,
-      ownerName: user.owner_name,
-      email: user.email,
-      storeNumber: user.store_number,
-      userPin: user.user_pin,
-      preWork: user.pre_work
+      userId: store.user_id,
+      storeId: store.id,
+      storeName: store.store_name,
+      ownerName: store.owner_name,
+      storeNumber: store.store_number,
+      userPin: store.user_pin,
+      preWork: store.pre_work
     };
 
     res.json(responseData);
   } catch (error) {
-    console.error('Error signing in user:', error);
+    console.error('Error signing in store:', error);
     res.status(500).json({ error: 'Failed to sign in' });
   }
 });
 
-// Get user profile by store number
+// Get store profile by store number
 router.get('/:storeNumber', async (req, res) => {
   try {
     const { storeNumber } = req.params;
-    const user = await User.findByStoreNumber(storeNumber);
+    const store = await Store.findByStoreNumber(storeNumber);
 
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+    if (!store) {
+      return res.status(404).json({ error: 'Store not found' });
     }
 
-    // Return user data without sensitive info
+    // Return store data without sensitive info
     const responseData = {
-      id: user.id,
-      storeName: user.store_name,
-      ownerName: user.owner_name,
-      email: user.email,
-      storeNumber: user.store_number,
-      storeAddress: user.store_address,
-      naverStoreLink: user.naver_store_link,
-      preWork: user.pre_work
+      userId: store.user_id,
+      storeId: store.id,
+      storeName: store.store_name,
+      ownerName: store.owner_name,
+      storeNumber: store.store_number,
+      storeAddress: store.store_address,
+      naverStoreLink: store.naver_store_link,
+      preWork: store.pre_work
     };
 
     res.json(responseData);
   } catch (error) {
-    console.error('Error fetching user:', error);
-    res.status(500).json({ error: 'Failed to fetch user' });
+    console.error('Error fetching store:', error);
+    res.status(500).json({ error: 'Failed to fetch store' });
+  }
+});
+
+// Get stores for a user
+router.get('/user/:userId/stores', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const stores = await Store.findByUserId(parseInt(userId));
+
+    const responseData = stores.map(store => ({
+      storeId: store.id,
+      storeName: store.store_name,
+      ownerName: store.owner_name,
+      storeNumber: store.store_number,
+      storeAddress: store.store_address,
+      naverStoreLink: store.naver_store_link,
+      preWork: store.pre_work,
+      createdAt: store.created_at
+    }));
+
+    res.json(responseData);
+  } catch (error) {
+    console.error('Error fetching user stores:', error);
+    res.status(500).json({ error: 'Failed to fetch user stores' });
   }
 });
 

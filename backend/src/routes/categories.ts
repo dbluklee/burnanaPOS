@@ -14,11 +14,11 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get categories by store number
-router.get('/store/:storeNumber', async (req, res) => {
+// Get categories by store ID
+router.get('/store/:storeId', async (req, res) => {
   try {
-    const { storeNumber } = req.params;
-    const categories = await Category.findByStoreNumber(storeNumber);
+    const storeId = parseInt(req.params.storeId);
+    const categories = await Category.findByStoreId(storeId);
     res.json(categories);
   } catch (error) {
     console.error('Error fetching categories by store:', error);
@@ -49,21 +49,20 @@ router.get('/:id', async (req, res) => {
 // Create new category
 router.post('/', async (req, res) => {
   try {
-    const { store_number, name, color, menu_count, user_pin } = req.body;
+    const { store_id, name, color, menu_count } = req.body;
     
     // Validation
-    if (!store_number || !name || !color || !user_pin) {
+    if (!store_id || !name || !color) {
       return res.status(400).json({ 
-        error: 'Missing required fields: store_number, name, color, user_pin' 
+        error: 'Missing required fields: store_id, name, color' 
       });
     }
     
     const newCategory = await Category.create({
-      store_number,
+      store_id,
       name,
       color,
-      menu_count: menu_count || 0,
-      user_pin
+      menu_count: menu_count || 0
     });
     
     res.status(201).json(newCategory);
