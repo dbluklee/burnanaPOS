@@ -32,9 +32,9 @@ export default function CardComp({
     
     switch (type) {
       case "Category":
-        return `${subtitle} Menus`;
+        return `${subtitle}`;
       case "Place":
-        return `${subtitle} Tables`;
+        return `${subtitle}`;
       default:
         return subtitle;
     }

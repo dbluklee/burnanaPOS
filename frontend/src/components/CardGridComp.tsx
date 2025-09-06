@@ -7,11 +7,8 @@ interface CardItem {
   id: string;
   name: string;
   color: string;
-  tableCount: number; // Used for different purposes: Place=tableCount, Table=0, Menu=price, Category=menuCount
+  cardData: Record<string, string>; // Structured data: Category={'menuQty':'3'}, Menu={'price':'30000','description':'good food'}, Place={'tableQty':'2'}, Table={'person':'4'}
   sortOrder?: number;
-  // Additional properties for specific card types
-  category?: string; // For Menu cards
-  description?: string; // For Menu cards
 }
 
 interface CardGridCompProps {
@@ -188,7 +185,7 @@ export default function CardGridComp({
     if (cardsPerRow > 0) {
       const row = Math.floor((clientY - containerRef.current!.getBoundingClientRect().top) / (cardPx + gapPx));
       const col = Math.floor((clientX - containerRef.current!.getBoundingClientRect().left) / (cardPx + gapPx));
-      const targetIndex = Math.min(Math.max(0, row * cardsPerRow + col), items.length - 2); // -2 to exclude add button
+      const targetIndex = Math.min(Math.max(0, row * cardsPerRow + col), items.length - 1); // Exclude add button
       
       setDragState(prev => ({
         ...prev,
@@ -506,14 +503,18 @@ export default function CardGridComp({
                 type={type}
                 title={item.name}
                 subtitle={
-                  type === 'Menu' 
-                    ? item.description 
-                    : type === 'Table' 
-                      ? `${item.tableCount} person` 
-                      : item.tableCount.toString()
+                  type === 'Category'
+                    ? `${item.cardData.menuQty || '0'} menus`
+                    : type === 'Menu'
+                      ? item.cardData.description || ''
+                      : type === 'Place'
+                        ? `${item.cardData.tableQty || '0'} tables`
+                        : type === 'Table'
+                          ? `${item.cardData.person || '0'} person`
+                          : ''
                 }
                 subtitle2={type === 'Menu' ? undefined : undefined}
-                subtitle3={type === 'Menu' ? `₩${item.tableCount % 1 === 0 ? Math.floor(item.tableCount).toLocaleString() : item.tableCount.toLocaleString()}` : undefined}
+                subtitle3={type === 'Menu' ? `₩${parseInt(item.cardData.price || '0').toLocaleString()}` : undefined}
                 color={getCSSVariable(item.color)} // Convert hex color back to CSS variable
                 property={item.id === 'add' ? 'Empty' : 'Default'}
                 onClick={() => {}} // Disable CardComp's own click handler

@@ -1343,12 +1343,12 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                       id: c.id, 
                       name: c.name, 
                       color: c.color, 
-                      tableCount: c.menuCount, // Show menu count instead of table count
+                      cardData: { menuQty: (c.menuCount || 0).toString() },
                       storeNumber: c.storeNumber,
                       userPin: c.userPin,
                       sortOrder: c.sortOrder,
                       createdAt: c.createdAt
-                    })), { id: 'add', name: '', color: '', tableCount: 0 }]}
+                    })), { id: 'add', name: '', color: '', cardData: {} }]}
                     onCardClick={(category) => {
                       if (category.id === 'add') {
                         handleAddButtonClick();
@@ -1367,7 +1367,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                 ) : selectedTab === 'Place' && savedPlaces.length > 0 ? (
                   <CardGrid 
                     type="Place"
-                    items={[...savedPlaces.map(p => ({ ...p, sortOrder: p.sortOrder })), { id: 'add', name: '', color: '', tableCount: 0 }]}
+                    items={[...savedPlaces.map(p => ({ ...p, cardData: { tableQty: (p.tableCount || 0).toString() }, sortOrder: p.sortOrder })), { id: 'add', name: '', color: '', cardData: {} }]}
                     onCardClick={(place) => {
                       if (place.id === 'add') {
                         handleAddButtonClick();
@@ -1390,7 +1390,7 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                       id: table.id,
                       name: table.name,
                       color: table.color,
-                      tableCount: table.diningCapacity, // Pass dining capacity as tableCount
+                      cardData: { person: (table.diningCapacity || 4).toString() },
                       storeNumber: table.storeNumber,
                       userPin: table.userPin,
                       createdAt: table.createdAt
@@ -1416,14 +1416,14 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                       id: menu.id,
                       name: menu.name,
                       color: selectedCategory.color, // Use category color for menu cards
-                      tableCount: parseInt(menu.price || '0'), // Show price as tableCount (will be displayed as ₩X)
+                      cardData: { 
+                        price: menu.price || '0',
+                        description: menu.description || ''
+                      },
                       storeNumber: menu.storeNumber,
                       userPin: menu.userPin,
-                      createdAt: menu.createdAt,
-                      // Additional Menu-specific properties
-                      category: selectedCategory.name, // Category name
-                      description: menu.description || '', // Menu description
-                    } as any))}
+                      createdAt: menu.createdAt
+                    }))}
                     onCardClick={(menu) => {
                       console.log('Clicked menu:', menu.name);
                     }}
