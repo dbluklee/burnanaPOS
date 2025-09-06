@@ -4,8 +4,7 @@ import ButtonAddComp from '../components/ButtonAddComp';
 import Noti from '../components/NotiComp';
 import PanelContent from '../components/PanelContentComp';
 import PanelHeaderComp from '../components/PanelHeaderComp';
-import PlaceCard from '../components/PlaceCardComp';
-import ResponsiveCardGrid from '../components/ResponsiveCardGridComp';
+import CardGrid from '../components/CardGridComp';
 import ManagementItemsComp from '../components/ManagementItemsComp';
 import ManagementSubItemsComp from '../components/ManagementSubItemsComp';
 import { tableColors, getHexColor, getCSSVariable } from '../components/InputColorComp';
@@ -1186,7 +1185,8 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                 }`}
               >
                 {selectedTab === 'Category' && savedCategories.length > 0 ? (
-                  <ResponsiveCardGrid 
+                  <CardGrid 
+                    type="Category"
                     places={[...savedCategories.map(c => ({ 
                       id: c.id, 
                       name: c.name, 
@@ -1222,7 +1222,8 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                     isEditMode={isCardEditMode}
                   />
                 ) : selectedTab === 'Place' && savedPlaces.length > 0 ? (
-                  <ResponsiveCardGrid 
+                  <CardGrid 
+                    type="Place"
                     places={[...savedPlaces.map(p => ({ ...p, sortOrder: p.sortOrder })), { id: 'add', name: '', color: '', tableCount: 0 }]}
                     onCardClick={(place) => {
                       if (place.id === 'add') {
@@ -1240,7 +1241,8 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                     isEditMode={isCardEditMode}
                   />
                 ) : selectedTab === 'Table' && selectedPlace && savedTables.length > 0 ? (
-                  <ResponsiveCardGrid 
+                  <CardGrid 
+                    type="Table"
                     places={savedTables.map(table => ({
                       id: table.id,
                       name: table.name,
@@ -1266,7 +1268,8 @@ export default function ManagementPage({ onBack, onSignOut, onHome }: Management
                     isEditMode={isCardEditMode}
                   />
                 ) : selectedTab === 'Menu' && selectedCategory && savedMenus.length > 0 ? (
-                  <ResponsiveCardGrid 
+                  <CardGrid 
+                    type="Menu"
                     places={savedMenus.map(menu => ({
                       id: menu.id,
                       name: menu.name,

@@ -24,7 +24,14 @@ export class Category {
   static async findAll(): Promise<CategoryRecord[]> {
     const client = await pool.connect();
     try {
-      const result = await client.query('SELECT * FROM categories ORDER BY sort_order ASC, created_at DESC');
+      const result = await client.query(`
+        SELECT c.*, 
+               COALESCE(COUNT(m.id), 0) as menu_count
+        FROM categories c
+        LEFT JOIN menus m ON c.id = m.category_id
+        GROUP BY c.id
+        ORDER BY c.sort_order ASC, c.created_at DESC
+      `);
       return result.rows;
     } finally {
       client.release();
@@ -34,7 +41,15 @@ export class Category {
   static async findById(id: number): Promise<CategoryRecord> {
     const client = await pool.connect();
     try {
-      const result = await client.query('SELECT * FROM categories WHERE id = $1', [id]);
+      const result = await client.query(
+        `SELECT c.*, 
+                COALESCE(COUNT(m.id), 0) as menu_count
+         FROM categories c
+         LEFT JOIN menus m ON c.id = m.category_id
+         WHERE c.id = $1
+         GROUP BY c.id`,
+        [id]
+      );
       
       if (result.rows.length === 0) {
         throw new Error('Category not found');
@@ -109,7 +124,13 @@ export class Category {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        'SELECT * FROM categories WHERE store_number = $1 ORDER BY sort_order ASC, created_at DESC',
+        `SELECT c.*, 
+                COALESCE(COUNT(m.id), 0) as menu_count
+         FROM categories c
+         LEFT JOIN menus m ON c.id = m.category_id
+         WHERE c.store_number = $1
+         GROUP BY c.id
+         ORDER BY c.sort_order ASC, c.created_at DESC`,
         [storeNumber]
       );
       return result.rows;

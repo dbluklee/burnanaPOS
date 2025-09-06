@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import PlaceCard from './PlaceCardComp';
+import CardComp from './CardComp';
+import type { CardType } from './CardComp';
 import { getCSSVariable } from './InputColorComp';
 
 interface Place {
@@ -10,7 +11,8 @@ interface Place {
   sortOrder?: number;
 }
 
-interface ResponsiveCardGridCompProps {
+interface CardGridCompProps {
+  type?: CardType; // Add type prop to specify card type
   places: Place[];
   onCardClick: (place: Place) => void;
   onCardLongPress?: (place: Place) => void;
@@ -23,7 +25,8 @@ interface ResponsiveCardGridCompProps {
   isEditMode?: boolean;
 }
 
-export default function ResponsiveCardGridComp({ 
+export default function CardGridComp({ 
+  type = "Place", // Default to Place type
   places, 
   onCardClick, 
   onCardLongPress, 
@@ -34,7 +37,7 @@ export default function ResponsiveCardGridComp({
   isTransitioning = false, 
   animatingCardId = null, 
   isEditMode = false 
-}: ResponsiveCardGridCompProps) {
+}: CardGridCompProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [cardSize, setCardSize] = useState(15); // Default 15vw
   const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
@@ -504,12 +507,14 @@ export default function ResponsiveCardGridComp({
               onMouseLeave={handleCardMouseLeave}
               data-card="true"
             >
-              <PlaceCard
-                placeName={place.name}
-                tableCount={place.tableCount}
+              <CardComp
+                type={type}
+                title={place.name}
+                subtitle={place.tableCount.toString()}
                 color={getCSSVariable(place.color)} // Convert hex color back to CSS variable
                 property={place.id === 'add' ? 'Empty' : 'Default'}
-                onClick={() => {}} // Disable PlaceCard's own click handler
+                onClick={() => {}} // Disable CardComp's own click handler
+                dataName={`${type}Card`}
               />
             </div>
           );
