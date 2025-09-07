@@ -1,12 +1,13 @@
+import { storeContextService } from './storeContextService';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3002/api';
 
 export interface CategoryData {
   id?: number;
-  store_number: string;
+  store_id: number;
   name: string;
   color: string;
   menu_count: number;
-  user_pin: string;
   sort_order?: number;
   created_at?: Date;
   updated_at?: Date;
@@ -14,13 +15,10 @@ export interface CategoryData {
 
 class CategoryService {
   // Categories API
-  async createCategory(category: Omit<CategoryData, 'id' | 'created_at' | 'updated_at'>): Promise<CategoryData> {
-    const response = await fetch(`${API_BASE_URL}/categories`, {
+  async createCategory(category: Omit<CategoryData, 'id' | 'created_at' | 'updated_at' | 'store_id'>): Promise<CategoryData> {
+    const response = await storeContextService.fetchWithStoreContext(`${API_BASE_URL}/categories`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(category),
+      body: category,
     });
 
     if (!response.ok) {
@@ -32,7 +30,7 @@ class CategoryService {
   }
 
   async getAllCategories(): Promise<CategoryData[]> {
-    const response = await fetch(`${API_BASE_URL}/categories`);
+    const response = await storeContextService.fetchWithStoreContext(`${API_BASE_URL}/categories`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch categories');
@@ -41,8 +39,10 @@ class CategoryService {
     return response.json();
   }
 
-  async getCategoriesByStore(storeNumber: string): Promise<CategoryData[]> {
-    const response = await fetch(`${API_BASE_URL}/categories/store/${storeNumber}`);
+  async getCategoriesByStore(storeId: number): Promise<CategoryData[]> {
+    const response = await storeContextService.fetchWithStoreContext(`${API_BASE_URL}/categories/store/${storeId}`, {
+      storeId
+    });
     
     if (!response.ok) {
       throw new Error('Failed to fetch categories');
@@ -52,7 +52,7 @@ class CategoryService {
   }
 
   async getCategoryById(id: number): Promise<CategoryData> {
-    const response = await fetch(`${API_BASE_URL}/categories/${id}`);
+    const response = await storeContextService.fetchWithStoreContext(`${API_BASE_URL}/categories/${id}`);
     
     if (!response.ok) {
       const error = await response.json();
@@ -63,12 +63,9 @@ class CategoryService {
   }
 
   async updateCategory(id: number, updates: Partial<CategoryData>): Promise<CategoryData> {
-    const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+    const response = await storeContextService.fetchWithStoreContext(`${API_BASE_URL}/categories/${id}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updates),
+      body: updates,
     });
 
     if (!response.ok) {
@@ -80,7 +77,7 @@ class CategoryService {
   }
 
   async deleteCategory(id: number): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+    const response = await storeContextService.fetchWithStoreContext(`${API_BASE_URL}/categories/${id}`, {
       method: 'DELETE',
     });
 
@@ -92,12 +89,9 @@ class CategoryService {
 
   // Update category order
   async updateCategoryOrder(categoryOrders: { id: number; sort_order: number }[]): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/categories/order`, {
+    const response = await storeContextService.fetchWithStoreContext(`${API_BASE_URL}/categories/order`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ categoryOrders }),
+      body: { categoryOrders },
     });
 
     if (!response.ok) {

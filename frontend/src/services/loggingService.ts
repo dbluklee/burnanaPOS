@@ -187,7 +187,7 @@ class LoggingService {
     await this.log(EventType.NAVIGATION_HOME, `Navigated from ${from} to ${to}.`);
   }
 
-  async logPlaceCreated(placeName: string, color: string): Promise<void> {
+  async logPlaceCreated(placeName: string, color: string, extraData?: any): Promise<void> {
     // Auto-initialize if not already initialized
     if (!this.isInitialized) {
       await this.initialize();
@@ -195,7 +195,8 @@ class LoggingService {
     
     const metadata = {
       preData: { placeName: "", color: "" },
-      postData: { placeName, color }
+      postData: { placeName, color },
+      placeId: extraData?.placeId
     };
     await this.log(EventType.PLACE_CREATED, `{{${placeName}}} has been created.`, { 
       placeName, 
@@ -203,15 +204,16 @@ class LoggingService {
     });
   }
 
-  async logPlaceDeleted(placeName: string, color: string): Promise<void> {
+  async logPlaceDeleted(placeName: string, color: string, extraData?: any): Promise<void> {
     // Auto-initialize if not already initialized
     if (!this.isInitialized) {
       await this.initialize();
     }
     
     const metadata = {
-      preData: { placeName, color },
-      postData: { placeName: "", color: "" }
+      preData: extraData?.preData || { placeName, color },
+      postData: { placeName: "", color: "" },
+      placeId: extraData?.placeId // Add placeId for undo operations
     };
     await this.log(EventType.PLACE_DELETED, `{{${placeName}}} has been deleted.`, { 
       placeName, 
@@ -219,15 +221,16 @@ class LoggingService {
     });
   }
 
-  async logPlaceUpdated(oldPlaceName: string, oldColor: string, newPlaceName: string, newColor: string): Promise<void> {
+  async logPlaceUpdated(oldPlaceName: string, oldColor: string, newPlaceName: string, newColor: string, extraData?: any): Promise<void> {
     // Auto-initialize if not already initialized
     if (!this.isInitialized) {
       await this.initialize();
     }
     
     const metadata = {
-      preData: { placeName: oldPlaceName, color: oldColor },
-      postData: { placeName: newPlaceName, color: newColor }
+      preData: extraData?.preData || { placeName: oldPlaceName, color: oldColor },
+      postData: extraData?.postData || { placeName: newPlaceName, color: newColor },
+      placeId: extraData?.placeId
     };
     await this.log(EventType.PLACE_UPDATED, `{{${newPlaceName}}} has been modified.`, { 
       placeName: newPlaceName, 
@@ -238,7 +241,8 @@ class LoggingService {
   async logTableCreated(tableName: string, placeName: string, tableData?: any): Promise<void> {
     const metadata = {
       preData: { tableName: "", placeName: placeName, ...tableData },
-      postData: { tableName, placeName, ...tableData }
+      postData: { tableName, placeName, ...tableData },
+      tableId: tableData?.tableId
     };
     await this.log(EventType.TABLE_CREATED, `{{${placeName}}} {{${tableName}}} has been created.`, {
       tableName,
@@ -249,13 +253,32 @@ class LoggingService {
 
   async logTableDeleted(tableName: string, placeName: string, tableData?: any): Promise<void> {
     const metadata = {
-      preData: { tableName, placeName, ...tableData },
-      postData: { tableName: "", placeName: placeName, ...tableData }
+      preData: tableData?.preData || { tableName, placeName },
+      postData: { tableName: "", placeName: placeName },
+      tableId: tableData?.tableId // Add tableId for undo operations
     };
     await this.log(EventType.TABLE_DELETED, `{{${placeName}}} {{${tableName}}} has been deleted.`, {
       tableName,
       placeName,
       additionalData: metadata
+    });
+  }
+
+  async logTableUpdated(oldTableName: string, oldPlaceName: string, newTableName: string, newPlaceName: string, extraData?: any): Promise<void> {
+    // Auto-initialize if not already initialized
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+    
+    const metadata = {
+      preData: extraData?.preData || { tableName: oldTableName, placeName: oldPlaceName },
+      postData: extraData?.postData || { tableName: newTableName, placeName: newPlaceName },
+      tableId: extraData?.tableId // Add tableId for undo operations
+    };
+    await this.log(EventType.TABLE_UPDATED, `{{${newPlaceName}}} {{${newTableName}}} has been modified.`, { 
+      tableName: newTableName, 
+      placeName: newPlaceName,
+      additionalData: metadata 
     });
   }
 
@@ -277,7 +300,8 @@ class LoggingService {
     
     const metadata = {
       preData: { categoryName: "", color: "", menu_count: 0 },
-      postData: { categoryName, color, menu_count: categoryData?.menu_count || 0, ...categoryData }
+      postData: { categoryName, color, menu_count: categoryData?.menu_count || 0, ...categoryData },
+      categoryId: categoryData?.categoryId
     };
     await this.log(EventType.CATEGORY_CREATED, `{{${categoryName}}} has been created.`, { 
       categoryName, 
@@ -326,7 +350,8 @@ class LoggingService {
     
     const metadata = {
       preData: { menuName: "", categoryName: categoryName, price: 0, description: "" },
-      postData: { menuName, categoryName, price: menuData?.price || 0, description: menuData?.description || "", ...menuData }
+      postData: { menuName, categoryName, price: menuData?.price || 0, description: menuData?.description || "", ...menuData },
+      menuId: menuData?.menuId
     };
     await this.log(EventType.MENU_CREATED, `{{${categoryName}}} {{${menuName}}} has been created.`, { 
       menuName,
@@ -343,7 +368,8 @@ class LoggingService {
     
     const metadata = {
       preData: { menuName, categoryName, price: menuData?.price || 0, description: menuData?.description || "", ...menuData },
-      postData: { menuName: "", categoryName: categoryName, price: 0, description: "" }
+      postData: { menuName: "", categoryName: categoryName, price: 0, description: "" },
+      menuId: menuData?.menuId // Add menuId for undo operations
     };
     await this.log(EventType.MENU_DELETED, `{{${categoryName}}} {{${menuName}}} has been deleted.`, { 
       menuName,
@@ -360,7 +386,8 @@ class LoggingService {
     
     const metadata = {
       preData: { menuName: oldMenuName, categoryName: oldCategoryName, ...oldMenuData },
-      postData: { menuName: newMenuName, categoryName: newCategoryName, ...newMenuData }
+      postData: { menuName: newMenuName, categoryName: newCategoryName, ...newMenuData },
+      menuId: newMenuData?.menuId || oldMenuData?.menuId // Add menuId for undo operations
     };
     await this.log(EventType.MENU_UPDATED, `{{${newCategoryName}}} {{${newMenuName}}} has been modified.`, { 
       menuName: newMenuName,
@@ -503,26 +530,8 @@ class LoggingService {
       const result = await response.json();
       
       if (result.success) {
-        
-        // Create the undo log entry locally with proper formatting
-        const undoMessage = result.message;
-        if (undoMessage) {
-          // Extract the place name from the message using {{}} format
-          const placeNameMatch = undoMessage.match(/^(.+?)\s+has been/);
-          const placeName = placeNameMatch ? placeNameMatch[1] : '';
-          
-          // Format the message with {{placeName}}
-          const formattedMessage = undoMessage.replace(placeName, `{{${placeName}}}`);
-          
-          await this.log(
-            'undo' as EventType,
-            formattedMessage,
-            {
-              originalLogId: logId,
-              placeName: placeName
-            }
-          );
-        }
+        // Backend already creates proper UNDO_PERFORMED log entries
+        // No need to create duplicate frontend logs
         
         // Notify subscribers about the change
         this.notifySubscribers();

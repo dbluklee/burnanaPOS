@@ -6,6 +6,7 @@ interface LogEntry {
   time: string;
   message: string;
   type: string;
+  isUndone?: boolean;
 }
 
 interface LogsCompProps {
@@ -19,12 +20,16 @@ export default function LogsComp({ logEntries, onLogUndo }: LogsCompProps) {
   // Define which log types support undo functionality
   const undoableLogTypes = [
     'place_created', 'place_modified', 'place_deleted', 'place_updated',
-    'table_created', 'table_deleted',
+    'table_created', 'table_deleted', 'table_updated',
     'category_created', 'category_deleted', 'category_updated',
     'menu_created', 'menu_deleted', 'menu_updated'
   ];
   
-  const isLogUndoable = (logType: string) => {
+  const isLogUndoable = (logType: string, isUndone?: boolean) => {
+    // Can't undo if already undone or if it's an UNDO_PERFORMED log
+    if (isUndone || logType === 'UNDO_PERFORMED') {
+      return false;
+    }
     return undoableLogTypes.includes(logType);
   };
 
@@ -55,7 +60,7 @@ export default function LogsComp({ logEntries, onLogUndo }: LogsCompProps) {
           onUndo={() => handleLogUndo(log.id)}
           isActiveUndo={activeUndoLogId === log.id}
           onSlideStateChange={(isInUndoMode) => handleLogSlide(log.id, isInUndoMode)}
-          isUndoable={isLogUndoable(log.type)}
+          isUndoable={isLogUndoable(log.type, log.isUndone)}
         />
       ))}
     </div>

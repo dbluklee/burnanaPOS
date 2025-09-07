@@ -15,13 +15,13 @@ interface LogCompProps {
 
 function LogComp({ time, text, itemLabel, property1: externalProperty1, onUndo, isActiveUndo, onSlideStateChange, isUndoable = true }: LogCompProps) {
   // Extract management items from text
-  const extractManagementItems = (logText: string) => {
+  const extractManagementItems = (logText: string | undefined) => {
     const items: string[] = [];
-    let cleanedText = logText;
+    let cleanedText = logText || '';
     
     // First, extract items in {{label}} format (highest priority)
     const bracketRegex = /\{\{([^}]+)\}\}/g;
-    const bracketMatches = [...cleanedText.matchAll(bracketRegex)];
+    const bracketMatches = cleanedText ? [...cleanedText.matchAll(bracketRegex)] : [];
     if (bracketMatches.length > 0) {
       bracketMatches.forEach(match => {
         items.push(match[1]); // Extract content inside {{}}

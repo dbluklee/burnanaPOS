@@ -123,8 +123,8 @@ export default function SignInComp({ onBack, onSignInComplete }: SignInCompProps
       }
 
       const signInData: SignInData = {
-        storeNumber: pinForm.storeId,
-        userPin: pinForm.userPin
+        store_number: pinForm.storeId,
+        user_pin: pinForm.userPin
       };
 
       const user = await userService.signIn(signInData);

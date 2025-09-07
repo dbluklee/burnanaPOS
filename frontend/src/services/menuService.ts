@@ -1,13 +1,14 @@
+import { storeContextService } from './storeContextService';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3002/api';
 
 export interface MenuData {
   id?: number;
   category_id: number;
-  store_number: string;
+  store_id: number;
   name: string;
   price: number;
   description?: string;
-  user_pin: string;
   sort_order?: number;
   created_at?: Date;
   updated_at?: Date;
@@ -15,13 +16,10 @@ export interface MenuData {
 
 class MenuService {
   // Menus API
-  async createMenu(menu: Omit<MenuData, 'id' | 'created_at' | 'updated_at'>): Promise<MenuData> {
-    const response = await fetch(`${API_BASE_URL}/menus`, {
+  async createMenu(menu: Omit<MenuData, 'id' | 'created_at' | 'updated_at' | 'store_id'>): Promise<MenuData> {
+    const response = await storeContextService.fetchWithStoreContext(`${API_BASE_URL}/menus`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(menu),
+      body: menu,
     });
 
     if (!response.ok) {
@@ -33,7 +31,7 @@ class MenuService {
   }
 
   async getAllMenus(): Promise<MenuData[]> {
-    const response = await fetch(`${API_BASE_URL}/menus`);
+    const response = await storeContextService.fetchWithStoreContext(`${API_BASE_URL}/menus`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch menus');
@@ -42,8 +40,10 @@ class MenuService {
     return response.json();
   }
 
-  async getMenusByStore(storeNumber: string): Promise<MenuData[]> {
-    const response = await fetch(`${API_BASE_URL}/menus/store/${storeNumber}`);
+  async getMenusByStore(storeId: number): Promise<MenuData[]> {
+    const response = await storeContextService.fetchWithStoreContext(`${API_BASE_URL}/menus/store/${storeId}`, {
+      storeId
+    });
     
     if (!response.ok) {
       throw new Error('Failed to fetch menus');
@@ -53,7 +53,7 @@ class MenuService {
   }
 
   async getMenusByCategory(categoryId: number): Promise<MenuData[]> {
-    const response = await fetch(`${API_BASE_URL}/menus/category/${categoryId}`);
+    const response = await storeContextService.fetchWithStoreContext(`${API_BASE_URL}/menus/category/${categoryId}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch menus');
@@ -63,7 +63,7 @@ class MenuService {
   }
 
   async getMenuById(id: number): Promise<MenuData> {
-    const response = await fetch(`${API_BASE_URL}/menus/${id}`);
+    const response = await storeContextService.fetchWithStoreContext(`${API_BASE_URL}/menus/${id}`);
     
     if (!response.ok) {
       const error = await response.json();
@@ -74,12 +74,9 @@ class MenuService {
   }
 
   async updateMenu(id: number, updates: Partial<MenuData>): Promise<MenuData> {
-    const response = await fetch(`${API_BASE_URL}/menus/${id}`, {
+    const response = await storeContextService.fetchWithStoreContext(`${API_BASE_URL}/menus/${id}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updates),
+      body: updates,
     });
 
     if (!response.ok) {
@@ -91,7 +88,7 @@ class MenuService {
   }
 
   async deleteMenu(id: number): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/menus/${id}`, {
+    const response = await storeContextService.fetchWithStoreContext(`${API_BASE_URL}/menus/${id}`, {
       method: 'DELETE',
     });
 
@@ -103,12 +100,9 @@ class MenuService {
 
   // Update menu order
   async updateMenuOrder(menuOrders: { id: number; sort_order: number }[]): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/menus/order`, {
+    const response = await storeContextService.fetchWithStoreContext(`${API_BASE_URL}/menus/order`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ menuOrders }),
+      body: { menuOrders },
     });
 
     if (!response.ok) {

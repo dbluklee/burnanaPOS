@@ -1,5 +1,6 @@
 import express from 'express';
 import { Log } from '../models/Log';
+import { UndoService } from '../services/undoService';
 
 const router = express.Router();
 
@@ -111,7 +112,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Undo log action - temporarily disabled
+// Undo log action - Using unified undo service
 router.post('/:id/undo', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -119,16 +120,22 @@ router.post('/:id/undo', async (req, res) => {
       return res.status(400).json({ error: 'Invalid log ID' });
     }
     
-    // Get the log to undo
-    const log = await Log.findById(id);
+    // Use the unified undo service
+    const result = await UndoService.undoLog(id);
     
-    // TODO: Update undo logic for multi-tenant structure
-    // For now, just return success
-    res.json({ 
-      success: true, 
-      message: 'Undo operation completed (temporarily disabled)',
-      data: log 
-    });
+    // Return the result
+    if (result.success) {
+      res.json({ 
+        success: true, 
+        message: result.message,
+        data: result.result 
+      });
+    } else {
+      res.status(400).json({ 
+        success: false, 
+        error: result.message 
+      });
+    }
   } catch (error) {
     console.error('Error performing undo:', error);
     if (error instanceof Error && error.message === 'Log not found') {

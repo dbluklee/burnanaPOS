@@ -28,13 +28,13 @@ export default function WelcomeBodyComp({ intro, title, description, onSignUp, o
         <span>{title}</span>
       </div>
       <div 
-        className="mb-6 text-[clamp(0.8rem,2vw,1.2rem)] text-gray-400 max-w-[60ch]"
+        className="mb-10 text-[clamp(0.8rem,1.5vw,1.2rem)] text-gray-400 max-w-[60ch]"
         data-name="WelcomeBodyDesc"
       >
         <span>{description}</span>
       </div>
       <div 
-        className="flex gap-4 flex-wrap"
+        className="flex gap-8 flex-wrap"
         data-name="WelcomeBodyButtons"
       >
         <ButtonComp 

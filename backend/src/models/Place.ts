@@ -143,7 +143,7 @@ export class Place {
       
       if (storeId) {
         sql += ' AND store_id = $2';
-        params.push(storeId as any);
+        params.push(storeId);
       }
       
       sql += ' LIMIT 1';
@@ -168,7 +168,7 @@ export class Place {
       
       if (storeId) {
         sql += ' AND store_id = $2';
-        params.push(storeId as any);
+        params.push(storeId);
       }
       
       const result = await client.query(sql, params);

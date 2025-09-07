@@ -41,7 +41,7 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [registeredUser, setRegisteredUser] = useState<UserProfile | null>(null);
+  const [registrationData, setRegistrationData] = useState<{user: any, store: any} | null>(null);
   const [phoneVerificationMessage, setPhoneVerificationMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -146,17 +146,18 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
 
     try {
       const signUpData: SignUpData = {
-        businessRegistrationNumber: formData.businessRegistrationNumber,
-        storeName: formData.storeName,
-        ownerName: formData.ownerName,
-        phoneNumber: formData.phoneNumber,
+        phone: formData.phoneNumber,
+        name: formData.ownerName,
         email: formData.email,
-        storeAddress: formData.storeAddress,
-        naverStoreLink: formData.naverStoreLink || undefined,
+        business_registration_number: formData.businessRegistrationNumber,
+        store_name: formData.storeName,
+        owner_name: formData.ownerName,
+        store_address: formData.storeAddress,
+        naver_store_link: formData.naverStoreLink || undefined,
       };
 
-      const user = await userService.register(signUpData);
-      setRegisteredUser(user);
+      const result = await userService.register(signUpData);
+      setRegistrationData(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
@@ -229,7 +230,7 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
               transition: 'font-size 0.2s ease-in-out'
             }}
           >
-            {registeredUser ? 'Registration Complete!' : 'Sign Up'}
+            {registrationData ? 'Registration Complete!' : 'Sign Up'}
           </h1>
           <p 
             className="FontStyleBlockText"
@@ -239,7 +240,7 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
               transition: 'font-size 0.2s ease-in-out'
             }}
           >
-            {registeredUser 
+            {registrationData 
               ? 'Your account has been created successfully'
               : 'Create your BurnanaPOS account'
             }
@@ -247,7 +248,7 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
         </div>
 
         {/* Registration Success */}
-        {registeredUser && (
+        {registrationData && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(1rem, 2vh, 1.5rem)' }}>
             <div className="text-center rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: 'clamp(1rem, 2vh, 1.5rem)', borderRadius: 'clamp(6px, 0.8vw, 8px)' }}>
               <h3 
@@ -275,7 +276,7 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
                       borderRadius: 'clamp(6px, 0.8vw, 8px)',
                     }}
                   >
-                    {registeredUser.storeNumber}
+                    {registrationData.store.store_number}
                   </p>
                 </div>
                 <div>
@@ -291,7 +292,7 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
                       borderRadius: 'clamp(6px, 0.8vw, 8px)',
                     }}
                   >
-                    {registeredUser.userPin}
+                    {registrationData.store.user_pin}
                   </p>
                 </div>
               </div>
@@ -313,12 +314,23 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
               label="Continue to Dashboard"
               onClick={async () => {
                 // Save user data to localStorage like signin does
-                if (registeredUser) {
-                  localStorage.setItem('currentUser', JSON.stringify(registeredUser));
+                if (registrationData) {
+                  // Create user object in same format as signin response
+                  const userForStorage = {
+                    userId: registrationData.user.id,
+                    storeId: registrationData.store.id,
+                    storeName: registrationData.store.store_name,
+                    ownerName: registrationData.store.owner_name,
+                    storeNumber: registrationData.store.store_number,
+                    userPin: registrationData.store.user_pin,
+                    preWork: registrationData.store.pre_work
+                  };
+                  
+                  localStorage.setItem('currentUser', JSON.stringify(userForStorage));
                   
                   // Initialize logging session with user sign in after successful registration
-                  if (registeredUser.userPin) {
-                    await logUserSignIn(registeredUser.userPin);
+                  if (registrationData.store.user_pin) {
+                    await logUserSignIn(registrationData.store.user_pin);
                   }
                   
                   // Log server connection status like signin does
@@ -336,7 +348,7 @@ export default function SignUpComp({ onBack, onSignUpComplete }: SignUpCompProps
         )}
 
         {/* Form */}
-        {!registeredUser && (
+        {!registrationData && (
           <>
             {error && (
               <div 

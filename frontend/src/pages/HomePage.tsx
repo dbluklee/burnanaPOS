@@ -8,7 +8,6 @@ import BlockSetting from '../components/BlockSetting';
 import BlockFAQ from '../components/BlockFAQ';
 import BlockLanguage from '../components/BlockLanguage';
 import BlockEmail from '../components/BlockEmail';
-import type { UserProfile } from '../services/userService';
 
 // Image assets
 import promotionTopImage from '../assets/images/HomePage/promotion-top.jpg';
@@ -24,7 +23,7 @@ interface HomePageProps {
 }
 
 export default function HomePage({ onSignOut, onManagement }: HomePageProps) {
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
 
   useEffect(() => {
     // Get current user from localStorage

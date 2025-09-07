@@ -110,7 +110,7 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({ error: 'Invalid table ID' });
     }
 
-    const { place_id, name, color, store_number, user_pin } = req.body;
+    const { place_id, name, color, dining_capacity, store_id } = req.body;
 
     // If place_id is being updated, verify the place exists
     if (place_id) {
@@ -133,8 +133,8 @@ router.put('/:id', async (req, res) => {
     if (place_id !== undefined) updates.place_id = parseInt(place_id);
     if (name !== undefined) updates.name = name;
     if (color !== undefined) updates.color = color;
-    if (store_number !== undefined) updates.store_number = store_number;
-    if (user_pin !== undefined) updates.user_pin = user_pin;
+    if (dining_capacity !== undefined) updates.dining_capacity = parseInt(dining_capacity);
+    if (store_id !== undefined) updates.store_id = parseInt(store_id);
 
     const updatedTable = await Table.update(id, updates);
     res.json(updatedTable);
